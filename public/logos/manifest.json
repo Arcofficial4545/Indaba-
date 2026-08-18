@@ -1,0 +1,200 @@
+{
+  "asana": {
+    "brand": "Asana",
+    "file": "/logos/asana.svg",
+    "shape": "mark",
+    "hex": "#f06a6a",
+    "width": 24,
+    "height": 24,
+    "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/asana.svg",
+    "note": "Simple Icons, official brand glyph",
+    "fetchedAt": "2026-08-17T22:38:54.135Z"
+  },
+  "bamboohr": {
+    "brand": "BambooHR",
+    "file": "/logos/bamboohr.png",
+    "shape": "wordmark",
+    "hex": "#73c41d",
+    "width": 1479,
+    "height": 227,
+    "sourceUrl": "https://www.bamboohr.com/images/about/media-assets/bamboohr-logo-green.png",
+    "note": "BambooHR published media assets, 1479x227 PNG with alpha",
+    "fetchedAt": "2026-08-17T22:38:57.264Z"
+  },
+  "bitrix24": {
+    "brand": "Bitrix24",
+    "file": "/logos/bitrix24.svg",
+    "shape": "wordmark",
+    "hex": "#2fc7f7",
+    "width": 174,
+    "height": 33,
+    "sourceUrl": "https://www.bitrix24.com/images/bitrix24-logo-en.svg",
+    "note": "Bitrix24 own site, vector wordmark",
+    "fetchedAt": "2026-08-18T00:04:34.808Z"
+  },
+  "clickup": {
+    "brand": "ClickUp",
+    "file": "/logos/clickup.svg",
+    "shape": "mark",
+    "hex": "#7b68ee",
+    "width": 24,
+    "height": 24,
+    "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/clickup.svg",
+    "note": "Simple Icons, official brand glyph",
+    "fetchedAt": "2026-08-18T00:04:34.301Z"
+  },
+  "hubspot": {
+    "brand": "HubSpot",
+    "file": "/logos/hubspot.svg",
+    "shape": "mark",
+    "hex": "#ff7a59",
+    "width": 24,
+    "height": 24,
+    "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/hubspot.svg",
+    "note": "Simple Icons, official brand glyph",
+    "fetchedAt": "2026-08-17T22:38:52.232Z"
+  },
+  "monday": {
+    "brand": "monday.com",
+    "file": "/logos/monday.png",
+    "shape": "mark",
+    "hex": "#ff3d57",
+    "width": 256,
+    "height": 256,
+    "sourceUrl": "https://cdn.prod.website-files.com/656da6fea306219773d04208/65af6bd6e742d497b5f23f69_645898132bbaac20f1963919_256x256.png",
+    "note": "monday.com own CDN, 256x256 PNG with alpha",
+    "fetchedAt": "2026-08-17T22:38:55.930Z"
+  },
+  "odoo": {
+    "brand": "Odoo",
+    "file": "/logos/odoo.svg",
+    "shape": "mark",
+    "hex": "#714b67",
+    "width": 24,
+    "height": 24,
+    "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/odoo.svg",
+    "note": "Simple Icons, official brand glyph",
+    "fetchedAt": "2026-08-17T22:38:52.920Z"
+  },
+  "payspace": {
+    "brand": "PaySpace",
+    "file": "/logos/payspace.svg",
+    "shape": "wordmark",
+    "hex": "#e4002b",
+    "width": 3211,
+    "height": 600,
+    "sourceUrl": "https://www.payspace.com/images/dlp-logo.svg",
+    "note": "PaySpace own site, vector wordmark",
+    "fetchedAt": "2026-08-17T22:38:57.122Z"
+  },
+  "quickbooks": {
+    "brand": "QuickBooks",
+    "file": "/logos/quickbooks.svg",
+    "shape": "mark",
+    "hex": "#2ca01c",
+    "width": 24,
+    "height": 24,
+    "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/quickbooks.svg",
+    "note": "Simple Icons, official brand glyph",
+    "fetchedAt": "2026-08-17T22:38:50.381Z"
+  },
+  "sage": {
+    "brand": "Sage",
+    "file": "/logos/sage.svg",
+    "shape": "mark",
+    "hex": "#00d639",
+    "width": 24,
+    "height": 24,
+    "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/sage.svg",
+    "note": "Simple Icons, official brand glyph",
+    "fetchedAt": "2026-08-17T22:38:49.026Z"
+  },
+  "salesforce": {
+    "brand": "Salesforce",
+    "file": "/logos/salesforce.svg",
+    "shape": "mark",
+    "hex": "#00a1e0",
+    "width": 92,
+    "height": 64,
+    "sourceUrl": "https://a.sfdcstatic.com/shared/images/c360-nav/salesforce-no-type-logo.svg",
+    "note": "Salesforce own CDN, vector cloud mark",
+    "fetchedAt": "2026-08-17T22:39:55.055Z"
+  },
+  "sap": {
+    "brand": "SAP",
+    "file": "/logos/sap.svg",
+    "shape": "mark",
+    "hex": "#0faaff",
+    "width": 24,
+    "height": 24,
+    "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/sap.svg",
+    "note": "Simple Icons, official brand glyph",
+    "fetchedAt": "2026-08-17T22:38:53.369Z"
+  },
+  "simplepay": {
+    "brand": "SimplePay",
+    "file": "/logos/simplepay.png",
+    "shape": "mark",
+    "hex": "#1e88e5",
+    "width": 80,
+    "height": 80,
+    "sourceUrl": "https://www.simplepay.co.za/assets/img/logos/favicon.png",
+    "note": "SimplePay own site, 80x80 PNG with alpha",
+    "fetchedAt": "2026-08-17T22:38:56.022Z"
+  },
+  "syspro": {
+    "brand": "SYSPRO",
+    "file": "/logos/syspro.svg",
+    "shape": "wordmark",
+    "hex": "#0033a0",
+    "width": 450.55,
+    "height": 119.82,
+    "sourceUrl": "https://s48470.pcdn.co/wp-content/uploads/2025/10/SYSPRO_WORDMARK_COBALT.svg",
+    "note": "SYSPRO own CDN, vector wordmark",
+    "fetchedAt": "2026-08-18T00:04:35.196Z"
+  },
+  "trello": {
+    "brand": "Trello",
+    "file": "/logos/trello.svg",
+    "shape": "mark",
+    "hex": "#0079bf",
+    "width": 24,
+    "height": 24,
+    "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/trello.svg",
+    "note": "Simple Icons, official brand glyph",
+    "fetchedAt": "2026-08-17T22:38:55.853Z"
+  },
+  "wave": {
+    "brand": "Wave",
+    "file": "/logos/wave.svg",
+    "shape": "wordmark",
+    "hex": "#1a73e8",
+    "width": 1625.39,
+    "height": 467.88,
+    "sourceUrl": "https://cdn.prod.website-files.com/62446230dcb514b828a6e237/677ed61188695f2316217fc5_Wave-2_0-logo-fullcolour-rgb.svg",
+    "note": "Wave own CDN, full colour vector",
+    "fetchedAt": "2026-08-18T00:04:34.379Z"
+  },
+  "xero": {
+    "brand": "Xero",
+    "file": "/logos/xero.svg",
+    "shape": "mark",
+    "hex": "#13b5ea",
+    "width": 24,
+    "height": 24,
+    "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/xero.svg",
+    "note": "Simple Icons, official brand glyph",
+    "fetchedAt": "2026-08-17T22:38:49.802Z"
+  },
+  "zoho": {
+    "brand": "Zoho",
+    "file": "/logos/zoho.svg",
+    "shape": "mark",
+    "hex": "#e42527",
+    "width": 24,
+    "height": 24,
+    "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/zoho.svg",
+    "note": "Simple Icons, official brand glyph",
+    "fetchedAt": "2026-08-17T22:38:50.951Z"
+  }
+}

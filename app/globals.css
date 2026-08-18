@@ -1,0 +1,809 @@
+@import "tailwindcss";
+
+/*
+  next-themes drives the theme with a class on <html>, so Tailwind 4 needs the
+  dark variant wired to that class rather than the prefers-color-scheme default.
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   1. TOKENS
+   --------------------------------------------------------------------------
+   Raw values live on the short names. The --color-* aliases exist because
+   component markup addresses the brand directly as var(--color-brand), and
+   the @theme inline block below turns the same values into bg-brand /
+   text-brand-dark utilities. One source of truth, three ways to reach it.
+
+   The palette rests on one unusual decision: the primary brand colour is
+   LIGHT. Lime is a fill. It never carries white text and never becomes body
+   text on a white page. Three roles, never confused:
+     --color-brand        lime, fills only
+     --color-brand-ink    near black olive, the only ink that sits on lime
+     --color-brand-dark   deep olive, brand coloured TEXT on light surfaces
+   ========================================================================== */
+
+:root {
+  /* Brand palette */
+  --brand: #d9f65f; /* signature lime, FILLS ONLY */
+  --brand-strong: #c9ec3e; /* hover fill */
+  --brand-ink: #1a2008; /* text ON lime */
+  --brand-dark: #4c5f0a; /* brand text on white, 7.1:1 */
+  --brand-light: #f3fbd3; /* pale lime wash */
+  --navy: #1b1f3b; /* secondary brand, panels */
+  --amber: #f5a623;
+  --amber-dark: #e0941a;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --star: #f5a623; /* star rating fill */
+
+  /* Spec facing aliases, so var(--color-brand) resolves in arbitrary values */
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-light: var(--brand-light);
+  --color-navy: var(--navy);
+  --color-amber: var(--amber);
+  --color-amber-dark: var(--amber-dark);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-star: var(--star);
+
+  /* Semantic tokens */
+  --background: #ffffff;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #d9f65f;
+  --primary-foreground: #1a2008;
+  --secondary: #1b1f3b;
+  --secondary-foreground: #ffffff;
+  --muted: #f9fafb;
+  --muted-foreground: #6b7280;
+  --accent: #f3f4f6;
+  --accent-foreground: #111827;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #b6d43a;
+
+  /* Charts */
+  --chart-1: #a4c521;
+  --chart-2: #1b1f3b;
+  --chart-3: #f5a623;
+  --chart-4: #10b981;
+  --chart-5: #6b7280;
+
+  /* Admin sidebar */
+  --sidebar: #1b1f3b;
+  --sidebar-foreground: #e5e7eb;
+  --sidebar-primary: #d9f65f;
+  --sidebar-primary-foreground: #1a2008;
+  --sidebar-accent: #262b4d;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2c3157;
+  --sidebar-ring: #b6d43a;
+
+  --radius: 0.5rem;
+}
+
+/*
+  On dark surfaces the lime is already readable, so the "readable brand" token
+  becomes the lime itself. Only the two brand tokens flip; the rest is a
+  straight surface swap.
+*/
+.dark {
+  --brand-dark: #d9f65f;
+  --brand-light: #2c3512;
+
+  --background: #0c0e14;
+  --foreground: #f4f4f5;
+  --card: #12141d;
+  --card-foreground: #f4f4f5;
+  --popover: #12141d;
+  --popover-foreground: #f4f4f5;
+  --primary: #d9f65f;
+  --primary-foreground: #1a2008;
+  --secondary: #262b4d;
+  --secondary-foreground: #f4f4f5;
+  --muted: #181b26;
+  --muted-foreground: #9ca3af;
+  --accent: #1d2130;
+  --accent-foreground: #f4f4f5;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #262a38;
+  --input: #262a38;
+  --ring: #d9f65f;
+
+  --chart-1: #d9f65f;
+  --chart-2: #8b93c9;
+  --chart-3: #f5a623;
+  --chart-4: #34d399;
+  --chart-5: #9ca3af;
+
+  --sidebar: #12141d;
+  --sidebar-foreground: #e5e7eb;
+  --sidebar-primary: #d9f65f;
+  --sidebar-primary-foreground: #1a2008;
+  --sidebar-accent: #1d2130;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #262a38;
+  --sidebar-ring: #d9f65f;
+}
+
+/* ==========================================================================
+   2. THEME MAPPING
+   ========================================================================== */
+
+@theme inline {
+  /* Fonts. Google Sans is the display face, Inter is the reading face. */
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-heading: var(--font-google-sans), var(--font-inter), sans-serif;
+  --font-mono: ui-monospace, monospace;
+
+  /* Brand */
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-light: var(--brand-light);
+  --color-navy: var(--navy);
+  --color-amber: var(--amber);
+  --color-amber-dark: var(--amber-dark);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-star: var(--star);
+
+  /* Semantic */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Admin sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Radius scale, all derived from --radius */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Motion */
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-delayed: float 8s ease-in-out 1.5s infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-18px) rotate(3deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+/* Radix reports the natural height, so the accordion can animate to it. */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes dialog-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+}
+
+/* ==========================================================================
+   3. BASE
+   ========================================================================== */
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+  }
+
+  /*
+    Google Sans tops out at a 700 weight axis. Asking for 800 or 900 makes the
+    browser synthesise a fake bold, which smears a geometric face. Clamp it.
+  */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-heading {
+    font-synthesis-weight: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--brand);
+    color: var(--brand-ink);
+  }
+}
+
+/* ==========================================================================
+   4. LAYOUT LANGUAGE
+   ========================================================================== */
+
+@layer components {
+  /* 4.1 The site container. Every page sits inside this. */
+  .container-site {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 1440px;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 768px) {
+    .container-site {
+      padding-inline: 2rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .container-site {
+      padding-inline: 3rem;
+    }
+  }
+
+  /*
+    4.4 The glossy button. A rounded rectangle, never a pill. Glass sheen over
+    the top half, a darker bezel, pillowed inner shadows and a drop shadow
+    tinted to the fill. Fully parameterised: set --btn-bg, --btn-ink and
+    --btn-glow inline to recolour it per product.
+  */
+  .btn-glossy {
+    --btn-bg: var(--brand);
+    --btn-ink: var(--brand-ink);
+    --btn-glow: rgba(163, 197, 33, 0.5);
+    border-radius: 0.875rem;
+    color: var(--btn-ink);
+    font-weight: 600;
+    border: 1px solid color-mix(in srgb, var(--btn-bg), #000 22%);
+    background-image:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.4) 0%,
+        rgba(255, 255, 255, 0.14) 36%,
+        rgba(255, 255, 255, 0) 52%
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--btn-bg), #fff 14%) 0%,
+        var(--btn-bg) 55%,
+        color-mix(in srgb, var(--btn-bg), #000 14%) 100%
+      );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -5px 9px color-mix(in srgb, var(--btn-bg), #000 18%),
+      0 12px 24px -10px var(--btn-glow);
+    transition:
+      transform 0.2s ease,
+      filter 0.2s ease,
+      box-shadow 0.2s ease;
+    cursor: pointer;
+  }
+
+  .btn-glossy:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06) saturate(1.04);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -5px 9px color-mix(in srgb, var(--btn-bg), #000 18%),
+      0 16px 30px -10px var(--btn-glow);
+  }
+
+  .btn-glossy:active {
+    transform: translateY(0) scale(0.98);
+    filter: brightness(0.97);
+    box-shadow:
+      inset 0 1px 2px color-mix(in srgb, var(--btn-bg), #000 30%),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+      0 6px 14px -8px var(--btn-glow);
+  }
+
+  .btn-glossy:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
+    filter: none;
+  }
+
+  .btn-glossy-dark {
+    --btn-bg: #232428;
+    --btn-ink: #ffffff;
+    --btn-glow: rgba(10, 12, 16, 0.55);
+  }
+
+  .btn-glossy-white {
+    --btn-bg: #ffffff;
+    --btn-ink: var(--navy);
+    --btn-glow: rgba(15, 23, 42, 0.22);
+    border-color: color-mix(in srgb, #ffffff, #000 14%);
+  }
+
+  /* 4.5 The modern card */
+  .card-modern {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1.5rem;
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 12px 32px -16px rgba(15, 23, 42, 0.14);
+    transition:
+      transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.25s ease;
+  }
+
+  .card-modern-hover:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--foreground) 12%, var(--border));
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 24px 48px -20px rgba(15, 23, 42, 0.22);
+  }
+
+  /*
+    Overlay and popover entrances. Radix drives these through data-state, so
+    they are written directly rather than pulling in an animation library.
+  */
+  .anim-overlay[data-state="open"] {
+    animation: fade-in 0.2s ease both;
+  }
+  .anim-overlay[data-state="closed"] {
+    animation: fade-out 0.15s ease both;
+  }
+  .anim-pop[data-state="open"] {
+    animation: pop-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .anim-pop[data-state="closed"] {
+    animation: pop-out 0.15s ease both;
+  }
+
+  /*
+    A centred dialog is positioned with a translate, and an animation that set
+    `transform: scale()` alone would wipe that translate out. These keyframes
+    carry both.
+  */
+  .anim-dialog[data-state="open"] {
+    animation: dialog-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .anim-dialog[data-state="closed"] {
+    animation: dialog-out 0.15s ease both;
+  }
+
+  /*
+    The lime highlight span. The single most recognisable element of the
+    brand. One heading per section, two or three words, never twice in the
+    same heading.
+  */
+  .brand-highlight {
+    border-radius: 1rem;
+    background: var(--brand);
+    color: var(--brand-ink);
+    padding: 0.125rem 0.75rem;
+    white-space: nowrap;
+  }
+}
+
+/* ==========================================================================
+   5. MOTION
+   Subtle, mostly CSS only, no animation library.
+   ========================================================================== */
+
+/* Scroll reveal as progressive enhancement, zero JS */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal-on-scroll {
+      animation: reveal-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 42%;
+    }
+    @keyframes reveal-rise {
+      from {
+        opacity: 0;
+        transform: translateY(28px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+/* Rating bars grow from zero */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-fill-bar {
+    animation: fill-bar 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes fill-bar {
+    from {
+      width: 0%;
+    }
+  }
+}
+
+/* Honour the user's setting, always. This wins over everything above. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   6. PROSE SYSTEMS
+   Three of them, because the same CSS cannot serve a legal page and a
+   magazine article.
+   ========================================================================== */
+
+/* 6.1 Vendor descriptions on profile pages */
+.prose-content {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--foreground);
+}
+.prose-content > * + * {
+  margin-top: 1.15em;
+}
+.prose-content h2 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-top: 2em;
+}
+.prose-content h3 {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 1.6em;
+}
+.prose-content a {
+  color: var(--brand-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+}
+.prose-content a:hover {
+  text-decoration-thickness: 2.5px;
+}
+.prose-content ul {
+  list-style: disc;
+  padding-left: 1.35rem;
+}
+.prose-content ol {
+  list-style: decimal;
+  padding-left: 1.35rem;
+}
+.prose-content li + li {
+  margin-top: 0.4em;
+}
+.prose-content blockquote {
+  border-left: 3px solid var(--brand);
+  padding-left: 1.1rem;
+  color: var(--muted-foreground);
+  font-style: normal;
+}
+.prose-content strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* 6.2 Policy pages */
+.legal-content {
+  font-size: 0.975rem;
+  line-height: 1.8;
+  color: var(--foreground);
+}
+.legal-content > * + * {
+  margin-top: 1.1em;
+}
+.legal-content h2 {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin-top: 2.2em;
+  scroll-margin-top: 6rem;
+}
+.legal-content h3 {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1.6em;
+}
+.legal-content a {
+  color: var(--brand-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.legal-content ul {
+  list-style: none;
+  padding-left: 0;
+}
+.legal-content ul > li {
+  position: relative;
+  padding-left: 1.4rem;
+}
+.legal-content ul > li + li {
+  margin-top: 0.5em;
+}
+.legal-content ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.65em;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  background: var(--brand);
+}
+.legal-content ol {
+  list-style: decimal;
+  padding-left: 1.35rem;
+}
+.legal-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.legal-content th,
+.legal-content td {
+  border: 1px dashed var(--border);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+.legal-content th {
+  font-weight: 600;
+  background: var(--muted);
+}
+
+/* 6.3 Blog posts */
+.article-content {
+  font-size: 1.075rem;
+  line-height: 1.85;
+  color: var(--foreground);
+}
+.article-content > * + * {
+  margin-top: 1.3em;
+}
+/* Oversized opening paragraph doubles as the standfirst */
+.article-content > p:first-of-type {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+.article-content h2 {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-top: 2em;
+  scroll-margin-top: 6rem;
+  text-wrap: balance;
+}
+.article-content h3 {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-top: 1.7em;
+  text-wrap: balance;
+}
+.article-content a {
+  color: var(--brand-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+}
+.article-content ul {
+  list-style: none;
+  padding-left: 0;
+}
+.article-content ul > li {
+  position: relative;
+  padding-left: 1.6rem;
+}
+.article-content ul > li + li {
+  margin-top: 0.55em;
+}
+/* Lime diamonds, a rotated square */
+.article-content ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0.15rem;
+  top: 0.72em;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--brand);
+  transform: rotate(45deg);
+}
+.article-content ol {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: article-counter;
+}
+.article-content ol > li {
+  position: relative;
+  padding-left: 2.4rem;
+  counter-increment: article-counter;
+}
+.article-content ol > li + li {
+  margin-top: 0.7em;
+}
+/* Lime circle counters */
+.article-content ol > li::before {
+  content: counter(article-counter);
+  position: absolute;
+  left: 0;
+  top: 0.3em;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 9999px;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.article-content blockquote {
+  background: var(--muted);
+  border-radius: 1.25rem 1.25rem 1.25rem 0.35rem;
+  padding: 1.25rem 1.5rem;
+  color: var(--foreground);
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  line-height: 1.55;
+}
+.article-content img {
+  border-radius: 1.25rem;
+}
+.article-content figcaption {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  margin-top: 0.6rem;
+}
