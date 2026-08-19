@@ -4,7 +4,10 @@ import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
 function Toaster(props: ToasterProps) {
-  const { theme = "system" } = useTheme();
+  // Defaults to light, not "system": with enableSystem off in the root layout
+  // "system" is no longer one of next-themes' themes, and handing it to Sonner
+  // would have it read the OS directly and draw dark toasts over a light page.
+  const { theme = "light" } = useTheme();
 
   return (
     <Sonner

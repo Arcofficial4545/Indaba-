@@ -92,11 +92,18 @@ export const metadata: Metadata = {
   },
 };
 
+/*
+  A single light value rather than a prefers-color-scheme pair. The pair was
+  correct while the OS drove the theme; it no longer does, so keying the
+  browser chrome off that media query would paint a dark-OS visitor's chrome
+  #0c0e14 above a light page. Light is the default and the only theme a
+  first-time visitor can land on, so that is what the chrome matches. A
+  visitor who toggles to dark keeps light chrome, which is a cosmetic
+  mismatch on the address bar only, and the honest trade for not shipping a
+  client effect to rewrite a meta tag.
+*/
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c0e14" },
-  ],
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -113,10 +120,34 @@ export default function RootLayout({
         suppressHydrationWarning
         className="flex min-h-full flex-col bg-background text-foreground"
       >
+        {/*
+          Runs before next-themes' own pre-paint script, which sits at the
+          position of <ThemeProvider> below.
+
+          next-themes only sanitises the stored theme when enableSystem is on:
+          its script computes `enableSystem && stored === "system" ? os
+          : stored` and applies the result verbatim. With enableSystem off, a
+          "system" left in storage from when this site ran defaultTheme=
+          "system" is written to <html> as class="system". That paints light by
+          accident, because .dark is simply absent, but useTheme() then reports
+          resolvedTheme as the OS theme, so the toggle would offer "Switch to
+          light theme" on a page already light, and Sonner would draw dark
+          toasts. Discarding anything that is not light or dark lets the read
+          fall through to defaultTheme. A real light or dark choice is left
+          untouched, so it still persists.
+
+          "theme" is next-themes' default storageKey, which is left unset
+          below, and is the same key scripts/shoot.ts writes.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark")localStorage.removeItem("theme")}catch(e){}`,
+          }}
+        />
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <a
