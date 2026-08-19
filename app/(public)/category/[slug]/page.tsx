@@ -10,7 +10,7 @@ import { formatNumber } from "@/lib/format";
 import { getCategoryIntro } from "@/lib/content/categoryIntros";
 import { getCategories, getCategoryBySlug } from "@/lib/queries/categories";
 import { getSoftwareByCategory } from "@/lib/queries/software";
-import { SITE_URL } from "@/lib/site";
+import { ogImageUrl, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;
 
@@ -26,12 +26,32 @@ export async function generateMetadata(
   const category = await getCategoryBySlug(slug);
   if (!category) return { title: "Not found" };
 
+  const title = `Best ${category.name.toLowerCase()} in South Africa`;
+  const description =
+    category.description ??
+    `Independent reviews and comparisons of ${category.name.toLowerCase()} for South African businesses, with prices in rand.`;
+
   return {
-    title: `Best ${category.name.toLowerCase()} in South Africa`,
-    description:
-      category.description ??
-      `Independent reviews and comparisons of ${category.name.toLowerCase()} for South African businesses, with prices in rand.`,
+    title,
+    description,
     alternates: { canonical: `${SITE_URL}/category/${category.slug}` },
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/category/${category.slug}`,
+      images: [
+        {
+          url: ogImageUrl({
+            title: category.name,
+            eyebrow: "Category",
+            subtitle: description,
+          }),
+          width: 1200,
+          height: 630,
+          alt: `${category.name} on ${SITE_NAME}`,
+        },
+      ],
+    },
   };
 }
 

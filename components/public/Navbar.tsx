@@ -3,17 +3,33 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MenuIcon, SearchIcon, XIcon } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { BrandLogo } from "@/components/public/BrandLogo";
 import { GlossyButton } from "@/components/public/GlossyButton";
-import { SearchDialog, type SearchIndexItem } from "@/components/public/SearchDialog";
+import {
+  SearchDialog,
+  type SearchIndexItem,
+} from "@/components/public/SearchDialog";
 import { ThemeToggle } from "@/components/public/ThemeToggle";
 import { MAIN_NAV } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-/** Scroll past this and the capsule gains its frosted background. */
-const FROST_AT = 8;
+/*
+  The capsule engages at one threshold and releases at a lower one. A single
+  threshold means a reader resting a trackpad near the boundary can flip the
+  bar between bare and glass several times a second, and the transition is
+  320ms, so it never even completes. The gap between the two is the hysteresis
+  that makes that impossible.
+*/
+const FROST_ENGAGE = 12;
+const FROST_RELEASE = 4;
 /** Only start hiding the bar once the reader is genuinely into the page. */
 const HIDE_AFTER = 120;
 
@@ -33,8 +49,17 @@ export function Navbar({ searchIndex }: { searchIndex: SearchIndexItem[] }) {
   const toggleMenu = () => setMenuPath(menuOpen ? null : pathname);
 
   const lastScroll = useRef(0);
+  /*
+    The listener reads the current state from a ref rather than from the
+    closure. Registered once with an empty dependency list, a closure over
+    `frosted` would be permanently stale and the release threshold would never
+    fire.
+  */
+  const frostedRef = useRef(false);
   const navRef = useRef<HTMLDivElement>(null);
-  const [pill, setPill] = useState<{ left: number; width: number } | null>(null);
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(
+    null,
+  );
 
   /* ---------------------------------------------------------------------- */
   /* Scroll behaviour                                                        */
@@ -48,7 +73,14 @@ export function Navbar({ searchIndex }: { searchIndex: SearchIndexItem[] }) {
       frame = window.requestAnimationFrame(() => {
         frame = 0;
         const y = window.scrollY;
-        setFrosted(y > FROST_AT);
+
+        if (!frostedRef.current && y > FROST_ENGAGE) {
+          frostedRef.current = true;
+          setFrosted(true);
+        } else if (frostedRef.current && y < FROST_RELEASE) {
+          frostedRef.current = false;
+          setFrosted(false);
+        }
 
         const goingDown = y > lastScroll.current;
         // A few pixels of jitter should not flip the bar back and forth.
@@ -129,123 +161,133 @@ export function Navbar({ searchIndex }: { searchIndex: SearchIndexItem[] }) {
 
   return (
     <>
+      {/*
+        The state lives on the header and every part of the bar reads it from
+        there, so one attribute drives the whole gesture and the pieces cannot
+        disagree about which state they are in mid transition.
+      */}
       <header
+        data-nav-frosted={frosted ? "true" : "false"}
         className={cn(
           "sticky top-0 z-50 pt-3 transition-transform duration-300 ease-out sm:pt-4",
           hidden && "-translate-y-[130%]",
         )}
       >
         <div className="container-site">
-          <div
-            className={cn(
-              "flex h-16 items-center gap-3 rounded-full border px-3 transition-all duration-300 sm:px-4",
-              frosted
-                ? "border-border/70 bg-background/85 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur-xl"
-                : "border-transparent bg-transparent",
-            )}
-          >
-            <BrandLogo className="mr-1" />
+          {/*
+            The shell owns the contraction: its horizontal padding is what
+            pulls the capsule in from the container's edges. Horizontal only,
+            so the header's height never changes and the hero below it cannot
+            be pushed.
+          */}
+          <div className="nav-shell">
+            <div className="nav-capsule h-16 items-center gap-2 sm:gap-3">
+              <BrandLogo className="mr-1" />
 
-            {/* Desktop navigation with the sliding pill behind the active link */}
-            <nav
-              ref={navRef}
-              aria-label="Main"
-              className="relative hidden items-center gap-1 lg:flex"
-            >
-              {pill && (
-                <span
-                  aria-hidden="true"
-                  className="absolute top-1/2 h-9 -translate-y-1/2 rounded-full bg-muted transition-all duration-300 ease-out"
-                  style={{ left: pill.left, width: pill.width }}
-                />
-              )}
-              {MAIN_NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  data-active={isActive(item.href)}
-                  aria-current={isActive(item.href) ? "page" : undefined}
-                  className={cn(
-                    "relative z-10 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                    "focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:outline-none",
-                    isActive(item.href)
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setSearchOpen(true)}
-                aria-label="Search software and guides"
-                className="inline-grid size-10 place-items-center rounded-xl border border-border/70 text-foreground/70 transition-colors hover:bg-[var(--color-brand)] hover:text-[var(--color-brand-ink)] focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:outline-none"
+              {/* Desktop navigation with the sliding pill behind the active link */}
+              <nav
+                ref={navRef}
+                aria-label="Main"
+                className="relative hidden items-center gap-1 lg:flex"
               >
-                <SearchIcon className="size-4" aria-hidden="true" />
-              </button>
-
-              <GlossyButton
-                href="/contact?intent=listing"
-                size="sm"
-                className="hidden md:inline-flex"
-              >
-                List your software
-              </GlossyButton>
-
-              <ThemeToggle />
-
-              <button
-                type="button"
-                onClick={toggleMenu}
-                aria-label={menuOpen ? "Close menu" : "Open menu"}
-                aria-expanded={menuOpen}
-                className="inline-grid size-10 place-items-center rounded-xl border border-border/70 text-foreground/70 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:outline-none lg:hidden"
-              >
-                {menuOpen ? (
-                  <XIcon className="size-4" aria-hidden="true" />
-                ) : (
-                  <MenuIcon className="size-4" aria-hidden="true" />
+                {pill && (
+                  <span
+                    aria-hidden="true"
+                    className="nav-pill"
+                    style={{ left: pill.left, width: pill.width }}
+                  />
                 )}
-              </button>
-            </div>
-          </div>
-
-          {/* A floating card under the capsule, not a full screen takeover */}
-          {menuOpen && (
-            <div className="anim-pop mt-2 rounded-3xl border border-border bg-background/95 p-2 shadow-xl backdrop-blur-xl lg:hidden" data-state="open">
-              <nav aria-label="Mobile" className="flex flex-col">
                 {MAIN_NAV.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={closeMenu}
+                    data-active={isActive(item.href)}
                     aria-current={isActive(item.href) ? "page" : undefined}
                     className={cn(
-                      "rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
+                      "relative z-10 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                      "focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:outline-none",
                       isActive(item.href)
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     {item.label}
                   </Link>
                 ))}
               </nav>
-              <div className="p-2 pt-3">
+
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  aria-label="Search software and guides"
+                  className="nav-control inline-grid size-10 place-items-center text-foreground/75 hover:text-foreground focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:outline-none"
+                >
+                  <SearchIcon className="size-4" aria-hidden="true" />
+                </button>
+
                 <GlossyButton
                   href="/contact?intent=listing"
-                  className="w-full"
-                  size="md"
+                  size="sm"
+                  className="hidden h-10 rounded-full px-5 md:inline-flex"
                 >
                   List your software
                 </GlossyButton>
+
+                <ThemeToggle />
+
+                <button
+                  type="button"
+                  onClick={toggleMenu}
+                  aria-label={menuOpen ? "Close menu" : "Open menu"}
+                  aria-expanded={menuOpen}
+                  className="nav-control inline-grid size-10 place-items-center text-foreground/75 hover:text-foreground focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:outline-none lg:hidden"
+                >
+                  {menuOpen ? (
+                    <XIcon className="size-4" aria-hidden="true" />
+                  ) : (
+                    <MenuIcon className="size-4" aria-hidden="true" />
+                  )}
+                </button>
               </div>
             </div>
-          )}
+
+            {/* A floating card under the capsule, not a full screen takeover */}
+            {menuOpen && (
+              <div
+                className="nav-sheet anim-pop mt-2 p-2 lg:hidden"
+                data-state="open"
+              >
+                <nav aria-label="Mobile" className="flex flex-col">
+                  {MAIN_NAV.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={closeMenu}
+                      aria-current={isActive(item.href) ? "page" : undefined}
+                      className={cn(
+                        "rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
+                        isActive(item.href)
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+                <div className="p-2 pt-3">
+                  <GlossyButton
+                    href="/contact?intent=listing"
+                    className="w-full"
+                    size="md"
+                  >
+                    List your software
+                  </GlossyButton>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

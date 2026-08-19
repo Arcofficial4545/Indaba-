@@ -212,6 +212,16 @@ export interface PriceHistoryEntry {
   recorded_at: string;
 }
 
+/** A "best for" term: a business size, a role or an industry. */
+export interface TaxonomyTerm {
+  id: string;
+  kind: "business_size" | "role" | "industry";
+  name: string;
+  slug: string;
+  description: string | null;
+  display_order: number;
+}
+
 /** The five dimensions every rating is broken down by. */
 export const RATING_DIMENSIONS = [
   { key: "ease_of_use", label: "Ease of use" },

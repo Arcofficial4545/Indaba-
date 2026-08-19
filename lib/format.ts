@@ -19,11 +19,28 @@ import {
  * page look like a spreadsheet export.
  */
 
+/*
+  en-ZA groups thousands with U+00A0, a no-break space. The grouping is right
+  and stays: it is the South African convention and a comma would be wrong.
+  The character is the problem. A no-break space carries a full word space of
+  advance, so at display sizes "6 196" stops reading as one figure and starts
+  reading as a 6 followed by a 196.
+
+  U+202F, the narrow no-break space, is the same thing typographically at about
+  a third of the width. Still a space, still non-breaking, so the number can
+  never wrap across the gap; just no longer wide enough to split the figure in
+  two. Applied here rather than at the one call site, so a price and a count
+  group the same way.
+*/
+const NARROW_NO_BREAK_SPACE = "\u202F";
+
 function groupDigits(amount: number, fractionDigits: number): string {
   return new Intl.NumberFormat(SITE_LOCALE, {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
-  }).format(amount);
+  })
+    .format(amount)
+    .replaceAll("\u00A0", NARROW_NO_BREAK_SPACE);
 }
 
 /** `R1 375`, or `US$49`. The symbol is prefixed with no space. */

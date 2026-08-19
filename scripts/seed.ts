@@ -12,6 +12,7 @@
 
 import { CATALOGUE, catalogueStats } from "../lib/content/catalogue";
 import { PRICING, resolvePrice } from "../lib/content/pricing";
+import { TAXONOMY_TERMS } from "../lib/content/taxonomy";
 import { done, fail, getServiceClient, step } from "./lib/client";
 
 const CATEGORIES = [
@@ -23,40 +24,18 @@ const CATEGORIES = [
   { name: "Project Management", slug: "project-management", icon: "kanban", display_order: 6, description: "Task boards, timelines and resource planning for agencies, consultancies and internal teams." },
 ];
 
-const TAXONOMY = [
-  { kind: "business_size", name: "Sole traders", slug: "sole-trader" },
-  { kind: "business_size", name: "Small businesses", slug: "small-business" },
-  { kind: "business_size", name: "Growing businesses", slug: "growing-business" },
-  { kind: "business_size", name: "Medium businesses", slug: "medium-business" },
-  { kind: "business_size", name: "Large businesses", slug: "large-business" },
-  { kind: "business_size", name: "Enterprises", slug: "enterprise" },
-  { kind: "business_size", name: "Startups", slug: "startups" },
-  { kind: "role", name: "Accountants in practice", slug: "accountants" },
-  { kind: "role", name: "Sales teams", slug: "sales-teams" },
-  { kind: "role", name: "Consultants", slug: "consultants" },
-  { kind: "role", name: "Agencies", slug: "agencies" },
-  { kind: "industry", name: "Manufacturing", slug: "manufacturing" },
-  { kind: "industry", name: "Distribution", slug: "distribution" },
-  { kind: "industry", name: "Retail", slug: "retail" },
-  { kind: "industry", name: "Print and signage", slug: "print" },
-  { kind: "industry", name: "Stock heavy businesses", slug: "stock-heavy" },
-  { kind: "industry", name: "Telesales", slug: "telesales" },
-  { kind: "industry", name: "Multinationals", slug: "multinational" },
-  { kind: "role", name: "VAT registered businesses", slug: "vat-registered" },
-  { kind: "role", name: "Exporters", slug: "exporters" },
-  { kind: "role", name: "Zoho users", slug: "zoho-users" },
-  { kind: "role", name: "Microsoft shops", slug: "microsoft-shops" },
-  { kind: "role", name: "Cost conscious buyers", slug: "cost-conscious" },
-  { kind: "role", name: "Complex payroll", slug: "complex-payroll" },
-  { kind: "role", name: "Simple payroll", slug: "simple-payroll" },
-  { kind: "role", name: "Compliance heavy", slug: "compliance-heavy" },
-  { kind: "role", name: "Complex sales processes", slug: "complex-sales" },
-  { kind: "role", name: "Marketing led businesses", slug: "marketing-led" },
-  { kind: "role", name: "People focused teams", slug: "people-focused" },
-  { kind: "role", name: "Outsourcing payroll", slug: "outsourcing" },
-  { kind: "role", name: "Established businesses", slug: "established-business" },
-  { kind: "role", name: "Unreliable connectivity", slug: "unreliable-connectivity" },
-];
+/*
+  The terms themselves live in lib/content/taxonomy.ts so that the seed, the
+  fallback data and the /best landing pages all read from one list. `phrase` is
+  a presentation concern and has no column, so it is dropped here.
+*/
+const TAXONOMY = TAXONOMY_TERMS.map((term, index) => ({
+  kind: term.kind,
+  name: term.name,
+  slug: term.slug,
+  description: term.description,
+  display_order: index + 1,
+}));
 
 async function main() {
   const supabase = getServiceClient();

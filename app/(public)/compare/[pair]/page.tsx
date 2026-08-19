@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/public/Breadcrumbs";
 import { CompareDashboard } from "@/components/public/CompareDashboard";
+import { CompareStickyBar } from "@/components/public/CompareStickyBar";
 import { AffiliateDisclosureNote } from "@/components/public/AffiliateDisclosureNote";
 import { formatRating } from "@/lib/format";
 import { getComparisonPair } from "@/lib/queries/comparisons";
@@ -52,7 +53,7 @@ export default async function ComparePairPage(
   const other = leader ? (leader.id === a.id ? b : a) : null;
 
   return (
-    <div className="container-site flex flex-col gap-12 py-8">
+    <div className="container-site flex flex-col gap-12 py-8 pb-32 lg:pb-8">
       <Breadcrumbs
         items={[
           { label: "Compare", href: "/compare" },
@@ -112,6 +113,8 @@ export default async function ComparePairPage(
 
         <AffiliateDisclosureNote className="mt-8 text-white/45" />
       </section>
+
+      <CompareStickyBar a={a} b={b} />
     </div>
   );
 }

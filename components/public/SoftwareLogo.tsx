@@ -6,10 +6,9 @@ import { cn } from "@/lib/utils";
 /**
  * The product logo.
  *
- * Vendor marks sit on a white plate in both themes. That is deliberate: a
- * number of these marks are dark green or navy wordmarks that would disappear
- * against a dark card, and a consistent plate also stops a grid of nineteen
- * logos looking like a ransom note.
+ * Vendor marks render as bare art: no plate, no border, no shadow. The tile
+ * only reserves space and centres the mark, so what shows is the logo's own
+ * transparent artwork sitting directly on whatever card is behind it.
  *
  * Falls back to the initials mark when a product has no brand mapping yet,
  * which is the normal state for a newly added listing.
@@ -43,15 +42,17 @@ export function SoftwareLogo({
     .map((word) => word[0]?.toUpperCase())
     .join("");
 
-  const base = cn(
-    "inline-grid shrink-0 place-items-center overflow-hidden rounded-2xl",
-    className,
-  );
+  const base = cn("inline-grid shrink-0 place-items-center", className);
 
   if (!src) {
+    /*
+      The initials chip keeps its tint and outline. It is not a container
+      behind a mark, it is the mark, and bare letters floating in a card would
+      not read as a logo at all.
+    */
     return (
       <span
-        className={cn(base, "border bg-card")}
+        className={cn(base, "overflow-hidden rounded-2xl border bg-card")}
         style={{
           width: size,
           height: size,
@@ -77,10 +78,7 @@ export function SoftwareLogo({
     : Math.round(size * 0.18);
 
   return (
-    <span
-      className={cn(base, "border border-zinc-200/80 bg-white dark:border-zinc-700/60")}
-      style={{ width: size, height: size, padding }}
-    >
+    <span className={base} style={{ width: size, height: size, padding }}>
       {/*
         A plain img rather than next/image: these are static assets of well
         under a kilobyte each, so the optimiser has nothing to gain, and it

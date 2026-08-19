@@ -28,8 +28,8 @@ export function ThemeToggle({ className }: { className?: string }) {
   const isDark = resolvedTheme === "dark";
 
   const classes = cn(
-    "inline-grid size-10 place-items-center rounded-xl border border-border/70 text-foreground/70 transition-colors",
-    "hover:bg-[var(--color-brand)] hover:text-[var(--color-brand-ink)]",
+    "nav-control inline-grid size-10 place-items-center text-foreground/75",
+    "hover:text-foreground",
     "focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:outline-none",
     className,
   );

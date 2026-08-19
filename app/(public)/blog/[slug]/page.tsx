@@ -7,7 +7,7 @@ import { NewsletterSection } from "@/components/public/NewsletterSection";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDate, formatReadTime } from "@/lib/format";
 import { getArticleBySlug, getLatestArticles } from "@/lib/queries/articles";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { ogImageUrl, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;
 
@@ -34,6 +34,18 @@ export async function generateMetadata(
       url: `${SITE_URL}/blog/${article.slug}`,
       publishedTime: article.published_date,
       authors: [article.author_name],
+      images: [
+        {
+          url: ogImageUrl({
+            title: article.title,
+            eyebrow: "Buying guide",
+            subtitle: article.excerpt,
+          }),
+          width: 1200,
+          height: 630,
+          alt: `${article.title} on ${SITE_NAME}`,
+        },
+      ],
     },
   };
 }

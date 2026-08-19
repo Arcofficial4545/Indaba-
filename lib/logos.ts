@@ -12,7 +12,7 @@
  * it came from in `public/logos/manifest.json`.
  */
 
-export type LogoSourceKind = "simple-icons" | "direct";
+export type LogoSourceKind = "simple-icons" | "direct" | "domain";
 
 export type BrandLogoSource = {
   /** Display name of the brand that owns the mark. */
@@ -20,7 +20,8 @@ export type BrandLogoSource = {
   kind: LogoSourceKind;
   /**
    * For simple-icons this is the icon slug. For direct it is the full URL of
-   * the vendor's own asset.
+   * the vendor's own asset. For domain it is the vendor's bare hostname, and
+   * the mark is resolved from that one host by the icon service.
    */
   source: string;
   /** Official brand colour, used to paint monochrome marks. */
@@ -193,14 +194,123 @@ export const BRAND_LOGOS: Record<string, BrandLogoSource> = {
     shape: "wordmark",
     note: "SYSPRO own CDN, vector wordmark",
   },
+
+  /*
+     Brands Simple Icons dropped or never carried. Rather than hunting a
+     bespoke asset URL per vendor, which rots the moment a marketing site is
+     rebuilt, these resolve from the hostname already recorded against the
+     product in the catalogue. One source, one shape of failure.
+  */
+  freshbooks: {
+    brand: "FreshBooks",
+    kind: "domain",
+    source: "freshbooks.com",
+    hex: "#0075dd",
+    shape: "mark",
+    note: "Resolved from the vendor's own domain, freshbooks.com",
+  },
+  omniaccounts: {
+    brand: "Omni Accounts",
+    kind: "domain",
+    source: "omniaccounts.co.za",
+    hex: "#e87722",
+    shape: "mark",
+    note: "Resolved from the vendor's own domain, omniaccounts.co.za",
+  },
+  quickeasy: {
+    brand: "QuickEasy",
+    kind: "domain",
+    source: "quickeasy.co.za",
+    hex: "#004b8d",
+    shape: "mark",
+    note: "Resolved from the vendor's own domain, quickeasy.co.za",
+  },
+  /*
+     The domain lookup returns PaySoft's favicon, which is flattened onto an
+     opaque white square and so reads as a box on a card. Their own vector
+     wordmark is the same art with a real alpha channel.
+  */
+  paysoft: {
+    brand: "PaySoft",
+    kind: "direct",
+    source:
+      "https://paysoft.co.za/wp-content/uploads/2026/03/paysoft-logo-primary-WebRGB.svg",
+    hex: "#002a77",
+    shape: "wordmark",
+    note: "PaySoft own site, vector wordmark",
+  },
+  labournet: {
+    brand: "LabourNet",
+    kind: "domain",
+    source: "labournet.com",
+    hex: "#005eb8",
+    shape: "mark",
+    note: "Resolved from the vendor's own domain, labournet.com",
+  },
+  peoplehr: {
+    brand: "People HR",
+    kind: "domain",
+    source: "peoplehr.com",
+    hex: "#5a2d82",
+    shape: "mark",
+    note: "Resolved from the vendor's own domain, peoplehr.com",
+  },
+  workday: {
+    brand: "Workday",
+    kind: "domain",
+    source: "workday.com",
+    hex: "#0875e1",
+    shape: "mark",
+    note: "Resolved from the vendor's own domain, workday.com",
+  },
+  pipedrive: {
+    brand: "Pipedrive",
+    kind: "domain",
+    source: "pipedrive.com",
+    hex: "#017737",
+    shape: "mark",
+    note: "Resolved from the vendor's own domain, pipedrive.com",
+  },
+  freshworks: {
+    brand: "Freshworks",
+    kind: "domain",
+    source: "freshworks.com",
+    hex: "#ff6600",
+    shape: "mark",
+    note: "Resolved from the vendor's own domain, freshworks.com",
+  },
+  insightly: {
+    brand: "Insightly",
+    kind: "domain",
+    source: "insightly.com",
+    hex: "#fdb913",
+    shape: "mark",
+    note: "Resolved from the vendor's own domain, insightly.com",
+  },
+  microsoftdynamics: {
+    brand: "Microsoft Dynamics 365",
+    kind: "domain",
+    source: "microsoft.com",
+    hex: "#002050",
+    shape: "mark",
+    note: "Resolved from the vendor's own domain, microsoft.com",
+  },
+  wrike: {
+    brand: "Wrike",
+    kind: "domain",
+    source: "wrike.com",
+    hex: "#08cf65",
+    shape: "mark",
+    note: "Resolved from the vendor's own domain, wrike.com",
+  },
 };
 
 /**
  * Product slug to brand key.
  *
- * Products with no entry fall back to the brand coloured initials mark, which
- * is the normal state for the smaller South African vendors who publish no
- * usable vector asset.
+ * Every catalogue product currently maps to a mark. Anything added without an
+ * entry here falls back to the brand coloured initials mark, which is the
+ * normal state for a listing on the day it is created.
  */
 export const BRAND_BY_SLUG: Record<string, string> = {
   // Sage, one mark across the whole local range
@@ -235,6 +345,26 @@ export const BRAND_BY_SLUG: Record<string, string> = {
   asana: "asana",
   trello: "trello",
   clickup: "clickup",
+  freshbooks: "freshbooks",
+  "omni-accounts": "omniaccounts",
+  "quickeasy-bos": "quickeasy",
+  paysoft: "paysoft",
+  /*
+     Deliberately unmapped. paymaster.co.za now redirects to hrmaster.co.za,
+     so the only mark the domain resolves is an HR Master wordmark, and
+     putting that above a heading reading Paymaster would misbrand the
+     listing. The initials mark holds the space until the catalogue entry is
+     updated to whatever the product is actually called now.
+  */
+  "labournet-payroll": "labournet",
+  peoplehr: "peoplehr",
+  "workday-hcm": "workday",
+  pipedrive: "pipedrive",
+  // Freshsales is a Freshworks product and carries the Freshworks mark.
+  freshsales: "freshworks",
+  insightly: "insightly",
+  "dynamics-365-business-central": "microsoftdynamics",
+  wrike: "wrike",
 };
 
 export function getBrandKey(slug: string): string | null {

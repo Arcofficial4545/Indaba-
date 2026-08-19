@@ -43,6 +43,28 @@
     "note": "Simple Icons, official brand glyph",
     "fetchedAt": "2026-08-18T00:04:34.301Z"
   },
+  "freshbooks": {
+    "brand": "FreshBooks",
+    "file": "/logos/freshbooks.png",
+    "shape": "mark",
+    "hex": "#0075dd",
+    "width": 96,
+    "height": 96,
+    "sourceUrl": "https://www.google.com/s2/favicons?domain=freshbooks.com&sz=256",
+    "note": "Resolved from the vendor's own domain, freshbooks.com",
+    "fetchedAt": "2026-08-18T03:18:56.388Z"
+  },
+  "freshworks": {
+    "brand": "Freshworks",
+    "file": "/logos/freshworks.png",
+    "shape": "mark",
+    "hex": "#ff6600",
+    "width": 180,
+    "height": 180,
+    "sourceUrl": "https://www.google.com/s2/favicons?domain=freshworks.com&sz=256",
+    "note": "Resolved from the vendor's own domain, freshworks.com",
+    "fetchedAt": "2026-08-18T03:18:57.711Z"
+  },
   "hubspot": {
     "brand": "HubSpot",
     "file": "/logos/hubspot.svg",
@@ -53,6 +75,39 @@
     "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/hubspot.svg",
     "note": "Simple Icons, official brand glyph",
     "fetchedAt": "2026-08-17T22:38:52.232Z"
+  },
+  "insightly": {
+    "brand": "Insightly",
+    "file": "/logos/insightly.png",
+    "shape": "mark",
+    "hex": "#fdb913",
+    "width": 192,
+    "height": 192,
+    "sourceUrl": "https://www.google.com/s2/favicons?domain=insightly.com&sz=256",
+    "note": "Resolved from the vendor's own domain, insightly.com",
+    "fetchedAt": "2026-08-18T03:18:57.786Z"
+  },
+  "labournet": {
+    "brand": "LabourNet",
+    "file": "/logos/labournet.png",
+    "shape": "mark",
+    "hex": "#005eb8",
+    "width": 192,
+    "height": 192,
+    "sourceUrl": "https://www.google.com/s2/favicons?domain=labournet.com&sz=256",
+    "note": "Resolved from the vendor's own domain, labournet.com",
+    "fetchedAt": "2026-08-18T03:18:57.359Z"
+  },
+  "microsoftdynamics": {
+    "brand": "Microsoft Dynamics 365",
+    "file": "/logos/microsoftdynamics.png",
+    "shape": "mark",
+    "hex": "#002050",
+    "width": 128,
+    "height": 128,
+    "sourceUrl": "https://www.google.com/s2/favicons?domain=microsoft.com&sz=256",
+    "note": "Resolved from the vendor's own domain, microsoft.com",
+    "fetchedAt": "2026-08-18T03:18:57.860Z"
   },
   "monday": {
     "brand": "monday.com",
@@ -76,6 +131,28 @@
     "note": "Simple Icons, official brand glyph",
     "fetchedAt": "2026-08-17T22:38:52.920Z"
   },
+  "omniaccounts": {
+    "brand": "Omni Accounts",
+    "file": "/logos/omniaccounts.png",
+    "shape": "mark",
+    "hex": "#e87722",
+    "width": 192,
+    "height": 192,
+    "sourceUrl": "https://www.google.com/s2/favicons?domain=omniaccounts.co.za&sz=256",
+    "note": "Resolved from the vendor's own domain, omniaccounts.co.za",
+    "fetchedAt": "2026-08-18T03:18:56.679Z"
+  },
+  "paysoft": {
+    "brand": "PaySoft",
+    "file": "/logos/paysoft.svg",
+    "shape": "wordmark",
+    "hex": "#002a77",
+    "width": 634.7,
+    "height": 259.3,
+    "sourceUrl": "https://paysoft.co.za/wp-content/uploads/2026/03/paysoft-logo-primary-WebRGB.svg",
+    "note": "PaySoft own site, vector wordmark",
+    "fetchedAt": "2026-08-18T03:21:22.045Z"
+  },
   "payspace": {
     "brand": "PaySpace",
     "file": "/logos/payspace.svg",
@@ -87,6 +164,28 @@
     "note": "PaySpace own site, vector wordmark",
     "fetchedAt": "2026-08-17T22:38:57.122Z"
   },
+  "peoplehr": {
+    "brand": "People HR",
+    "file": "/logos/peoplehr.png",
+    "shape": "mark",
+    "hex": "#5a2d82",
+    "width": 196,
+    "height": 196,
+    "sourceUrl": "https://www.google.com/s2/favicons?domain=peoplehr.com&sz=256",
+    "note": "Resolved from the vendor's own domain, peoplehr.com",
+    "fetchedAt": "2026-08-18T03:18:57.450Z"
+  },
+  "pipedrive": {
+    "brand": "Pipedrive",
+    "file": "/logos/pipedrive.png",
+    "shape": "mark",
+    "hex": "#017737",
+    "width": 144,
+    "height": 144,
+    "sourceUrl": "https://www.google.com/s2/favicons?domain=pipedrive.com&sz=256",
+    "note": "Resolved from the vendor's own domain, pipedrive.com",
+    "fetchedAt": "2026-08-18T03:18:57.603Z"
+  },
   "quickbooks": {
     "brand": "QuickBooks",
     "file": "/logos/quickbooks.svg",
@@ -97,6 +196,17 @@
     "sourceUrl": "https://cdn.jsdelivr.net/npm/simple-icons@16.28.0/icons/quickbooks.svg",
     "note": "Simple Icons, official brand glyph",
     "fetchedAt": "2026-08-17T22:38:50.381Z"
+  },
+  "quickeasy": {
+    "brand": "QuickEasy",
+    "file": "/logos/quickeasy.png",
+    "shape": "mark",
+    "hex": "#004b8d",
+    "width": 50,
+    "height": 61,
+    "sourceUrl": "https://www.google.com/s2/favicons?domain=quickeasy.co.za&sz=256",
+    "note": "Resolved from the vendor's own domain, quickeasy.co.za",
+    "fetchedAt": "2026-08-18T03:18:56.943Z"
   },
   "sage": {
     "brand": "Sage",
@@ -174,6 +284,28 @@
     "sourceUrl": "https://cdn.prod.website-files.com/62446230dcb514b828a6e237/677ed61188695f2316217fc5_Wave-2_0-logo-fullcolour-rgb.svg",
     "note": "Wave own CDN, full colour vector",
     "fetchedAt": "2026-08-18T00:04:34.379Z"
+  },
+  "workday": {
+    "brand": "Workday",
+    "file": "/logos/workday.png",
+    "shape": "mark",
+    "hex": "#0875e1",
+    "width": 32,
+    "height": 32,
+    "sourceUrl": "https://www.google.com/s2/favicons?domain=workday.com&sz=256",
+    "note": "Resolved from the vendor's own domain, workday.com",
+    "fetchedAt": "2026-08-18T03:18:57.528Z"
+  },
+  "wrike": {
+    "brand": "Wrike",
+    "file": "/logos/wrike.png",
+    "shape": "mark",
+    "hex": "#08cf65",
+    "width": 48,
+    "height": 48,
+    "sourceUrl": "https://www.google.com/s2/favicons?domain=wrike.com&sz=256",
+    "note": "Resolved from the vendor's own domain, wrike.com",
+    "fetchedAt": "2026-08-18T03:18:57.933Z"
   },
   "xero": {
     "brand": "Xero",

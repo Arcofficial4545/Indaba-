@@ -49,7 +49,7 @@ export async function Footer() {
             </p>
           </div>
           <div className="w-full max-w-md">
-            <NewsletterForm tone="dark" />
+            <NewsletterForm tone="dark" source="footer" />
           </div>
         </div>
 

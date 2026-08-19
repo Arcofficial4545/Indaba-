@@ -4,10 +4,12 @@
  *   npm run logos            fetch anything missing
  *   npm run logos -- --force re fetch everything
  *
- * Two kinds of source:
+ * Three kinds of source:
  *   simple-icons  a monochrome vector glyph, painted in the official brand
  *                 colour on the way through
  *   direct        the vendor's own published asset, saved byte for byte
+ *   domain        resolved from the vendor's hostname through one icon
+ *                 service, for brands with no vector asset worth linking
  *
  * Every file gets an entry in public/logos/manifest.json recording where it
  * came from and when, so the provenance of each mark is auditable rather than
@@ -23,6 +25,13 @@ import { BRAND_LOGOS, type BrandLogoSource } from "../lib/logos";
 const OUT_DIR = path.join(process.cwd(), "public", "logos");
 const MANIFEST = path.join(OUT_DIR, "manifest.json");
 const SIMPLE_ICONS_VERSION = "16.28.0";
+/*
+  One host resolves every domain sourced mark. Requesting 256 gets the largest
+  icon a site publishes rather than the 16px favicon, which is the difference
+  between a usable mark and a smudge on the 84px profile header.
+*/
+const DOMAIN_ICON_ENDPOINT = (domain: string) =>
+  `https://www.google.com/s2/favicons?domain=${domain}&sz=256`;
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
@@ -98,9 +107,12 @@ async function fetchOne(
     };
   }
 
-  const buffer = await fetchBuffer(logo.source);
+  const url =
+    logo.kind === "domain" ? DOMAIN_ICON_ENDPOINT(logo.source) : logo.source;
+
+  const buffer = await fetchBuffer(url);
   const isSvg =
-    logo.source.endsWith(".svg") ||
+    url.endsWith(".svg") ||
     buffer.subarray(0, 200).toString("utf8").includes("<svg");
   const file = `${key}.${isSvg ? "svg" : "png"}`;
   await writeFile(path.join(OUT_DIR, file), buffer);
@@ -114,7 +126,7 @@ async function fetchOne(
     hex: logo.hex,
     width: size?.width ?? null,
     height: size?.height ?? null,
-    sourceUrl: logo.source,
+    sourceUrl: url,
     note: logo.note,
     fetchedAt: new Date().toISOString(),
   };

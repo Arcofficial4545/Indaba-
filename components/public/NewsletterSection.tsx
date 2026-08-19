@@ -57,7 +57,7 @@ export function NewsletterSection() {
         </div>
 
         <div className="lg:pl-8">
-          <NewsletterForm tone="dark" />
+          <NewsletterForm tone="dark" source="homepage" />
           <p className="mt-4 text-xs leading-relaxed text-white/40">
             By subscribing you agree to receive the monthly brief. We store your
             address and the time you consented, and nothing else.

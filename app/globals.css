@@ -90,6 +90,31 @@
   --sidebar-ring: #b6d43a;
 
   --radius: 0.5rem;
+
+  /*
+    Hero surface. The hero is the one full bleed band on the site, so it owns
+    its own canvas and ink rather than borrowing the page tokens. In light mode
+    the canvas is the page white, so there is no seam where the band ends.
+  */
+  --hero-canvas: #ffffff;
+  --hero-ink: #1b1f3b;
+  --hero-rule: rgba(27, 31, 59, 0.14);
+
+  /*
+    Glass. One material for the floating nav capsule and every small control
+    inside it: a translucent fill over a blur, a hairline of light along the
+    top edge where a real pane would catch it, and a soft shadow underneath.
+    The capsule and the controls differ only in how much of each they take.
+  */
+  --glass-fill: rgba(255, 255, 255, 0.58);
+  --glass-fill-strong: rgba(255, 255, 255, 0.82);
+  /* A well cut into a light pane reads as a control; a lighter chip on it
+     reads as nothing, so the light theme tints down rather than up. */
+  --glass-control: rgba(15, 23, 42, 0.05);
+  --glass-control-hover: rgba(15, 23, 42, 0.1);
+  --glass-edge: rgba(15, 23, 42, 0.1);
+  --glass-sheen: rgba(255, 255, 255, 0.9);
+  --glass-shadow: rgba(15, 23, 42, 0.34);
 }
 
 /*
@@ -135,6 +160,29 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #262a38;
   --sidebar-ring: #d9f65f;
+
+  /*
+    Ink navy, not the page near black. With nothing behind the illustration
+    this canvas is the whole dark surface, so it has to read as blue on its
+    own: enough chroma that the lime lands on navy rather than on black.
+  */
+  --hero-canvas: #131a30;
+  --hero-ink: #f4f4f5;
+  --hero-rule: rgba(255, 255, 255, 0.16);
+
+  /*
+    Dark glass is the hard one: raise the fill's alpha and it stops being
+    glass and becomes a grey box. So the fill stays low, the blur does the
+    work, and the top sheen plus a lighter edge are what make it read as a
+    pane with a lit rim rather than a panel.
+  */
+  --glass-fill: rgba(41, 52, 88, 0.42);
+  --glass-fill-strong: rgba(24, 31, 56, 0.72);
+  --glass-control: rgba(255, 255, 255, 0.07);
+  --glass-control-hover: rgba(255, 255, 255, 0.16);
+  --glass-edge: rgba(255, 255, 255, 0.13);
+  --glass-sheen: rgba(255, 255, 255, 0.16);
+  --glass-shadow: rgba(0, 0, 0, 0.6);
 }
 
 /* ==========================================================================
@@ -142,10 +190,31 @@
    ========================================================================== */
 
 @theme inline {
-  /* Fonts. Google Sans is the display face, Inter is the reading face. */
+  /* Fonts. Inter sets display and reading text, IBM Plex Mono the data. */
   --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-heading: var(--font-google-sans), var(--font-inter), sans-serif;
-  --font-mono: ui-monospace, monospace;
+  --font-heading: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
+
+  /*
+    The hero type scale. Each size carries its own tracking and leading,
+    because a display line at 4.5rem and a stat at 2rem cannot share either.
+  */
+  /*
+    The middle term used to be a bare 5.5vw, which gave 70px at 1280 and 72px
+    at 1440: barely any difference in type size across a viewport range where
+    the seven column measure loses 94px. 1280 was therefore the pinch, with the
+    headline running the full width of its column. A shallower slope with an
+    intercept ramps properly instead: 47px at 768, 56px at 1024, 65px at 1280,
+    71px at 1440, and the 72px ceiling from 1500 up.
+  */
+  --text-hero: clamp(2.5rem, 1.2rem + 3.6vw, 4.5rem);
+  --text-hero--line-height: 1;
+  --text-hero--letter-spacing: -0.03em;
+  --text-hero-sub: clamp(1.0625rem, 0.95rem + 0.5vw, 1.1875rem);
+  --text-hero-sub--line-height: 1.6;
+  --text-hero-stat: clamp(1.625rem, 1.35rem + 0.9vw, 2rem);
+  --text-hero-stat--line-height: 1.1;
+  --text-hero-stat--letter-spacing: -0.02em;
 
   /* Brand */
   --color-brand: var(--brand);
@@ -160,6 +229,9 @@
   --color-warning: var(--warning);
   --color-error: var(--error);
   --color-star: var(--star);
+  --color-hero-canvas: var(--hero-canvas);
+  --color-hero-ink: var(--hero-ink);
+  --color-hero-rule: var(--hero-rule);
 
   /* Semantic */
   --color-background: var(--background);
@@ -330,8 +402,9 @@
   }
 
   /*
-    Google Sans tops out at a 700 weight axis. Asking for 800 or 900 makes the
-    browser synthesise a fake bold, which smears a geometric face. Clamp it.
+    Never let the browser synthesise a fake bold, which smears the letterforms.
+    Inter carries a real 100 to 900 axis, so every weight a heading asks for is
+    a drawn one.
   */
   h1,
   h2,
@@ -443,6 +516,34 @@
     filter: none;
   }
 
+  /*
+    A highlight that travels across the face, the way light crosses a curved
+    glossy surface as it turns. It is a modifier rather than part of
+    .btn-glossy, because a page full of buttons all glinting at once would be
+    a nightmare; this is for the one primary button in a view.
+
+    The sweep is short and the rest of the cycle is still, so it reads as an
+    occasional catch of light rather than a loading shimmer.
+  */
+  .btn-shine {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .btn-shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transform: translateX(-130%);
+    background: linear-gradient(
+      105deg,
+      transparent 38%,
+      rgba(255, 255, 255, 0.7) 50%,
+      transparent 62%
+    );
+  }
+
   .btn-glossy-dark {
     --btn-bg: #232428;
     --btn-ink: #ffffff;
@@ -527,7 +628,7 @@
    ========================================================================== */
 
 /* Scroll reveal as progressive enhancement, zero JS */
-@supports (animation-timeline: view()) {
+@supports (animation-timeline: scroll()) {
   @media (prefers-reduced-motion: no-preference) {
     .reveal-on-scroll {
       animation: reveal-rise linear both;
@@ -565,6 +666,7 @@
   ::before,
   ::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
@@ -806,4 +908,526 @@
   font-size: 0.85rem;
   color: var(--muted-foreground);
   margin-top: 0.6rem;
+}
+
+/* ==========================================================================
+   7. HERO
+   --------------------------------------------------------------------------
+   One orchestrated load sequence, no library. Every element enters on opacity
+   and transform only, offset by its own --d, so the order is readable from the
+   markup rather than from a timeline object.
+   ========================================================================== */
+
+@layer components {
+  /*
+    The one full bleed band on the site. No radius, no inset, no card.
+
+    --hero-nav is the sticky capsule's own height: its top padding plus h-16.
+    The band is pulled up by that much and pads itself back down by the same
+    amount, so the capsule floats on the hero canvas rather than on the page
+    background. In dark mode that closes a visible seam across the top of the
+    page, and it gives every child one honest number to clear the nav by.
+  */
+  .hero-band {
+    --hero-nav: 4.75rem;
+
+    /*
+      The band's own vertical padding, kept here as properties so the top and
+      the bottom can be reasoned about together.
+
+      The top used to be a full capsule height of clearance, which looked
+      considered on a tall window and pushed the counts and the marquee off the
+      bottom of a normal laptop: a 1920x1080 screen at the 125% scaling Windows
+      ships by default reports 1536x864, and browser chrome and the taskbar
+      leave roughly 700px of that. Taking the top back gives the proof row its
+      space without touching anything between them.
+    */
+    --hero-pad-top: 2.5rem;
+    --hero-pad-bottom: 3.5rem;
+
+    background: var(--hero-canvas);
+    border-bottom: 1px solid var(--hero-rule);
+    margin-top: calc(var(--hero-nav) * -1);
+    padding-top: var(--hero-nav);
+  }
+  @media (min-width: 640px) {
+    .hero-band {
+      --hero-nav: 5rem;
+      --hero-pad-top: 3rem;
+      --hero-pad-bottom: 4rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .hero-band {
+      --hero-pad-top: 2.5rem;
+      --hero-pad-bottom: 4rem;
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* 4.x The navbar: bare at rest, a capsule once the page has moved      */
+  /* ------------------------------------------------------------------ */
+
+  /*
+    Two states and one gesture.
+
+    At rest the bar is nothing. No fill, no border, no blur, no shadow, no
+    radius that anything could read. The logo sits on the container's own left
+    edge, on the same vertical as the hero headline below it, and the controls
+    sit on the right edge. The only filled object is the glossy CTA. A plate
+    drawn on a white page around links that are already legible is a widget
+    bolted above the content; without it the bar is simply where the page
+    starts.
+
+    Scrolled, it contracts inward and materialises as glass.
+
+    The contraction is the whole idea, so the order matters: the shell's
+    padding, the capsule's padding and its radius all start at once, and the
+    fill, border, shadow and blur follow --nav-glass-delay behind. The shape
+    moves first and the material catches up, which reads as one object
+    arriving rather than two properties crossfading past each other.
+  */
+  .nav-shell {
+    --nav-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --nav-dur: 320ms;
+    /*
+      The glass is deliberately behind the shape, but only just. The easing is
+      an expo-out curve, so the width is 83% travelled by 80ms; against that, a
+      70ms delay meant the capsule had finished contracting while it was still
+      85% transparent, and the eye read a snap followed by a fade rather than
+      one movement. 40ms puts the material about a quarter of a beat behind the
+      shape, and the shorter duration lands them together.
+    */
+    --nav-glass-delay: 40ms;
+    --nav-glass-dur: 260ms;
+
+    /*
+      How far the capsule pulls in. Measured against what the bar actually
+      holds, not chosen by eye: below 1024 the desktop links are hidden and the
+      contents come to about 300px, so a proportional inset has room to spare.
+
+      At 1024 the links appear and the contents jump to ~884px inside a 928px
+      shell. There is no room to contract there at all, and a flat 5% overflowed
+      it by 48px. So from lg the inset is a clamp that stays at zero until the
+      viewport is wide enough to afford it, then opens out to 72px a side by
+      1440. Continuous rather than stepped, which suits a gesture better than a
+      jump at a breakpoint would.
+    */
+    --nav-inset: 3%;
+
+    padding-inline: 0;
+  }
+  @media (min-width: 1024px) {
+    .nav-shell {
+      --nav-inset: clamp(0px, (100vw - 1080px) * 0.2, 4.5rem);
+    }
+  }
+  [data-nav-frosted="true"] .nav-shell {
+    padding-inline: var(--nav-inset);
+  }
+
+  .nav-capsule {
+    display: flex;
+    border-radius: 1rem;
+    padding-inline: 0;
+    background-color: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
+    /*
+      blur(0) rather than none, because none does not interpolate: the blur
+      would snap in at the end of the transition instead of building with it.
+    */
+    backdrop-filter: blur(0px) saturate(100%);
+  }
+  [data-nav-frosted="true"] .nav-capsule {
+    border-radius: 9999px;
+    padding-inline: 1.25rem;
+    background-color: var(--glass-fill-strong);
+    border-color: var(--glass-edge);
+    box-shadow:
+      inset 0 1px 0 var(--glass-sheen),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+      0 2px 4px -2px var(--glass-shadow),
+      0 26px 54px -28px var(--glass-shadow);
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  /*
+    The mobile menu is a sheet, not part of the bar's two states. It is only
+    ever on screen because someone opened it, and it always needs a surface
+    under the links, so it carries the glass unconditionally.
+  */
+  .nav-sheet {
+    border-radius: 1.75rem;
+    background-color: var(--glass-fill-strong);
+    border: 1px solid var(--glass-edge);
+    box-shadow:
+      inset 0 1px 0 var(--glass-sheen),
+      0 2px 4px -2px var(--glass-shadow),
+      0 26px 54px -28px var(--glass-shadow);
+    /* Unprefixed only: written as a pair, Lightning CSS keeps just the last
+       declaration and the standard property is lost, which silently drops the
+       blur in every browser that does not take the -webkit- alias. Left alone,
+       it emits both. */
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  /*
+    A control is bare at rest and cut from the pane once there is a pane to cut
+    it from. Hover still fills, in both states, because a control with no
+    pressed or hovered affordance is not a control.
+  */
+  .nav-control {
+    border-radius: 9999px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
+  }
+  [data-nav-frosted="true"] .nav-control {
+    background-color: var(--glass-control);
+    border-color: var(--glass-edge);
+    box-shadow: inset 0 1px 0 var(--glass-sheen);
+  }
+  .nav-control:hover {
+    background-color: var(--glass-control-hover);
+    transform: translateY(-1px);
+  }
+  .nav-control:active {
+    transform: translateY(0);
+  }
+
+  /*
+    The active marker. A filled pill needs a plate to sit on, and at rest there
+    isn't one, so it would read as a grey lozenge floating on the page. At rest
+    it is a two pixel rule under the active link; scrolled, it grows into the
+    pill. Same element, so the horizontal slide between links is uninterrupted
+    either way.
+  */
+  .nav-pill {
+    position: absolute;
+    top: calc(50% + 0.875rem);
+    height: 2px;
+    border-radius: 9999px;
+    background-color: var(--foreground);
+  }
+  [data-nav-frosted="true"] .nav-pill {
+    top: calc(50% - 1.125rem);
+    height: 2.25rem;
+    background-color: var(--muted);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .nav-shell {
+      transition: padding var(--nav-dur) var(--nav-ease);
+    }
+    .nav-capsule {
+      transition:
+        padding var(--nav-dur) var(--nav-ease),
+        border-radius var(--nav-dur) var(--nav-ease),
+        background-color var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay),
+        border-color var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay),
+        box-shadow var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay),
+        backdrop-filter var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay);
+    }
+    .nav-control {
+      transition:
+        background-color 200ms ease,
+        border-color var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay),
+        box-shadow var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay),
+        color 200ms ease,
+        transform 200ms ease;
+    }
+    .nav-pill {
+      transition:
+        left var(--nav-dur) var(--nav-ease),
+        width var(--nav-dur) var(--nav-ease),
+        top var(--nav-dur) var(--nav-ease),
+        height var(--nav-dur) var(--nav-ease),
+        background-color var(--nav-dur) var(--nav-ease);
+    }
+  }
+
+  /* A pill holding a pill: the field takes the same radius language as the
+     nav capsule, and the button inside it repeats the shape one size down. */
+  .hero-field {
+    border-radius: 9999px;
+  }
+
+  /*
+    The category chips, cut from the same pane as the nav controls: a
+    translucent fill, a hairline, and a lit top edge. They catch the light on
+    hover rather than continuously, because five pills all glinting on a loop
+    under the one button that should be drawing the eye is noise.
+  */
+  .hero-chip {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 9999px;
+    background: var(--glass-control);
+    border: 1px solid var(--glass-edge);
+    box-shadow: inset 0 1px 0 var(--glass-sheen);
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s ease;
+  }
+  .hero-chip:hover {
+    background: var(--glass-control-hover);
+    transform: translateY(-1px);
+  }
+  .hero-chip::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transform: translateX(-130%);
+    background: linear-gradient(
+      105deg,
+      transparent 38%,
+      rgba(255, 255, 255, 0.55) 50%,
+      transparent 62%
+    );
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* The vendor marquee                                                   */
+  /* ------------------------------------------------------------------ */
+
+  /*
+    Two identical tracks side by side, translated by exactly half their
+    combined width, which lands copy B precisely where copy A began. The
+    trailing gap lives inside each list as padding rather than between the two
+    lists as a flex gap, because a gap between them would not be part of the
+    50% and the loop would jump by that much on every cycle.
+  */
+  .hero-marquee {
+    --marquee-fade: 1.5rem;
+    overflow: hidden;
+    /*
+      Belt to the grid's braces. A track that is max-content wide will happily
+      report that width as its own intrinsic contribution and push its
+      container open; hidden overflow does not stop that on its own.
+    */
+    min-width: 0;
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--marquee-fade),
+      #000 calc(100% - var(--marquee-fade)),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--marquee-fade),
+      #000 calc(100% - var(--marquee-fade)),
+      transparent 100%
+    );
+  }
+  @media (min-width: 640px) {
+    .hero-marquee {
+      --marquee-fade: 2.5rem;
+    }
+  }
+
+  .hero-marquee-track {
+    display: flex;
+    width: max-content;
+  }
+
+  .hero-marquee-run {
+    display: flex;
+    align-items: center;
+    gap: 2.75rem;
+    padding-inline-end: 2.75rem;
+  }
+
+  /*
+    Optical sizing. A square glyph and a horizontal lockup set to the same
+    height do not read as the same weight: the lockup is five times as wide and
+    swamps everything beside it. Wordmarks are set shorter and capped, so the
+    row reads as one row.
+  */
+  .hero-mark {
+    width: auto;
+    object-fit: contain;
+    height: 1.75rem;
+  }
+  .hero-mark[data-shape="wordmark"] {
+    height: 1.125rem;
+    max-width: 7.5rem;
+  }
+  @media (min-width: 640px) {
+    .hero-mark {
+      height: 2rem;
+    }
+    .hero-mark[data-shape="wordmark"] {
+      height: 1.125rem;
+      max-width: 7rem;
+    }
+  }
+
+  /*
+    A wordmark is type, and type has to be legible before it is anything else.
+    Several of these are set in near black: measured against the dark canvas
+    they come in at a luminance of 44 to 47 on a ground of 25, which is a mark
+    you cannot read. Every brand guideline that ships a dark background version
+    ships it in mono white, so that is what the dark canvas gets. Square glyphs
+    are logo marks rather than type, they carry their own contrast, and they
+    keep full brand colour in both themes.
+  */
+  .dark .hero-mark[data-shape="wordmark"] {
+    filter: brightness(0) invert(1);
+    opacity: 0.92;
+  }
+
+  /*
+    The single rule that opens the proof band, with the second and last of the
+    hero's two lime placements sitting on its head. It is one hairline, not
+    two: the lime is a segment of the same line, marking where the band starts
+    and lining up with the container's left edge and everything under it.
+  */
+  .hero-proof::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 0;
+    width: 3.5rem;
+    height: 2px;
+    background: var(--brand);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Entry. opacity + translateY, 620ms, staggered by --d. */
+  .hero-rise {
+    animation: hero-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms) both;
+  }
+  @keyframes hero-rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+
+  /* The blur is on the headline alone, so the first line resolves into focus. */
+  .hero-rise-blur {
+    animation: hero-rise-blur 680ms cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms)
+      both;
+  }
+  @keyframes hero-rise-blur {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+      filter: blur(6px);
+    }
+  }
+
+  .hero-settle {
+    animation: hero-settle 1500ms cubic-bezier(0.18, 1.5, 0.35, 1) var(--d, 0ms)
+      both;
+    transform-origin: 50% 94%;
+  }
+  @keyframes hero-settle {
+    from {
+      transform: rotate(-3deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
+  }
+
+  /*
+    The shine sweep. Off-canvas by default, so with reduce on the pseudo
+    element simply never enters the button and there is nothing to settle.
+  */
+  .btn-shine::after {
+    animation: btn-shine 4.5s ease-in-out 1.4s infinite;
+  }
+  @keyframes btn-shine {
+    0% {
+      transform: translateX(-130%);
+    }
+    18%,
+    100% {
+      transform: translateX(130%);
+    }
+  }
+
+  /* One pass across the chip, on hover, then done. */
+  .hero-chip:hover::after,
+  .hero-chip:focus-visible::after {
+    animation: chip-shine 850ms ease-out;
+  }
+  @keyframes chip-shine {
+    from {
+      transform: translateX(-130%);
+    }
+    to {
+      transform: translateX(130%);
+    }
+  }
+
+  /*
+    The marquee. One period is exactly one copy of the list, and the duration
+    comes in per instance as --marquee-duration so the speed stays constant
+    however many brands the catalogue yields.
+
+    Under reduce the whole block is skipped, which leaves the track at
+    translateX(0): a static row of logos, clipped and faded at the right edge
+    by the mask, with nothing left mid transition.
+  */
+  .hero-marquee-track {
+    animation: hero-marquee var(--marquee-duration, 45s) linear infinite;
+    will-change: transform;
+  }
+  .hero-marquee:hover .hero-marquee-track,
+  .hero-marquee:focus-within .hero-marquee-track {
+    animation-play-state: paused;
+  }
+  @keyframes hero-marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  /*
+    Ambient float, starting after the sequence has landed. This one runs
+    forever, so it is the only hero element that earns a will-change.
+  */
+  .hero-float {
+    animation: hero-float 6s ease-in-out 1.7s infinite;
+    will-change: transform;
+  }
+  @keyframes hero-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+}
+
+/*
+  Leaving the viewport. Scroll driven through view(), so there is no listener
+  and nothing forces a reflow. It sits on a wrapper rather than on the entering
+  elements, so the two animations never fight over the same properties.
+*/
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-exit {
+      animation: hero-exit linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 70vh;
+    }
+    @keyframes hero-exit {
+      to {
+        opacity: 0;
+        transform: translateY(-28px);
+      }
+    }
+  }
 }

@@ -6,6 +6,7 @@ import {
   CheckIcon,
   CircleHelpIcon,
   CoinsIcon,
+  ImagesIcon,
   LayoutGridIcon,
   MessagesSquareIcon,
   ScaleIcon,
@@ -21,9 +22,11 @@ import { FaqAccordion } from "@/components/public/FaqAccordion";
 import { GlossyButton } from "@/components/public/GlossyButton";
 import { GlossyCTA } from "@/components/public/GlossyCTA";
 import { PricingCards } from "@/components/public/PricingCards";
+import { PricingTable } from "@/components/public/PricingTable";
 import { ProfileNav } from "@/components/public/ProfileNav";
 import { RatingBar } from "@/components/public/RatingBar";
 import { ReviewCard } from "@/components/public/ReviewCard";
+import { ScreenshotCarousel } from "@/components/public/ScreenshotCarousel";
 import { SectionHeader } from "@/components/public/SectionHeader";
 import { SentimentBar } from "@/components/public/SentimentBar";
 import { SoftwareLogo } from "@/components/public/SoftwareLogo";
@@ -42,7 +45,7 @@ import {
   getStarDistributions,
 } from "@/lib/queries/software";
 import { getCompanySizeBreakdown, getReviews } from "@/lib/queries/reviews";
-import { SITE_URL } from "@/lib/site";
+import { ogImageUrl, SITE_NAME, SITE_URL } from "@/lib/site";
 import { canonicalComparisonSlug } from "@/lib/utils";
 
 export const revalidate = 3600;
@@ -75,20 +78,41 @@ export async function generateMetadata(
       description,
       url: `${SITE_URL}/software/${software.slug}`,
       type: "article",
+      images: [
+        {
+          url: ogImageUrl({
+            title: software.name,
+            eyebrow: software.category?.name ?? "Business software",
+            subtitle: software.tagline ?? undefined,
+            rating: formatRating(software.overall_rating),
+            reviews: formatNumber(software.review_count),
+          }),
+          width: 1200,
+          height: 630,
+          alt: `${software.name} on ${SITE_NAME}`,
+        },
+      ],
     },
   };
 }
 
-const SECTIONS = [
-  { id: "overview", label: "Overview" },
-  { id: "pricing", label: "Pricing" },
-  { id: "features", label: "Features" },
-  { id: "ratings", label: "Ratings" },
-  { id: "compare", label: "Compare" },
-  { id: "reviews", label: "Reviews" },
-  { id: "alternatives", label: "Alternatives" },
-  { id: "faqs", label: "FAQs" },
-];
+/**
+ * Section pills. Screenshots only earn one when the product actually has
+ * them, so the nav never points at a section that is not on the page.
+ */
+function sectionsFor(hasScreenshots: boolean) {
+  return [
+    { id: "overview", label: "Overview" },
+    { id: "pricing", label: "Pricing" },
+    { id: "features", label: "Features" },
+    ...(hasScreenshots ? [{ id: "screenshots", label: "Screenshots" }] : []),
+    { id: "ratings", label: "Ratings" },
+    { id: "compare", label: "Compare" },
+    { id: "reviews", label: "Reviews" },
+    { id: "alternatives", label: "Alternatives" },
+    { id: "faqs", label: "FAQs" },
+  ];
+}
 
 export default async function SoftwareProfilePage(
   props: PageProps<"/software/[slug]">,
@@ -116,6 +140,15 @@ export default async function SoftwareProfilePage(
     (a, b) => a + b,
     0,
   );
+
+  /*
+     Guarded rather than trusted: screenshots come out of a jsonb column that
+     the admin edits by hand, so a malformed row should cost the section, not
+     the page.
+  */
+  const screenshots = Array.isArray(software.screenshots)
+    ? software.screenshots.filter((shot) => shot?.url && shot?.alt)
+    : [];
 
   const colour = getBrandColor(software.slug, software.brand_color);
   const faqs = buildFaqs(software);
@@ -237,7 +270,7 @@ export default async function SoftwareProfilePage(
         </GlossyButton>
       </header>
 
-      <ProfileNav sections={SECTIONS} />
+      <ProfileNav sections={sectionsFor(screenshots.length > 0)} />
 
       <div className="grid gap-10 lg:grid-cols-[1fr_20rem] lg:items-start">
         <div className="flex min-w-0 flex-col gap-20">
@@ -277,6 +310,11 @@ export default async function SoftwareProfilePage(
               className="mb-8"
             />
             <PricingCards software={software} />
+            <PricingTable
+              plans={software.pricing_plans}
+              name={software.name}
+              className="mt-6"
+            />
           </section>
 
           {/* -------------------------------------------------------------- */}
@@ -337,7 +375,31 @@ export default async function SoftwareProfilePage(
           )}
 
           {/* -------------------------------------------------------------- */}
-          {/* 4. Ratings                                                      */}
+          {/* 4. Screenshots                                                  */}
+          {/* -------------------------------------------------------------- */}
+          {screenshots.length > 0 && (
+            <section
+              id="screenshots"
+              aria-labelledby="screenshots-heading"
+              className="scroll-mt-32"
+            >
+              <SectionHeader
+                eyebrow="Screenshots"
+                icon={ImagesIcon}
+                title="What it looks like"
+                highlight="in use"
+                headingId="screenshots-heading"
+                className="mb-8"
+              />
+              <ScreenshotCarousel
+                screenshots={screenshots}
+                name={software.name}
+              />
+            </section>
+          )}
+
+          {/* -------------------------------------------------------------- */}
+          {/* 5. Ratings                                                      */}
           {/* -------------------------------------------------------------- */}
           <section id="ratings" aria-labelledby="ratings-heading" className="scroll-mt-32">
             <SectionHeader
@@ -390,7 +452,7 @@ export default async function SoftwareProfilePage(
           </section>
 
           {/* -------------------------------------------------------------- */}
-          {/* 5. Compare                                                      */}
+          {/* 6. Compare                                                      */}
           {/* -------------------------------------------------------------- */}
           {topAlternative && (
             <section id="compare" aria-labelledby="compare-heading" className="scroll-mt-32">
@@ -427,7 +489,7 @@ export default async function SoftwareProfilePage(
           )}
 
           {/* -------------------------------------------------------------- */}
-          {/* 6. Reviews                                                      */}
+          {/* 7. Reviews                                                      */}
           {/* -------------------------------------------------------------- */}
           <section id="reviews" aria-labelledby="reviews-heading" className="scroll-mt-32">
             <SectionHeader
@@ -453,12 +515,12 @@ export default async function SoftwareProfilePage(
           </section>
 
           {/* -------------------------------------------------------------- */}
-          {/* 7. Sponsored                                                    */}
+          {/* 8. Sponsored                                                    */}
           {/* -------------------------------------------------------------- */}
           <SponsoredAd format="billboard" />
 
           {/* -------------------------------------------------------------- */}
-          {/* 8. Alternatives                                                 */}
+          {/* 9. Alternatives                                                 */}
           {/* -------------------------------------------------------------- */}
           {alternatives.length > 0 && (
             <section
@@ -500,7 +562,7 @@ export default async function SoftwareProfilePage(
           )}
 
           {/* -------------------------------------------------------------- */}
-          {/* 9. FAQs                                                         */}
+          {/* 10. FAQs                                                         */}
           {/* -------------------------------------------------------------- */}
           {faqs.length > 0 && (
             <section id="faqs" aria-labelledby="faqs-heading" className="scroll-mt-32">
