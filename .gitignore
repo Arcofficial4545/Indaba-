@@ -32,6 +32,12 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env.local
+.env.local.example
+!.env.example
+
+# files set aside instead of deleted
+_trash/
 
 # vercel
 .vercel

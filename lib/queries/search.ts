@@ -1,5 +1,5 @@
 import type { SearchIndexItem } from "@/components/public/SearchDialog";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { Article, SoftwareWithCategory } from "@/lib/types";
 
 import { getLatestArticles } from "./articles";
@@ -65,7 +65,7 @@ export async function search(query: string): Promise<SearchResults> {
   const trimmed = query.trim();
   if (!trimmed) return { software: [], articles: [], total: 0 };
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   if (supabase) {
     const [softwareResult, articleResult] = await Promise.all([

@@ -27,12 +27,17 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   const isDark = resolvedTheme === "dark";
 
-  const classes = cn(
-    "nav-control inline-grid size-10 place-items-center text-foreground/75",
-    "hover:text-foreground",
-    "focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:outline-none",
-    className,
-  );
+  /*
+    No colour of its own. It used to set `text-foreground/75`, which resolves
+    to ink in the light theme and therefore disappeared completely once the
+    navbar docked and became an ink capsule.
+
+    `.nav-control` sets `color: inherit`, and the capsule sets its own colour
+    for each state, so inheriting is what keeps this legible in both. The
+    focus ring classes are gone for the same reason as everywhere else: the
+    global :focus-visible outline already draws one.
+  */
+  const classes = cn("nav-control", className);
 
   if (!mounted) {
     return <span className={classes} aria-hidden="true" />;

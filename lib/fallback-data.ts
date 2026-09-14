@@ -1,6 +1,7 @@
 import { ARTICLE_SEEDS } from "@/lib/content/articles";
 import { CATALOGUE, type CatalogueEntry } from "@/lib/content/catalogue";
 import { PRICING, resolvePrice } from "@/lib/content/pricing";
+import { DEFAULT_CURRENCY } from "@/lib/site";
 import type {
   Article,
   Category,
@@ -117,7 +118,7 @@ function buildSoftware(entry: CatalogueEntry): SoftwareWithCategory {
     category_id: category?.id ?? null,
 
     starting_price: price?.zar ?? null,
-    price_currency: "ZAR",
+    price_currency: DEFAULT_CURRENCY,
     billing_period: record?.period ?? "month",
     vat_inclusive: price?.vatInclusive ?? null,
     price_source_url: price?.sourceUrl ?? null,
@@ -131,7 +132,7 @@ function buildSoftware(entry: CatalogueEntry): SoftwareWithCategory {
         price:
           plan.amount === null
             ? null
-            : plan.currency === "ZAR"
+            : plan.currency === DEFAULT_CURRENCY
               ? plan.amount
               : Math.round(
                   plan.amount *
@@ -142,7 +143,7 @@ function buildSoftware(entry: CatalogueEntry): SoftwareWithCategory {
                         : 18.7536),
                 ),
         period: plan.period,
-        currency: "ZAR",
+        currency: DEFAULT_CURRENCY,
         vat_inclusive: plan.vatInclusive,
         description: plan.note,
         features: [],

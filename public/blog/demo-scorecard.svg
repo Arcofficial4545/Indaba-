@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<rect width="1200" height="630" fill="#262626"/>
+<path d="M648 0v630M0 550h1200" stroke="#474741" stroke-width="1"/>
+<circle cx="1200" cy="0" r="220" fill="#30302d"/>
+<text x="65" y="94" fill="#d1bd91" font-family="Arial, sans-serif" font-size="17" font-weight="700">THE BUYER'S DESK</text>
+<text x="62" y="271" fill="#eeefe9" font-family="Arial, sans-serif" font-size="49" font-weight="700">Less sales pitch.</text>
+<text x="62" y="335" fill="#eeefe9" font-family="Arial, sans-serif" font-size="49" font-weight="700">More proof.</text>
+<text x="65" y="397" fill="#b4bdae" font-family="Arial, sans-serif" font-size="22">A better software demo</text>
+<text x="65" y="594" fill="#eeefe9" font-family="Arial, sans-serif" font-size="28" font-weight="700">indaba</text>
+<text x="908" y="590" fill="#d1bd91" font-family="Arial, sans-serif" font-size="15" font-weight="700">FIELD GUIDE / 01</text>
+<rect x="720" y="142" width="334" height="352" rx="18" fill="#eeefe9"/><rect x="751" y="179" width="122" height="12" rx="6" fill="#262626"/><rect x="751" y="230" width="45" height="45" rx="12" fill="#d1bd91"/><path d="m756 252 12 12 25-29" fill="none" stroke="#262626" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><rect x="819" y="240" width="180" height="9" rx="4" fill="#738077"/><rect x="819" y="261" width="130" height="7" rx="3" fill="#d3d7ca"/><rect x="751" y="307" width="45" height="45" rx="12" fill="#d1bd91"/><path d="m756 329 12 12 25-29" fill="none" stroke="#262626" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><rect x="819" y="317" width="155" height="9" rx="4" fill="#738077"/><rect x="819" y="338" width="130" height="7" rx="3" fill="#d3d7ca"/><rect x="751" y="384" width="45" height="45" rx="12" fill="#d1bd91"/><path d="m756 406 12 12 25-29" fill="none" stroke="#262626" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><rect x="819" y="394" width="130" height="9" rx="4" fill="#738077"/><rect x="819" y="415" width="130" height="7" rx="3" fill="#d3d7ca"/><circle cx="1041" cy="154" r="42" fill="#d1bd91"/><text x="1019" y="163" fill="#262626" font-family="Arial, sans-serif" font-size="22" font-weight="700">3/3</text>
+</svg>

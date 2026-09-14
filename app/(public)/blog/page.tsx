@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { Breadcrumbs } from "@/components/public/Breadcrumbs";
@@ -12,7 +13,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Buying guides",
   description:
-    "Long form guides to choosing business software in South Africa, written by people who have done the migration rather than by a marketing team.",
+    "Practical guides to choosing and using business software in South Africa, covering accounting, payroll, HR, CRM, ERP and project management.",
   alternates: { canonical: `${SITE_URL}/blog` },
 };
 
@@ -26,13 +27,14 @@ export default async function BlogIndexPage(props: PageProps<"/blog">) {
   const page = Number(rawPage ?? "1") || 1;
 
   const all = await getLatestArticles(200);
-  const totalPages = Math.max(1, Math.ceil(all.length / PER_PAGE));
+  // The lead article has its own slot; paginate the remaining guides once.
+  const totalPages = Math.max(1, Math.ceil((all.length - 1) / PER_PAGE));
   const current = Math.min(Math.max(1, page), totalPages);
 
   // The newest article gets the hero treatment, but only on page one.
   const featured = current === 1 ? all[0] : null;
-  const listSource = featured ? all.slice(1) : all;
-  const offset = current === 1 ? 0 : (current - 1) * PER_PAGE - 1;
+  const listSource = all.slice(1);
+  const offset = (current - 1) * PER_PAGE;
   const items = listSource.slice(offset, offset + PER_PAGE);
 
   return (
@@ -53,6 +55,16 @@ export default async function BlogIndexPage(props: PageProps<"/blog">) {
 
       {featured && (
         <article className="card-modern card-modern-hover group relative overflow-hidden p-8 sm:p-10">
+          {featured.featured_image_url && (
+            <Image
+              src={featured.featured_image_url}
+              alt=""
+              width={1200}
+              height={630}
+              className="mb-6 aspect-[1200/630] w-full rounded-2xl object-cover"
+              preload
+            />
+          )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="rounded-full bg-[var(--color-brand)] px-2.5 py-1 font-semibold text-[var(--color-brand-ink)]">
               Latest
@@ -96,6 +108,15 @@ export default async function BlogIndexPage(props: PageProps<"/blog">) {
             key={article.id}
             className="card-modern card-modern-hover group relative flex flex-col gap-4 p-6"
           >
+            {article.featured_image_url && (
+              <Image
+                src={article.featured_image_url}
+                alt=""
+                width={1200}
+                height={630}
+                className="aspect-[1200/630] w-full rounded-xl object-cover"
+              />
+            )}
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground">
               {article.category_tag && (
                 <span className="rounded-full bg-muted px-2.5 py-1 font-semibold text-foreground/70">

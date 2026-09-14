@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<rect width="1200" height="630" fill="#262626"/>
+<path d="M648 0v630M0 550h1200" stroke="#474741" stroke-width="1"/>
+<circle cx="1200" cy="0" r="220" fill="#30302d"/>
+<text x="65" y="94" fill="#d1bd91" font-family="Arial, sans-serif" font-size="17" font-weight="700">PAYROLL / BEFORE PAYDAY</text>
+<text x="62" y="271" fill="#eeefe9" font-family="Arial, sans-serif" font-size="49" font-weight="700">Check twice.</text>
+<text x="62" y="335" fill="#eeefe9" font-family="Arial, sans-serif" font-size="49" font-weight="700">Pay once.</text>
+<text x="65" y="397" fill="#b4bdae" font-family="Arial, sans-serif" font-size="22">The parallel-run checklist</text>
+<text x="65" y="594" fill="#eeefe9" font-family="Arial, sans-serif" font-size="28" font-weight="700">indaba</text>
+<text x="908" y="590" fill="#d1bd91" font-family="Arial, sans-serif" font-size="15" font-weight="700">FIELD GUIDE / 03</text>
+<rect x="700" y="171" width="388" height="300" rx="18" fill="#eeefe9"/><rect x="700" y="171" width="388" height="62" rx="18" fill="#d1bd91"/><text x="726" y="211" fill="#262626" font-family="Arial, sans-serif" font-size="19" font-weight="700">PAYROLL REVIEW</text><text x="744" y="279" fill="#738077" font-family="Arial, sans-serif" font-size="13" font-weight="700">OLD</text><text x="912" y="279" fill="#738077" font-family="Arial, sans-serif" font-size="13" font-weight="700">NEW</text><rect x="743" y="304" width="100" height="10" rx="5" fill="#bcc6b4"/><rect x="910" y="304" width="100" height="10" rx="5" fill="#bcc6b4"/><rect x="743" y="348" width="100" height="10" rx="5" fill="#bcc6b4"/><rect x="910" y="348" width="100" height="10" rx="5" fill="#bcc6b4"/><rect x="743" y="392" width="100" height="10" rx="5" fill="#bcc6b4"/><rect x="910" y="392" width="100" height="10" rx="5" fill="#bcc6b4"/><circle cx="1058" cy="449" r="51" fill="#d1bd91"/><path d="m1038 451 12 12 25-29" fill="none" stroke="#262626" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -7,7 +7,11 @@
  */
 
 export const SITE_NAME = "Indaba";
-export const SITE_DOMAIN = "indaba.co.za";
+/*
+  The production Vercel address, used until a custom domain is bought. When it
+  is, change this line and NEXT_PUBLIC_SITE_URL, and nothing else.
+*/
+export const SITE_DOMAIN = "indaba-one.vercel.app";
 export const SITE_TAGLINE =
   "South Africa's independent business software guide";
 export const SITE_DESCRIPTION =
@@ -16,6 +20,7 @@ export const SITE_DESCRIPTION =
 export const CONTACT_EMAIL = "hello@indaba.co.za";
 export const CONTACT_PHONE = "+27 21 300 4820";
 export const SITE_LOCATION = "Cape Town, South Africa";
+export const SITE_COUNTRY = "South Africa";
 export const SITE_LOCALE = "en-ZA";
 export const OG_LOCALE = "en_ZA";
 
@@ -108,32 +113,12 @@ export function ogImageUrl(params: {
   return `${SITE_URL}/api/og${search ? `?${search}` : ""}`;
 }
 
-/**
- * Hero copy.
- *
- * It lives here rather than in the component because every line of it is a
- * market signal: the country, the currency, the tax and the city. A component
- * that hardcoded "rands" or "South African" would have to be found and edited
- * by hand the day this directory covers a second market.
- */
+/** Hero copy and search labels, including the directory's market. */
 export const HERO_COPY = {
-  /** 8 words. Names the country, names the method. */
-  headline: "South African business software, weighed in the open.",
-  /**
-   * 19 words, and every clause is checkable: prices carry `vat_inclusive`,
-   * reviews carry `reviewer_name` and `verified_linkedin`, and the ordering is
-   * a weighted average of ratings, as the editorial policy states.
-   */
+  headline: "Choose better software.",
   subheading:
-    "Every price in rands with VAT shown, every reviewer named and verified, and no vendor can buy a ranking.",
-  /** A query a buyer actually types, not a list of nouns. */
-  searchPlaceholder: "payroll that submits EMP201 to SARS",
+    "Compare prices and reviews for South African businesses. Free to use.",
+  searchPlaceholder: "Search software",
   searchLabel: "Search South African business software",
   chipsLabel: "Popular categories",
-  /*
-    Labels the row of vendor marks under the counts. It claims only what the
-    catalogue can back: these products carry reviews here. It does not claim
-    partnership, endorsement or sponsorship, none of which exist.
-  */
-
 } as const;

@@ -4,48 +4,21 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { formatNumber } from "@/lib/format";
 
-/**
- * The second and last client component in the hero, the search field being the
- * other. A number that counts up cannot be a Server Component, but everything
- * around it still is: this renders one span.
- *
- * The final, formatted value is what the server puts in the markup, so the
- * page is correct with JavaScript off and correct for a crawler. The animation
- * is a progressive enhancement layered on top of that markup.
- */
-
 const DURATION = 1200;
-
-/** easeOutCubic. Fast off the mark, and it lands rather than stopping. */
 const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-
-/*
-  The count has to be zeroed before the browser paints, or the reader sees the
-  final figure for a frame and then watches it drop to zero, which is worse
-  than no animation at all. A layout effect runs inside the commit, before
-  paint; on the server it is never called, so it aliases to useEffect there to
-  keep React from warning about it during SSR.
-*/
 const useIsomorphicLayoutEffect =
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
+/** SSR exposes the final value. Only the visible copy counts, once on entry. */
 export function CountUp({
   value,
   formatted,
   delay = 0,
   group = true,
 }: {
-  /** The real number, counted to. */
   value: number;
-  /** The number as the server already rendered it, and the value landed on. */
   formatted: string;
-  /** Offset from the shared start, so the three figures do not move as one. */
   delay?: number;
-  /**
-   * Whether intermediate frames carry thousands grouping. It has to match how
-   * the caller produced `formatted`, or the figure would change shape on the
-   * last frame.
-   */
   group?: boolean;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -54,50 +27,59 @@ export function CountUp({
     const node = ref.current;
     if (!node) return;
 
-    // Final value, immediately, with nothing left running.
-    if (
-      value <= 0 ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (value <= 0 || preference.matches || !("IntersectionObserver" in window)) {
       node.textContent = formatted;
       return;
     }
 
     const render = (n: number) => (group ? formatNumber(n) : String(n));
-
-    node.textContent = render(0);
-
     let frame = 0;
-    let origin = 0;
+    let origin: number | undefined;
+    let started = false;
+    let finished = false;
 
+    const finish = () => {
+      finished = true;
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      node.textContent = formatted;
+    };
     const tick = (now: number) => {
-      if (!origin) origin = now;
-      const elapsed = now - origin - delay;
-
-      if (elapsed < 0) {
-        frame = requestAnimationFrame(tick);
+      origin ??= now;
+      const progress = Math.min(1, Math.max(0, (now - origin - delay) / DURATION));
+      if (progress === 1) {
+        finish();
         return;
       }
-
-      const t = Math.min(1, elapsed / DURATION);
-
-      /*
-        Formatted the same way on every frame, including the last, so the
-        figure never changes shape mid count: no separator appearing at the
-        end and shunting the digits sideways.
-      */
-      node.textContent = t < 1 ? render(Math.round(ease(t) * value)) : formatted;
-
-      if (t < 1) frame = requestAnimationFrame(tick);
+      node.textContent = render(Math.round(ease(progress) * value));
+      frame = requestAnimationFrame(tick);
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.6 || started || finished) return;
+      started = true;
+      observer.disconnect();
+      frame = requestAnimationFrame(tick);
+    }, { threshold: 0.6 });
+    const onPreferenceChange = () => {
+      if (preference.matches) finish();
     };
 
-    frame = requestAnimationFrame(tick);
-
+    node.textContent = render(0);
+    // Observe the full, reserved number box, not the changing glyph width.
+    observer.observe(node.parentElement ?? node);
+    preference.addEventListener("change", onPreferenceChange);
     return () => {
-      cancelAnimationFrame(frame);
-      node.textContent = formatted;
+      finish();
+      preference.removeEventListener("change", onPreferenceChange);
     };
   }, [value, formatted, delay, group]);
 
-  return <span ref={ref}>{formatted}</span>;
+  return (
+    <span className="count-up">
+      <span className="sr-only">{formatted}</span>
+      <span className="count-up-reserve" aria-hidden="true">{formatted}</span>
+      <span ref={ref} className="count-up-value" aria-hidden="true">{formatted}</span>
+    </span>
+  );
 }

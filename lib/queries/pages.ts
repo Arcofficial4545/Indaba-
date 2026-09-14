@@ -1,5 +1,5 @@
 import { PAGE_SEEDS } from "@/lib/content/pages";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { Page } from "@/lib/types";
 
 function fromSeed(slug: string): Page | null {
@@ -23,7 +23,7 @@ function fromSeed(slug: string): Page | null {
  * missing its privacy policy.
  */
 export async function getPageBySlug(slug: string): Promise<Page | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   if (!supabase) return fromSeed(slug);
 
   const { data, error } = await supabase

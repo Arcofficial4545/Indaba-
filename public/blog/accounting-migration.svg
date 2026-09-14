@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<rect width="1200" height="630" fill="#262626"/>
+<path d="M648 0v630M0 550h1200" stroke="#474741" stroke-width="1"/>
+<circle cx="1200" cy="0" r="220" fill="#30302d"/>
+<text x="65" y="94" fill="#d1bd91" font-family="Arial, sans-serif" font-size="17" font-weight="700">ACCOUNTING / FIELD NOTES</text>
+<text x="62" y="271" fill="#eeefe9" font-family="Arial, sans-serif" font-size="49" font-weight="700">New ledger.</text>
+<text x="62" y="335" fill="#eeefe9" font-family="Arial, sans-serif" font-size="49" font-weight="700">Clean start.</text>
+<text x="65" y="397" fill="#b4bdae" font-family="Arial, sans-serif" font-size="22">Make the balances agree</text>
+<text x="65" y="594" fill="#eeefe9" font-family="Arial, sans-serif" font-size="28" font-weight="700">indaba</text>
+<text x="908" y="590" fill="#d1bd91" font-family="Arial, sans-serif" font-size="15" font-weight="700">FIELD GUIDE / 02</text>
+<rect x="678" y="190" width="205" height="261" rx="18" fill="#d4d9cb"/><rect x="700" y="221" width="109" height="12" rx="6" fill="#262626"/><path d="M701 271H855V271" fill="none" stroke="#a1aa9b" stroke-width="3" stroke-linecap="round"/><path d="M701 310H855V310" fill="none" stroke="#a1aa9b" stroke-width="3" stroke-linecap="round"/><path d="M701 349H855V349" fill="none" stroke="#a1aa9b" stroke-width="3" stroke-linecap="round"/><path d="M701 388H855V388" fill="none" stroke="#a1aa9b" stroke-width="3" stroke-linecap="round"/><rect x="899" y="154" width="220" height="297" rx="18" fill="#eeefe9"/><rect x="924" y="186" width="107" height="12" rx="6" fill="#262626"/><path d="M924 240H1090V240" fill="none" stroke="#c4ccbf" stroke-width="3" stroke-linecap="round"/><path d="M924 284H1090V284" fill="none" stroke="#c4ccbf" stroke-width="3" stroke-linecap="round"/><path d="M924 328H1090V328" fill="none" stroke="#c4ccbf" stroke-width="3" stroke-linecap="round"/><path d="M924 372H1090V372" fill="none" stroke="#c4ccbf" stroke-width="3" stroke-linecap="round"/><circle cx="894" cy="332" r="47" fill="#d1bd91"/><path d="M869 332h50m-18-18 18 18-18 18" stroke="#262626" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

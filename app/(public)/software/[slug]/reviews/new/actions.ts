@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { clientIp, hashIp } from "@/lib/hash";
 import { getSoftwareBySlug } from "@/lib/queries/software";
+import { DEFAULT_REVIEWER_COUNTRY } from "@/lib/site";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
 export type ReviewFormState = {
@@ -97,7 +98,7 @@ export async function submitReview(
     reviewer_industry: String(form.get("reviewer_industry") ?? "").trim() || null,
     reviewer_company_size:
       String(form.get("reviewer_company_size") ?? "").trim() || null,
-    reviewer_country: String(form.get("reviewer_country") ?? "South Africa"),
+    reviewer_country: String(form.get("reviewer_country") ?? DEFAULT_REVIEWER_COUNTRY),
     reviewer_city: String(form.get("reviewer_city") ?? "").trim() || null,
     used_for_duration: String(form.get("used_for_duration") ?? "").trim() || null,
     ...ratings,

@@ -4,68 +4,57 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * The centred section header. Three parts stacked and centred: a pill eyebrow,
- * a large heading where two or three words carry the lime highlight, and a
- * muted subtitle.
+ * A section header.
  *
- * Pass the heading split into `title` and `highlight` rather than embedding
- * markup, so the highlight rule stays enforceable: one per section, never
- * twice in the same heading.
+ * It used to be three things stacked and centred: a pill eyebrow with an icon,
+ * a large heading where two or three words carried the lime highlight, and a
+ * muted subtitle. All three are now banned patterns — a pill eyebrow above a
+ * heading, an accented word inside one, and centred section text — so the
+ * component keeps its name and its call sites and stops doing any of them.
+ *
+ * The props survive on purpose. `eyebrow` becomes a quiet label above the
+ * heading rather than a pill, `highlight` is concatenated into the title as
+ * ordinary words, and `icon` is accepted and ignored. That let four call sites
+ * across the template pages be corrected in one edit rather than four, and the
+ * props fall away as those pages are rewritten.
+ *
+ * New sections should use `RailSection` instead, which puts the label and a
+ * live count on the structural rail where the rest of the site keeps them.
  */
 export function SectionHeader({
   eyebrow,
-  icon: Icon,
   title,
   highlight,
   titleAfter,
   subtitle,
   className,
-  align = "center",
   headingId,
 }: {
   eyebrow: string;
+  /** Accepted and ignored. Icons no longer appear above headings. */
   icon?: LucideIcon;
   title: string;
+  /** Joined into the title as plain words. No longer accented. */
   highlight?: string;
   titleAfter?: string;
   subtitle?: React.ReactNode;
   className?: string;
+  /** Accepted and ignored. Section text is left aligned everywhere. */
   align?: "center" | "start";
   headingId?: string;
 }) {
-  const centred = align === "center";
+  const heading = [title, highlight, titleAfter].filter(Boolean).join(" ");
 
   return (
-    <div
-      className={cn(
-        "flex max-w-xl flex-col gap-5 pb-2",
-        centred ? "mx-auto items-center text-center" : "items-start text-left",
-        className,
-      )}
-    >
-      <p className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-1.5 text-sm font-medium text-foreground/80">
-        {Icon && (
-          <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
-        )}
-        {eyebrow}
-      </p>
+    <div className={cn("flex max-w-[62ch] flex-col items-start", className)}>
+      <p className="text-small text-[var(--color-text-muted)]">{eyebrow}</p>
 
-      <h2
-        id={headingId}
-        className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-[2.6rem] sm:leading-[1.18]"
-      >
-        {title}
-        {highlight && (
-          <>
-            {" "}
-            <span className="brand-highlight">{highlight}</span>
-          </>
-        )}
-        {titleAfter && ` ${titleAfter}`}
+      <h2 id={headingId} className="section-heading reveal-line mt-2">
+        <span>{heading}</span>
       </h2>
 
       {subtitle && (
-        <p className="text-base leading-relaxed text-pretty text-muted-foreground">
+        <p className="mt-4 leading-relaxed text-[var(--color-text-muted)]">
           {subtitle}
         </p>
       )}

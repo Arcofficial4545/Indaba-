@@ -1,9 +1,9 @@
 import { FALLBACK_CATEGORIES } from "@/lib/fallback-data";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { Category } from "@/lib/types";
 
 export async function getCategories(): Promise<Category[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   if (!supabase) return FALLBACK_CATEGORIES;
 
   const { data, error } = await supabase
@@ -18,7 +18,7 @@ export async function getCategories(): Promise<Category[]> {
 export async function getCategoryBySlug(
   slug: string,
 ): Promise<Category | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   if (!supabase) {
     return FALLBACK_CATEGORIES.find((c) => c.slug === slug) ?? null;
   }

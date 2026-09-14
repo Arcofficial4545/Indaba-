@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ClipboardCheckIcon, TrophyIcon } from "lucide-react";
 
 import { Breadcrumbs } from "@/components/public/Breadcrumbs";
-import { CategoryIcon } from "@/components/public/CategoryIcon";
-import { SectionHeader } from "@/components/public/SectionHeader";
-import { SoftwareListRow } from "@/components/public/SoftwareListRow";
+import { CategoryResults } from "@/components/public/CategoryResults";
+import { Figure } from "@/components/public/Figure";
+import { Rail } from "@/components/public/Rail";
 import { formatNumber } from "@/lib/format";
 import { getCategoryIntro } from "@/lib/content/categoryIntros";
 import { getCategories, getCategoryBySlug } from "@/lib/queries/categories";
@@ -62,104 +62,128 @@ export default async function CategoryPage(
   const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const [software, intro] = await Promise.all([
+  const [software, intro, allCategories] = await Promise.all([
     getSoftwareByCategory(category.id),
     Promise.resolve(getCategoryIntro(category.slug)),
+    getCategories(),
   ]);
 
+  const reviewTotal = software.reduce(
+    (sum, item) => sum + item.review_count,
+    0,
+  );
+
   return (
-    <div className="container-site flex flex-col gap-16 py-8">
-      <Breadcrumbs
-        items={[
-          { label: "Categories", href: "/categories" },
-          { label: category.name },
-        ]}
-      />
+    <>
+      <div className="container-site pt-8">
+        <Breadcrumbs
+          items={[
+            { label: "Categories", href: "/categories" },
+            { label: category.name },
+          ]}
+        />
+      </div>
 
-      <header className="mx-auto flex max-w-2xl flex-col items-center gap-5 text-center">
-        <span
-          aria-hidden="true"
-          className="grid size-14 place-items-center rounded-2xl bg-[var(--color-brand-light)] text-[var(--color-brand-dark)]"
-        >
-          <CategoryIcon name={category.icon} className="size-7" />
-        </span>
-
-        <h1 className="font-heading text-4xl font-bold tracking-tight text-balance sm:text-5xl sm:leading-[1.12]">
-          Best {category.name.toLowerCase()} in{" "}
-          <span className="brand-highlight">South Africa</span>
-        </h1>
-
-        <p className="text-base leading-relaxed text-pretty text-muted-foreground">
-          {intro?.standfirst ?? category.description}
-        </p>
-
-        <p className="text-sm text-muted-foreground tabular-nums">
-          {formatNumber(software.length)} products reviewed
-        </p>
+      {/*
+        Left aligned, no icon tile, no accented half-heading. The count under
+        the title is the evidence and it is the first thing after the name.
+      */}
+      <header className="container-site pt-8">
+        <div className="rail-grid">
+          <Rail
+            label="Category"
+            count={formatNumber(software.length)}
+            note="Products reviewed here."
+          />
+          <div className="well">
+            <h1 className="section-heading reveal-line">
+              <span>Best {category.name.toLowerCase()} in South Africa</span>
+            </h1>
+            <p className="mt-6 max-w-[62ch] leading-relaxed text-[var(--color-text-muted)]">
+              {intro?.standfirst ?? category.description}
+            </p>
+            <p className="mt-6 text-small text-[var(--color-text-muted)]">
+              <Figure as="span">{formatNumber(software.length)}</Figure>{" "}
+              products, <Figure as="span">{formatNumber(reviewTotal)}</Figure>{" "}
+              reviews behind them, ordered by a weighted average that accounts
+              for how many reviews sit behind each score.
+            </p>
+          </div>
+        </div>
       </header>
 
-      {/* What to look for ------------------------------------------------- */}
-      {intro && (
-        <section aria-labelledby="checklist-heading">
-          <SectionHeader
-            eyebrow="Before you choose"
-            icon={ClipboardCheckIcon}
-            title="What actually"
-            highlight="matters here"
-            headingId="checklist-heading"
-            className="mb-10"
-          />
+      <div
+        className="container-site"
+        style={{ paddingBlock: "var(--section-2)" }}
+      >
+        <CategoryResults
+          software={software}
+          checklist={intro?.checklist ?? []}
+          categories={allCategories.map((entry) => ({
+            name: entry.name,
+            slug: entry.slug,
+            count: entry.software_count,
+            current: entry.slug === category.slug,
+          }))}
+          categoryName={category.name}
+        />
+      </div>
 
-          <div className="rounded-[1.75rem] bg-zinc-100/80 p-2 dark:bg-zinc-900/60">
-            <div className="grid gap-2 md:grid-cols-2">
-              {intro.checklist.map((item, index) => (
-                <div
-                  key={item.title}
-                  className="flex flex-col gap-3 rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 dark:border-zinc-800"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="font-heading text-sm font-bold text-[var(--color-brand-dark)] tabular-nums"
-                  >
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="font-heading text-base font-bold tracking-tight">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed text-pretty text-muted-foreground">
-                    {item.body}
-                  </p>
-                </div>
-              ))}
+      {intro && intro.checklist.length > 0 && (
+        <section
+          aria-labelledby="checklist-heading"
+          className="container-site"
+          style={{ paddingBlock: "var(--section-2)" }}
+        >
+          <div className="rail-grid">
+            <Rail
+              label="Before you choose"
+              count={formatNumber(intro.checklist.length)}
+              note="Things that decide it locally."
+            />
+            <div className="well">
+              <h2 id="checklist-heading" className="section-heading reveal-line">
+                <span>What actually matters in this category.</span>
+              </h2>
+              <dl className="mt-10">
+                {intro.checklist.map((item) => (
+                  <div key={item.title} className="checklist-row">
+                    <dt className="text-h3 font-medium tracking-[-0.01em]">
+                      {item.title}
+                    </dt>
+                    <dd className="mt-2 max-w-[62ch] leading-relaxed text-[var(--color-text-muted)]">
+                      {item.body}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </div>
         </section>
       )}
 
-      {/* The products ----------------------------------------------------- */}
-      <section aria-labelledby="products-heading">
-        <SectionHeader
-          eyebrow="Ranked"
-          icon={TrophyIcon}
-          title="Rated by the people"
-          highlight="who run them"
-          subtitle="Ordered by a weighted average that accounts for how many reviews sit behind each score."
-          headingId="products-heading"
-          className="mb-10"
-        />
-
-        {software.length === 0 ? (
-          <p className="text-center text-muted-foreground">
-            Nothing published in this category yet.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {software.map((item) => (
-              <SoftwareListRow key={item.id} software={item} />
-            ))}
+      <section
+        aria-label="Other categories"
+        className="container-site"
+        style={{ paddingBottom: "var(--section-3)" }}
+      >
+        <div className="rail-grid">
+          <Rail label="Elsewhere" count={formatNumber(allCategories.length)} />
+          <div className="well flex flex-wrap gap-2">
+            {allCategories
+              .filter((entry) => entry.slug !== category.slug)
+              .map((entry) => (
+                <Link
+                  key={entry.id}
+                  href={`/category/${entry.slug}`}
+                  className="hero-chip"
+                >
+                  {entry.name}
+                </Link>
+              ))}
           </div>
-        )}
+        </div>
       </section>
-    </div>
+    </>
   );
 }

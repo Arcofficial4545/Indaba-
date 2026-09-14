@@ -3,7 +3,7 @@ import {
   FALLBACK_REVIEW_TOTAL,
   FALLBACK_SOFTWARE,
 } from "@/lib/fallback-data";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 
 export type SiteStats = {
   reviewCount: number;
@@ -17,7 +17,7 @@ export type SiteStats = {
  * sceptical reader checks.
  */
 export async function getSiteStats(): Promise<SiteStats> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   if (!supabase) {
     return {

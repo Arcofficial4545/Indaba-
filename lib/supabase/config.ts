@@ -13,11 +13,3 @@ export const SUPABASE_ANON_KEY =
 export function isSupabaseConfigured(): boolean {
   return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 }
-
-/**
- * The service role key bypasses row level security, so it must never be
- * imported into anything that reaches the browser. Server routes only.
- */
-export function getServiceRoleKey(): string | null {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY ?? null;
-}

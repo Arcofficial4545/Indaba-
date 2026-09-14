@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/public/Breadcrumbs";
-import { NewsletterSection } from "@/components/public/NewsletterSection";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDate, formatReadTime } from "@/lib/format";
 import { getArticleBySlug, getLatestArticles } from "@/lib/queries/articles";
@@ -77,7 +77,8 @@ export default async function ArticlePage(props: PageProps<"/blog/[slug]">) {
   };
 
   return (
-    <div className="container-site flex flex-col gap-12 py-8">
+    <>
+      <div className="container-site flex flex-col gap-12 py-8">
       <Breadcrumbs
         items={[{ label: "Guides", href: "/blog" }, { label: article.title }]}
       />
@@ -116,6 +117,16 @@ export default async function ArticlePage(props: PageProps<"/blog/[slug]">) {
           </div>
         </header>
 
+        {article.featured_image_url && (
+          <Image
+            src={article.featured_image_url}
+            alt=""
+            width={1200}
+            height={630}
+            className="aspect-[1200/630] w-full rounded-2xl object-cover"
+          />
+        )}
+
         <div
           className="article-content"
           // Article bodies are authored HTML, stored in the articles table.
@@ -134,10 +145,6 @@ export default async function ArticlePage(props: PageProps<"/blog/[slug]">) {
           </footer>
         )}
       </article>
-
-      <div className="mx-auto w-full max-w-3xl">
-        <NewsletterSection />
-      </div>
 
       {related.length > 0 && (
         <section aria-labelledby="related-heading" className="mx-auto w-full max-w-5xl">
@@ -175,11 +182,21 @@ export default async function ArticlePage(props: PageProps<"/blog/[slug]">) {
         </section>
       )}
 
-      <script
-        type="application/ld+json"
-         
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-    </div>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </div>
+
+      {/*
+        The band sits outside the container, not inside it twice.
+
+        It was nested in `container-site > max-w-3xl`, and since the band
+        renders its own `container-site` and rail grid inside that, the rail
+        and the well were squeezed into a few hundred pixels and the label
+        collapsed onto the copy. A full-bleed band has to be a sibling of the
+        page's container, which is also how the home page uses it.
+      */}
+    </>
   );
 }

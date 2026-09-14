@@ -1,73 +1,41 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 
+import { IntroScript } from "@/components/public/Intro";
 import { ThemeProvider } from "@/components/theme-provider";
-import { OG_LOCALE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import {
+  OG_LOCALE,
+  SITE_DESCRIPTION,
+  SITE_LOCALE,
+  SITE_NAME,
+  SITE_TAGLINE,
+  SITE_URL,
+  ogImageUrl,
+} from "@/lib/site";
 
 import "./globals.css";
 
 /*
-  Both faces are loaded from woff2 files committed under app/fonts rather than
-  through next/font/google. next/font/google resolves the family over the
-  network at build time, so fonts.googleapis.com becomes a hard build
-  dependency: a CI machine that cannot reach it fails the build outright
-  rather than degrading. Reading the files off disk keeps the build
-  hermetic. The emitted CSS is identical either way, because next/font
-  self-hosts the Google files too — this only moves the download from build
-  time to the one time it was committed.
+  There is no next/font call here any more, and that is deliberate.
 
-  Each file is the latin subset pulled from the family Google serves, which is
-  what subsets: ["latin"] resolved to before.
+  The site runs on one face, Switzer, in one variable file. Its @font-face
+  rule lives in globals.css §2 rather than here, pointing straight at
+  cdn.fontshare.com. The reasoning is written out in full at that rule; the
+  short version is that Fontshare's own CSS route serves the rules from
+  api.fontshare.com and the binary from cdn.fontshare.com, which puts two
+  origins and a render blocking stylesheet in front of the hero headline, and
+  the hero headline is the LCP element.
+
+  Inter and IBM Plex Mono are gone, along with the three woff2 files that were
+  committed under app/fonts to keep next/font/google off the build path. That
+  hermetic-build property is preserved: nothing here resolves a font at build
+  time either.
 */
-
-/*
-  Inter is the whole face: headings, body copy, labels, table cells, form
-  fields and long form article text. It holds up at small sizes, has proper
-  tabular figures, and carries a real 100 to 900 wght axis, so a bold heading
-  is drawn rather than synthesised.
-
-  Exposed as --font-inter, not --font-sans, because Tailwind 4 emits its own
-  --font-sans on :root. Two declarations of that name land on <html> at equal
-  specificity, and the winner would be decided by stylesheet order. The
-  @theme inline block in globals.css maps --font-inter onto --font-sans and
-  --font-heading instead, which is the one direction that cannot collide.
-*/
-const inter = localFont({
-  src: "./fonts/Inter-latin-variable.woff2",
-  variable: "--font-inter",
-  weight: "100 900",
-  style: "normal",
-  display: "swap",
-  fallback: ["system-ui", "sans-serif"],
-});
-
-/*
-  IBM Plex Mono is the data face. It carries the counts in the hero trust row,
-  where the numerals are the whole argument. --font-mono was previously the
-  bare ui-monospace system stack, which resolves to a different face on every
-  operating system, and a review total cannot be allowed to render differently
-  per machine.
-
-  adjustFontFallback is off because the generated metric override is measured
-  against Arial, and scaling a proportional face onto a monospace advance
-  width reflows the numerals it is meant to hold still.
-*/
-const ibmPlexMono = localFont({
-  src: [
-    { path: "./fonts/IBMPlexMono-latin-400.woff2", weight: "400", style: "normal" },
-    { path: "./fonts/IBMPlexMono-latin-500.woff2", weight: "500", style: "normal" },
-  ],
-  variable: "--font-ibm-plex-mono",
-  display: "swap",
-  adjustFontFallback: false,
-  fallback: ["ui-monospace", "monospace"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} | South Africa's independent business software guide`,
+    default: `${SITE_NAME} | ${SITE_TAGLINE}`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -77,9 +45,9 @@ export const metadata: Metadata = {
     locale: OG_LOCALE,
     siteName: SITE_NAME,
     url: SITE_URL,
-    title: `${SITE_NAME} | South Africa's independent business software guide`,
+    title: `${SITE_NAME} | ${SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
-    images: [{ url: "/api/og", width: 1200, height: 630, alt: SITE_NAME }],
+    images: [{ url: ogImageUrl({}), width: 1200, height: 630, alt: SITE_NAME }],
   },
   twitter: {
     card: "summary_large_image",
@@ -96,14 +64,14 @@ export const metadata: Metadata = {
   A single light value rather than a prefers-color-scheme pair. The pair was
   correct while the OS drove the theme; it no longer does, so keying the
   browser chrome off that media query would paint a dark-OS visitor's chrome
-  #0c0e14 above a light page. Light is the default and the only theme a
-  first-time visitor can land on, so that is what the chrome matches. A
-  visitor who toggles to dark keeps light chrome, which is a cosmetic
-  mismatch on the address bar only, and the honest trade for not shipping a
-  client effect to rewrite a meta tag.
+  dark above a light page. Light is the default and the only theme a
+  first-time visitor can land on, so that is what the chrome matches.
+
+  The value is the bone page ground, not white, so the address bar and the
+  page are the same colour on a phone.
 */
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#eeefe9",
 };
 
 export default function RootLayout({
@@ -111,11 +79,48 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="en-ZA"
+      lang={SITE_LOCALE}
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
+      <head>
+        {/*
+          One origin, opened before the CSS that needs it has finished
+          parsing. crossorigin is required on both of these: fonts are always
+          fetched in CORS mode, and a preconnect or preload without it opens
+          or fills a second, unusable connection.
+
+          The preload is what stops the font being discovered only after the
+          stylesheet parses, which on a cold 4G connection is the difference
+          between the headline painting in Switzer and painting in Arial and
+          then swapping.
+        */}
+        <link
+          rel="preconnect"
+          href="https://cdn.fontshare.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          as="font"
+          type="font/woff2"
+          href="https://cdn.fontshare.com/wf/HJHZ26OECMTXRH7JXPFC7EVIHDSLT2RA/LJRNLR7WCPF3PY3SZ7B2LHNUTQMFNCHL/4MCJYGQDIOOXHWSIIB2OYNDBEALJSOGN.woff2"
+          crossOrigin="anonymous"
+        />
+        {/*
+          Decides whether the load sequence runs, synchronously, before the
+          first paint. It has to be here and it has to be blocking: React
+          cannot make this decision, because sessionStorage is unreadable on
+          the server, so a component that checked it would either mismatch on
+          hydration or decide a frame too late — and a frame too late means
+          the reader sees the finished hero and then an overlay drops onto it.
+
+          It writes data-intro="run" or "off" onto <html>, which both the CSS
+          and the Intro component key off. Never "run" under /admin.
+        */}
+        <IntroScript />
+      </head>
       <body
         suppressHydrationWarning
         className="flex min-h-full flex-col bg-background text-foreground"
@@ -152,7 +157,7 @@ export default function RootLayout({
         >
           <a
             href="#main"
-            className="sr-only rounded-xl bg-[var(--color-brand)] px-4 py-2 font-medium text-[var(--color-brand-ink)] focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100]"
+            className="sr-only rounded-full bg-[var(--color-surface-ink)] px-4 py-2 font-medium text-[var(--color-text-on-ink)] focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100]"
           >
             Skip to content
           </a>

@@ -1,10 +1,11 @@
+import "server-only";
+
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 import {
   SUPABASE_ANON_KEY,
   SUPABASE_URL,
-  getServiceRoleKey,
   isSupabaseConfigured,
 } from "@/lib/supabase/config";
 
@@ -41,9 +42,12 @@ export async function createClient() {
  * Service role client. Bypasses RLS, so this is only ever used from server
  * routes that must write regardless of the caller: affiliate click logging,
  * newsletter signups and contact messages.
+ *
+ * The key is read here, behind `server-only`, rather than in config.ts,
+ * because config.ts is also bundled into the browser via client.ts.
  */
 export function createServiceRoleClient() {
-  const serviceKey = getServiceRoleKey();
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? null;
   if (!SUPABASE_URL || !serviceKey) return null;
 
   return createServerClient(SUPABASE_URL, serviceKey, {

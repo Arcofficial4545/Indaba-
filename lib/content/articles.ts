@@ -1,4 +1,5 @@
 import type { Article } from "@/lib/types";
+import { ADDITIONAL_ARTICLE_SEEDS } from "./additional-articles";
 
 /**
  * Buying guides.
@@ -38,6 +39,7 @@ const PRIYA = {
 };
 
 export const ARTICLE_SEEDS: ArticleSeed[] = [
+  ...ADDITIONAL_ARTICLE_SEEDS,
   {
     id: "art-accounting-guide",
     title: "The best accounting software for South African small businesses",
@@ -54,7 +56,7 @@ export const ARTICLE_SEEDS: ArticleSeed[] = [
     read_time_minutes: 11,
     status: "published",
     featured: true,
-    published_date: "2026-07-28T00:00:00.000Z",
+    published_date: "2025-10-02T00:00:00.000Z",
     content: `
 <p>Choosing accounting software feels like a software decision and is really a compliance decision. Almost every package on the market can raise an invoice and produce a trial balance. Far fewer will hand you a VAT201 that reconciles to your ledger without somebody rebuilding the figures in a spreadsheet first, and that difference is worth more than any feature list.</p>
 
@@ -119,7 +121,7 @@ export const ARTICLE_SEEDS: ArticleSeed[] = [
     read_time_minutes: 8,
     status: "published",
     featured: false,
-    published_date: "2026-07-14T00:00:00.000Z",
+    published_date: "2025-06-10T00:00:00.000Z",
     content: `
 <p>Twice a year, payroll software gets an examination it cannot talk its way out of. The EMP501 reconciliation has to agree with the EMP201 declarations you submitted month by month, and with the IRP5 and IT3(a) certificates you are about to issue. Three sets of numbers, one answer. Software that has been quietly approximating all year has nowhere left to hide.</p>
 
@@ -182,7 +184,7 @@ export const ARTICLE_SEEDS: ArticleSeed[] = [
     read_time_minutes: 9,
     status: "published",
     featured: false,
-    published_date: "2026-06-30T00:00:00.000Z",
+    published_date: "2025-07-27T00:00:00.000Z",
     content: `
 <p>This is the comparison South African businesses make most often, and it is usually framed the wrong way. The question is not which package is better. Both are good. The question is which one fits how your business already works.</p>
 
@@ -238,7 +240,7 @@ export const ARTICLE_SEEDS: ArticleSeed[] = [
     read_time_minutes: 7,
     status: "published",
     featured: false,
-    published_date: "2026-06-16T00:00:00.000Z",
+    published_date: "2025-12-23T00:00:00.000Z",
     content: `
 <p>Software vendors have spent a decade explaining that desktop applications are finished. In most markets that is broadly true. In South Africa the picture is more complicated, and businesses that adopt the global consensus without thinking about it sometimes regret it.</p>
 
@@ -292,7 +294,7 @@ export const ARTICLE_SEEDS: ArticleSeed[] = [
     read_time_minutes: 8,
     status: "published",
     featured: false,
-    published_date: "2026-05-29T00:00:00.000Z",
+    published_date: "2025-01-22T00:00:00.000Z",
     content: `
 <p>A CRM that nobody updates is a very expensive contact list. That is the ordinary outcome of a CRM project, and it is almost never because the software could not do the job.</p>
 
@@ -339,7 +341,7 @@ export const ARTICLE_SEEDS: ArticleSeed[] = [
     read_time_minutes: 7,
     status: "published",
     featured: false,
-    published_date: "2026-05-12T00:00:00.000Z",
+    published_date: "2025-03-06T00:00:00.000Z",
     content: `
 <p>Ask what a system costs and you will be told a monthly figure per user. That number is accurate and frequently irrelevant. The total cost of putting business software into a company is made up of several things, and the licence is often not the largest.</p>
 
@@ -374,6 +376,9 @@ export const ARTICLE_SEEDS: ArticleSeed[] = [
 `,
   },
 ];
+
+// Keep local listings in the same newest-first order as the database query.
+ARTICLE_SEEDS.sort((a, b) => b.published_date.localeCompare(a.published_date));
 
 /** Article rows without the heavy body, for index pages. */
 export function articleSummaries(): Article[] {

@@ -12,17 +12,26 @@ import { cn } from "@/lib/utils";
  *
  * The button takes the product's own brand colour, so the CTA on the Xero page
  * is Xero blue and the one on the Sage page is Sage green.
+ *
+ * `tone="site"` opts out of that. One brand-coloured button on a product page
+ * is the vendor's identity; twenty of them side by side in a grid is a fruit
+ * salad, and several vendor colours are too pale to carry white label text at
+ * button size. In a list the identity belongs to the logo and the CTA stays one
+ * consistent ink pill, which is also what every directory of this kind does.
  */
 export function AffiliateCTAButton({
   slug,
   name,
   brandColor,
+  tone = "brand",
   className,
   children,
 }: {
   slug: string;
   name: string;
   brandColor?: string | null;
+  /** "site" drops the vendor colour and uses the site own button. */
+  tone?: "brand" | "site";
   className?: string;
   children?: React.ReactNode;
 }) {
@@ -33,7 +42,7 @@ export function AffiliateCTAButton({
       href={`/api/track-click?software=${encodeURIComponent(slug)}`}
       target="_blank"
       rel="noopener noreferrer sponsored"
-      style={glossyButtonVars(colour)}
+      style={tone === "site" ? undefined : glossyButtonVars(colour)}
       className={cn(
         "btn-glossy inline-flex h-11 items-center justify-center gap-2 px-5 text-sm",
         "focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",

@@ -9,35 +9,214 @@
 /* ==========================================================================
    1. TOKENS
    --------------------------------------------------------------------------
-   Raw values live on the short names. The --color-* aliases exist because
-   component markup addresses the brand directly as var(--color-brand), and
-   the @theme inline block below turns the same values into bg-brand /
-   text-brand-dark utilities. One source of truth, three ways to reach it.
+   Two layers, and a component may only ever address the second one.
 
-   The palette rests on one unusual decision: the primary brand colour is
-   LIGHT. Lime is a fill. It never carries white text and never becomes body
-   text on a white page. Three roles, never confused:
-     --color-brand        lime, fills only
-     --color-brand-ink    near black olive, the only ink that sits on lime
-     --color-brand-dark   deep olive, brand coloured TEXT on light surfaces
+   LAYER 1 is the brand scale: seven fixed values that mean the same thing in
+   both themes. They are constants, not roles. --sand is the warm accent
+   whichever theme is painting.
+
+   LAYER 2 is the semantic layer: --surface-page, --text, --border and so on.
+   These are the only names markup is allowed to use, and they are what the
+   .dark block swaps. A component that reaches past them to --sand directly
+   will be wrong in one theme, which is the whole reason for the split.
+
+   The palette rests on one rule that is easy to get wrong: SAND IS NOT A TEXT
+   COLOUR. Sand on bone measures 1.59:1 and sand on paper 1.70:1. Every time a
+   design calls for "sand text" it actually wants ink on a sand fill, or
+   --bronze, which is the same family at 5.18:1. There is no exception to this
+   anywhere on the site.
+
+   The legacy --brand / --navy / --amber aliases at the end of :root are not
+   dead. 52 files and 130 call sites still address --color-brand, and deleting
+   the name mid rebuild would blank half the site until Phase 6 finishes. They
+   are repointed at the new palette instead, so every unmigrated component
+   renders in the new colours from the moment this file lands, and each alias
+   is deleted once its last reference is gone.
    ========================================================================== */
 
 :root {
-  /* Brand palette */
-  --brand: #d9f65f; /* signature lime, FILLS ONLY */
-  --brand-strong: #c9ec3e; /* hover fill */
-  --brand-ink: #1a2008; /* text ON lime */
-  --brand-dark: #4c5f0a; /* brand text on white, 7.1:1 */
-  --brand-light: #f3fbd3; /* pale lime wash */
-  --navy: #1b1f3b; /* secondary brand, panels */
-  --amber: #f5a623;
-  --amber-dark: #e0941a;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --star: #f5a623; /* star rating fill */
+  /* ---- LAYER 1: the brand scale, theme independent --------------------- */
 
-  /* Spec facing aliases, so var(--color-brand) resolves in arbitrary values */
+  --bone: #eeefe9; /* page ground in light, type in dark */
+  --paper: #f6f6f2; /* raised surface. Lighter than the page, so it lifts
+                       without a shadow */
+  --ink: #262626; /* type in light, dark surface in both themes */
+  --sand: #d1bd91; /* the one warm accent. Fills and marks, never text */
+  --bronze: #7a5f31; /* sand family TEXT. 5.18:1 on bone */
+  --petrol: #1e3a34; /* the cool counterweight. 10.62:1 on bone */
+  --brick: #9a3b2a; /* functional negative only. 5.99:1 on bone */
+
+  /*
+    Two dark theme siblings. Both parents are specified as text roles and
+    neither survives the inversion: petrol measures 1.50:1 on #141413 and
+    brick 2.66:1. Their surface and chart-fill roles are unaffected, so only
+    the text role swaps.
+
+    brick-lift is deliberately not a lighter tint of brick. The obvious tint
+    lands around oklch(66% .12 34), which is within a few degrees of the
+    terracotta the anti-pattern list bans outright. This sits at hue 16, a
+    23 degree separation, and reads as red rather than clay.
+  */
+  --petrol-lift: #63a192; /* 6.18:1 on #141413 */
+  --brick-lift: #de6e78; /* 5.80:1 on #141413, 4.76:1 on #262626 */
+
+  /* ---- LAYER 2: semantic roles, light theme ---------------------------- */
+
+  --surface-page: var(--bone);
+  --surface-raised: var(--paper);
+  --surface-ink: var(--ink);
+  --surface-accent: var(--sand);
+
+  --text: var(--ink);
+  /*
+    One muted step, not two. ink 64% computes to 4.40:1 and fails; ink 66% is
+    4.67:1 and passes. 70% is taken for headroom, because this same token also
+    lands on --paper and inside the ink band, and a value that only just
+    clears on one surface will fail on the next one somebody uses it on.
+  */
+  --text-muted: color-mix(in oklch, var(--ink) 70%, var(--bone));
+  --text-accent: var(--bronze);
+  --text-cool: var(--petrol);
+  --text-negative: var(--brick);
+  --text-on-ink: var(--bone);
+  --text-on-sand: var(--ink);
+
+  /*
+    Two border weights, two meanings, and the second one is rationed.
+
+    --border is the brief's single hairline: 1px, ink 12%, used for every
+    decorative rule, card edge, table row and section divider. It computes to
+    #D6D7D2, which is 1.25:1. That is correct for separation and illegal for
+    anything a user has to find and operate.
+
+    --border-control exists because WCAG 2.2 SC 1.4.11 wants 3:1 on the
+    boundary of an operable component. Measured on bone, ink 50% is 2.98:1 and
+    still short; ink 55% is the first value that clears. It goes on inputs,
+    checkboxes, radios, selects, switches and focusable cards. Nothing else.
+  */
+  --border: color-mix(in oklch, var(--ink) 12%, transparent);
+  --border-control: color-mix(in oklch, var(--ink) 55%, var(--bone));
+
+  --focus: var(--bronze);
+
+  /* ---- Radii: two values that mean different things -------------------- */
+  --radius-pill: 999px;
+  --radius: 14px;
+
+  /* ---- Section rhythm, 8px base, four steps ---------------------------- */
+  --section-1: clamp(4rem, 8vw, 6rem); /* 96px  tight pairs */
+  --section-2: clamp(5rem, 10vw, 8rem); /* 128px default */
+  --section-3: clamp(6rem, 12vw, 10rem); /* 160px before a major shift */
+  --section-4: clamp(7rem, 14vw, 12rem); /* 192px around the ink band */
+
+  /* ---- Motion constants ------------------------------------------------ */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 160ms;
+  --dur-component: 320ms;
+  --dur-orchestrated: 700ms;
+
+  /*
+    Gloss is an inner highlight, never a gradient wash. The distinction holds
+    across the whole build: this is the only lighting effect on the site and
+    it appears on the docked nav capsule and on ink buttons.
+  */
+  /*
+    The gloss, and the one exception §4 grants to the no-gradient rule: an
+    inner highlight, not a wash. One hairline along the top edge and nothing
+    else.
+
+    It was briefly a full specular treatment — bright rim, inner bloom, deep
+    bottom shade — and it made every button on the site look like a boiled
+    sweet. Restraint is the trust signal; the shine belongs in the hover
+    sweep below, where the reader asked for it, not sitting on every pill at
+    rest.
+  */
+  --gloss-inset: inset 0 1px 0 rgb(255 255 255 / 0.16);
+
+  /*
+    Two elevation levels, and cards get neither. Elevation is --paper plus a
+    hairline. These exist for the two things that genuinely float above the
+    document and must not be mistaken for part of it.
+  */
+  --elev-dock: 0 1px 2px rgb(38 38 38 / 0.08), 0 8px 24px rgb(38 38 38 / 0.1);
+  --elev-tray: 0 -1px 2px rgb(38 38 38 / 0.06), 0 -8px 32px rgb(38 38 38 / 0.12);
+
+  /* ---- shadcn / Radix semantic names ----------------------------------- */
+  /*
+    These names are consumed by the component layer and by the admin, which is
+    not being redesigned. They keep their names and change their values, which
+    is what repaints the existing UI in the new palette without touching the
+    components.
+  */
+  --background: var(--bone);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  /* The primary action is the ink pill. */
+  --primary: var(--ink);
+  --primary-foreground: var(--bone);
+  --secondary: var(--petrol);
+  --secondary-foreground: var(--bone);
+  --muted: color-mix(in oklch, var(--ink) 5%, var(--bone));
+  --muted-foreground: var(--text-muted);
+  --accent: color-mix(in oklch, var(--sand) 40%, var(--bone));
+  --accent-foreground: var(--ink);
+  --destructive: var(--brick);
+  --destructive-foreground: var(--bone);
+  /* --input is the border of a text field, so it takes the control weight. */
+  --input: var(--border-control);
+  --ring: var(--focus);
+
+  /*
+    Charts. Sand and petrol are the two series the brief names, and they
+    separate from each other by 6.67:1. Sand is a 1.70:1 fill on paper, so any
+    sand series carries a bronze stroke rather than relying on the fill alone.
+  */
+  --chart-1: var(--sand);
+  --chart-2: var(--petrol);
+  --chart-3: var(--bronze);
+  --chart-4: var(--ink);
+  --chart-5: var(--text-muted);
+
+  /* Admin sidebar. Ink surface, bone type, sand for the active mark. */
+  --sidebar: var(--ink);
+  --sidebar-foreground: var(--bone);
+  --sidebar-primary: var(--sand);
+  --sidebar-primary-foreground: var(--ink);
+  --sidebar-accent: color-mix(in oklch, var(--bone) 10%, var(--ink));
+  --sidebar-accent-foreground: var(--bone);
+  --sidebar-border: color-mix(in oklch, var(--bone) 14%, var(--ink));
+  --sidebar-ring: var(--sand);
+
+  /* ---- Legacy aliases, repointed, deleted as they fall out of use ------ */
+  /*
+    --brand was the lime, and its contract was "fills only, never body text".
+    Sand has exactly that contract, so the mapping is one to one and the 130
+    existing call sites stay correct. --brand-dark was "brand coloured text on
+    a light surface", which is the definition of bronze.
+  */
+  --brand: var(--sand);
+  --brand-strong: color-mix(in oklch, var(--sand) 88%, var(--ink));
+  --brand-ink: var(--ink);
+  --brand-dark: var(--bronze);
+  --brand-light: color-mix(in oklch, var(--sand) 30%, var(--bone));
+  --navy: var(--petrol);
+  --amber: var(--sand);
+  --amber-dark: var(--bronze);
+  --success: var(--petrol);
+  --warning: var(--bronze);
+  --error: var(--brick);
+  /*
+    A star is a meaningful non-text graphic, so 1.4.11 asks for 3:1. Sand on
+    paper is 1.70:1 and a sand star is effectively invisible at rating sizes,
+    so the star mark is bronze. This is the palette's own rule applied rather
+    than an exception to it: when you want sand text, you want bronze.
+  */
+  --star: var(--bronze);
+
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
   --color-brand-ink: var(--brand-ink);
@@ -51,172 +230,303 @@
   --color-error: var(--error);
   --color-star: var(--star);
 
-  /* Semantic tokens */
-  --background: #ffffff;
-  --foreground: #111827;
-  --card: #ffffff;
-  --card-foreground: #111827;
-  --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #d9f65f;
-  --primary-foreground: #1a2008;
-  --secondary: #1b1f3b;
-  --secondary-foreground: #ffffff;
-  --muted: #f9fafb;
-  --muted-foreground: #6b7280;
-  --accent: #f3f4f6;
-  --accent-foreground: #111827;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #b6d43a;
-
-  /* Charts */
-  --chart-1: #a4c521;
-  --chart-2: #1b1f3b;
-  --chart-3: #f5a623;
-  --chart-4: #10b981;
-  --chart-5: #6b7280;
-
-  /* Admin sidebar */
-  --sidebar: #1b1f3b;
-  --sidebar-foreground: #e5e7eb;
-  --sidebar-primary: #d9f65f;
-  --sidebar-primary-foreground: #1a2008;
-  --sidebar-accent: #262b4d;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #2c3157;
-  --sidebar-ring: #b6d43a;
-
-  --radius: 0.5rem;
+  /*
+    Hero surface tokens, still referenced by the outgoing Hero. Phase 4
+    replaces that component and deletes these three.
+  */
+  --hero-canvas: var(--bone);
+  --hero-ink: var(--ink);
+  --hero-rule: var(--border);
 
   /*
-    Hero surface. The hero is the one full bleed band on the site, so it owns
-    its own canvas and ink rather than borrowing the page tokens. In light mode
-    the canvas is the page white, so there is no seam where the band ends.
+    The glass material is on its way out: the anti-pattern list bans
+    glassmorphism and backdrop-blur stacks outright. The tokens are repointed
+    at the opaque ink capsule so the outgoing navbar renders in the new
+    language rather than as a blurred pane, and Phase 3 deletes both the
+    tokens and the .glass-* classes that consume them.
   */
-  --hero-canvas: #ffffff;
-  --hero-ink: #1b1f3b;
-  --hero-rule: rgba(27, 31, 59, 0.14);
-
-  /*
-    Glass. One material for the floating nav capsule and every small control
-    inside it: a translucent fill over a blur, a hairline of light along the
-    top edge where a real pane would catch it, and a soft shadow underneath.
-    The capsule and the controls differ only in how much of each they take.
-  */
-  --glass-fill: rgba(255, 255, 255, 0.58);
-  --glass-fill-strong: rgba(255, 255, 255, 0.82);
-  /* A well cut into a light pane reads as a control; a lighter chip on it
-     reads as nothing, so the light theme tints down rather than up. */
-  --glass-control: rgba(15, 23, 42, 0.05);
-  --glass-control-hover: rgba(15, 23, 42, 0.1);
-  --glass-edge: rgba(15, 23, 42, 0.1);
-  --glass-sheen: rgba(255, 255, 255, 0.9);
-  --glass-shadow: rgba(15, 23, 42, 0.34);
+  --glass-fill: var(--ink);
+  --glass-fill-strong: var(--ink);
+  --glass-control: color-mix(in oklch, var(--bone) 10%, transparent);
+  --glass-control-hover: color-mix(in oklch, var(--bone) 18%, transparent);
+  --glass-edge: color-mix(in oklch, var(--bone) 14%, transparent);
+  --glass-sheen: rgb(255 255 255 / 0.14);
+  --glass-shadow: rgb(38 38 38 / 0.24);
 }
 
 /*
-  On dark surfaces the lime is already readable, so the "readable brand" token
-  becomes the lime itself. Only the two brand tokens flip; the rest is a
-  straight surface swap.
+  Dark theme.
+
+  Light is the default and the theme the site is designed for; this has to be
+  complete and correct, not an afterthought, but it is a swap of Layer 2 only.
+  Layer 1 does not move, apart from the two lifted text values which exist
+  precisely so that Layer 1 does not have to.
+
+  The link swap is forced, not stylistic: bronze measures 3.08:1 on #141413
+  and fails, sand measures 10.01:1 and passes.
 */
 .dark {
-  --brand-dark: #d9f65f;
-  --brand-light: #2c3512;
+  --surface-page: #141413;
+  --surface-raised: var(--ink);
+  --surface-ink: var(--ink);
 
-  --background: #0c0e14;
-  --foreground: #f4f4f5;
-  --card: #12141d;
-  --card-foreground: #f4f4f5;
-  --popover: #12141d;
-  --popover-foreground: #f4f4f5;
-  --primary: #d9f65f;
-  --primary-foreground: #1a2008;
-  --secondary: #262b4d;
-  --secondary-foreground: #f4f4f5;
-  --muted: #181b26;
-  --muted-foreground: #9ca3af;
-  --accent: #1d2130;
-  --accent-foreground: #f4f4f5;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #262a38;
-  --input: #262a38;
-  --ring: #d9f65f;
+  --text: var(--bone);
+  --text-muted: color-mix(in oklch, var(--bone) 70%, var(--surface-page));
+  --text-accent: var(--sand);
+  --text-cool: var(--petrol-lift);
+  --text-negative: var(--brick-lift);
 
-  --chart-1: #d9f65f;
-  --chart-2: #8b93c9;
-  --chart-3: #f5a623;
-  --chart-4: #34d399;
-  --chart-5: #9ca3af;
+  --border: color-mix(in oklch, var(--bone) 14%, transparent);
+  --border-control: color-mix(in oklch, var(--bone) 40%, var(--surface-page));
 
-  --sidebar: #12141d;
-  --sidebar-foreground: #e5e7eb;
-  --sidebar-primary: #d9f65f;
-  --sidebar-primary-foreground: #1a2008;
-  --sidebar-accent: #1d2130;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #262a38;
-  --sidebar-ring: #d9f65f;
+  --focus: var(--sand);
 
-  /*
-    Ink navy, not the page near black. With nothing behind the illustration
-    this canvas is the whole dark surface, so it has to read as blue on its
-    own: enough chroma that the lime lands on navy rather than on black.
-  */
-  --hero-canvas: #131a30;
-  --hero-ink: #f4f4f5;
-  --hero-rule: rgba(255, 255, 255, 0.16);
+  --elev-dock: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.5);
+  --elev-tray: 0 -1px 2px rgb(0 0 0 / 0.4), 0 -8px 32px rgb(0 0 0 / 0.5);
 
-  /*
-    Dark glass is the hard one: raise the fill's alpha and it stops being
-    glass and becomes a grey box. So the fill stays low, the blur does the
-    work, and the top sheen plus a lighter edge are what make it read as a
-    pane with a lit rim rather than a panel.
-  */
-  --glass-fill: rgba(41, 52, 88, 0.42);
-  --glass-fill-strong: rgba(24, 31, 56, 0.72);
-  --glass-control: rgba(255, 255, 255, 0.07);
-  --glass-control-hover: rgba(255, 255, 255, 0.16);
-  --glass-edge: rgba(255, 255, 255, 0.13);
-  --glass-sheen: rgba(255, 255, 255, 0.16);
-  --glass-shadow: rgba(0, 0, 0, 0.6);
+  --background: var(--surface-page);
+  --foreground: var(--bone);
+  --card: var(--surface-raised);
+  --card-foreground: var(--bone);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--bone);
+  /* On a dark ground the ink pill disappears, so the primary action inverts. */
+  --primary: var(--bone);
+  --primary-foreground: var(--ink);
+  --secondary: var(--petrol);
+  --secondary-foreground: var(--bone);
+  --muted: color-mix(in oklch, var(--bone) 6%, var(--surface-page));
+  --muted-foreground: var(--text-muted);
+  --accent: color-mix(in oklch, var(--sand) 22%, var(--surface-page));
+  --accent-foreground: var(--bone);
+  --destructive: var(--brick-lift);
+  --destructive-foreground: var(--ink);
+  --input: var(--border-control);
+  --ring: var(--focus);
+
+  --chart-1: var(--sand);
+  --chart-2: var(--petrol-lift);
+  --chart-3: var(--bronze);
+  --chart-4: var(--bone);
+  --chart-5: var(--text-muted);
+
+  --sidebar: var(--ink);
+  --sidebar-foreground: var(--bone);
+  --sidebar-primary: var(--sand);
+  --sidebar-primary-foreground: var(--ink);
+  --sidebar-accent: color-mix(in oklch, var(--bone) 10%, var(--ink));
+  --sidebar-accent-foreground: var(--bone);
+  --sidebar-border: color-mix(in oklch, var(--bone) 14%, var(--ink));
+  --sidebar-ring: var(--sand);
+
+  /* Legacy aliases that have to move with the theme. */
+  --brand-dark: var(--sand);
+  --brand-light: color-mix(in oklch, var(--sand) 20%, var(--surface-page));
+  --error: var(--brick-lift);
+  --star: var(--sand);
+
+  --hero-canvas: var(--surface-page);
+  --hero-ink: var(--bone);
+  --hero-rule: var(--border);
+
+  --glass-fill: var(--ink);
+  --glass-fill-strong: var(--ink);
+  --glass-control: color-mix(in oklch, var(--bone) 10%, transparent);
+  --glass-control-hover: color-mix(in oklch, var(--bone) 18%, transparent);
+  --glass-edge: color-mix(in oklch, var(--bone) 16%, transparent);
+  --glass-sheen: rgb(255 255 255 / 0.14);
+  --glass-shadow: rgb(0 0 0 / 0.6);
 }
 
 /* ==========================================================================
-   2. THEME MAPPING
+   2. THE FACE
+   --------------------------------------------------------------------------
+   One family across the entire site. No display and body split, no second
+   face for data, no monospace in the public UI.
+
+   Switzer, variable, roman, one file, 43 220 bytes. That is smaller than the
+   three static weights it replaces (~50 000) and it is the only form that can
+   animate the 400 to 500 weight shift on nav hover.
+
+   DELIVERY. Fontshare's own CSS route puts the @font-face rules on
+   api.fontshare.com and the binary on cdn.fontshare.com: two origins, two
+   handshakes, and a render blocking stylesheet in front of the LCP element,
+   which is the hero headline. The rule is written out here instead and points
+   straight at the CDN file, so there is one origin and no blocking request.
+   Nothing is redistributed from this repository, so the licence position the
+   brief relies on is unchanged.
+
+   THE URL IS PINNED AND IT IS A LIABILITY. Fontshare paths are versioned
+   hashes. If this file is ever rotated the request 404s and the site silently
+   falls back to Arial forever, which is a production font failure that no
+   build step would catch. Fetched and verified 2026-09-07. If it 404s, stop
+   and re-fetch from https://api.fontshare.com/v2/css?f[]=switzer@1 rather
+   than papering over it. Recorded in docs/DESIGN-NOTES.md.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Switzer";
+  src: url("https://cdn.fontshare.com/wf/HJHZ26OECMTXRH7JXPFC7EVIHDSLT2RA/LJRNLR7WCPF3PY3SZ7B2LHNUTQMFNCHL/4MCJYGQDIOOXHWSIIB2OYNDBEALJSOGN.woff2")
+    format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+  The fallback is metric matched rather than guessed, so the swap does not
+  reflow the hero headline and CLS stays at 0. Measured in a browser at 100px
+  on the string "Hxpg 6196":
+
+    Switzer   width 487.70   ascent 98   descent 25
+    Arial     width 483.70   ascent 91   descent 21
+
+  size-adjust  = 487.70 / 483.70 = 100.83%
+  ascent       = 98 / 100.83     =  97.2%
+  descent      = 25 / 100.83     =  24.8%
+
+  A 0.83% width error across the whole headline is not a visible shift.
+*/
+@font-face {
+  font-family: "Switzer Fallback";
+  src:
+    local("Arial"),
+    local("Helvetica"),
+    local("Liberation Sans");
+  size-adjust: 100.83%;
+  ascent-override: 97.2%;
+  descent-override: 24.8%;
+  line-gap-override: 0%;
+}
+
+/* ==========================================================================
+   3. THEME MAPPING
    ========================================================================== */
 
 @theme inline {
-  /* Fonts. Inter sets display and reading text, IBM Plex Mono the data. */
-  --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-heading: var(--font-inter), system-ui, sans-serif;
-  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  /*
+    One family, three names, because 125 call sites already say font-heading
+    and there is no reason to touch them to prove a point. They all resolve to
+    Switzer.
+  */
+  --font-sans: "Switzer", "Switzer Fallback", system-ui, sans-serif;
+  --font-heading: "Switzer", "Switzer Fallback", system-ui, sans-serif;
+  /*
+    Monospace survives for exactly one thing: the JSON textareas in the admin
+    resource form, where the content is code and proportional digits actively
+    hurt. The ban is on monospace as a decorative face for small data labels
+    in the public UI, and there is none.
+  */
+  --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace;
+
+  /* ---- Type scale ------------------------------------------------------ */
+  /*
+    display-xl is FULL BLEED ONLY: the footer wordmark and the 404. At 1280 it
+    resolves to 96px, and 96px inside the hero's seven column well gives 14.2
+    characters per line, which sets the headline in five lines rather than
+    three. That is not a defect in the clamp, it is a clamp tuned for type
+    that spans the page, so it is used for type that spans the page.
+  */
+  --text-display-xl: clamp(3rem, 7.5vw, 7.5rem);
+  --text-display-xl--line-height: 0.92;
+  --text-display-xl--letter-spacing: -0.035em;
 
   /*
-    The hero type scale. Each size carries its own tracking and leading,
-    because a display line at 4.5rem and a stat at 2rem cannot share either.
+    display-hero is the headline's own step, tuned to the well it lives in.
+
+      container-site   max-width 1440, padding-inline 3rem at >=1024
+      viewport 1280    inner 1184px, seven of twelve columns = 691px
+      5.2vw at 1280    66.56px
+      Switzer advance  0.54em average, less 0.032em tracking = 0.508em
+      per character    33.8px  ->  20.4 characters per line
+
+    Because the well and the type both scale with vw, that character count
+    holds from 1024 to 1920, so the headline sets in three lines across the
+    whole desktop range instead of only at the width it was checked on.
   */
+  --text-display-hero: clamp(2.5rem, 5.2vw, 4.75rem);
+  --text-display-hero--line-height: 0.94;
+  --text-display-hero--letter-spacing: -0.032em;
+
+  --text-display-l: clamp(2.25rem, 4.5vw, 4rem);
+  --text-display-l--line-height: 0.98;
+  --text-display-l--letter-spacing: -0.03em;
+
+  --text-h2: clamp(1.75rem, 2.6vw, 2.75rem);
+  --text-h2--line-height: 1.05;
+  --text-h2--letter-spacing: -0.02em;
+
+  --text-h3: 1.375rem;
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: -0.01em;
+
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.6;
+
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.45;
+
   /*
-    The middle term used to be a bare 5.5vw, which gave 70px at 1280 and 72px
-    at 1440: barely any difference in type size across a viewport range where
-    the seven column measure loses 94px. 1280 was therefore the pinch, with the
-    headline running the full width of its column. A shallower slope with an
-    intercept ramps properly instead: 47px at 768, 56px at 1024, 65px at 1280,
-    71px at 1440, and the 72px ceiling from 1500 up.
+    ---- Weight, capped ----------------------------------------------------
+
+    The scale is 400, 500 and 600. Nothing heavier: big type takes its impact
+    from size and negative tracking, and a 700 display line in a neo-grotesque
+    reads as loud rather than confident.
+
+    There are 128 `font-bold` call sites in the codebase, all of them meaning
+    700. Editing every one would fix today and not tomorrow, because the next
+    person to type `font-bold` gets 700 back. Capping the top of the scale
+    here means the utility still exists, still means "the heaviest weight this
+    brand has", and that weight is 600. The constraint is enforced by the
+    token system rather than by remembering.
+
+    font-synthesis-weight is off in §3, so nothing fakes the difference either.
   */
-  --text-hero: clamp(2.5rem, 1.2rem + 3.6vw, 4.5rem);
-  --text-hero--line-height: 1;
-  --text-hero--letter-spacing: -0.03em;
-  --text-hero-sub: clamp(1.0625rem, 0.95rem + 0.5vw, 1.1875rem);
+  --font-weight-bold: 600;
+  --font-weight-extrabold: 600;
+  --font-weight-black: 600;
+
+  /*
+    Outgoing hero scale. Still addressed by the Hero that Phase 4 deletes.
+    Repointed rather than removed so the page keeps rendering in between.
+  */
+  --text-hero: var(--text-display-hero);
+  --text-hero--line-height: 0.94;
+  --text-hero--letter-spacing: -0.032em;
+  --text-hero-sub: var(--text-body);
   --text-hero-sub--line-height: 1.6;
   --text-hero-stat: clamp(1.625rem, 1.35rem + 0.9vw, 2rem);
   --text-hero-stat--line-height: 1.1;
   --text-hero-stat--letter-spacing: -0.02em;
 
-  /* Brand */
+  /* ---- Colour, Layer 2 only -------------------------------------------- */
+  --color-surface-page: var(--surface-page);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-ink: var(--surface-ink);
+  --color-surface-accent: var(--surface-accent);
+
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-accent: var(--text-accent);
+  --color-text-cool: var(--text-cool);
+  --color-text-negative: var(--text-negative);
+  --color-text-on-ink: var(--text-on-ink);
+  --color-text-on-sand: var(--text-on-sand);
+
+  --color-line: var(--border);
+  --color-line-control: var(--border-control);
+  --color-focus: var(--focus);
+
+  /* Layer 1, exposed because charts and the hero disc need the raw value. */
+  --color-bone: var(--bone);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-sand: var(--sand);
+  --color-bronze: var(--bronze);
+  --color-petrol: var(--petrol);
+  --color-brick: var(--brick);
+
+  /* Legacy names, still addressed by unmigrated components. */
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
   --color-brand-ink: var(--brand-ink);
@@ -233,7 +543,7 @@
   --color-hero-ink: var(--hero-ink);
   --color-hero-rule: var(--hero-rule);
 
-  /* Semantic */
+  /* shadcn / Radix semantic names */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -254,14 +564,12 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Charts */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  /* Admin sidebar */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -271,20 +579,25 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Radius scale, all derived from --radius */
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /*
+    Radius. The brief allows two values that mean different things: a pill for
+    anything you press, 14px for anything that holds content, and 0 for full
+    bleed bands and table cells.
 
-  /* Motion */
-  --animate-float: float 7s ease-in-out infinite;
-  --animate-float-delayed: float 8s ease-in-out 1.5s infinite;
+    The derived scale is collapsed onto 14px rather than kept proportional,
+    because 64 existing call sites say rounded-xl / 2xl / 3xl and the point of
+    the rule is that hierarchy is not expressed through corner radius. Pills
+    are applied explicitly with rounded-full.
+  */
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 14px;
+  --radius-2xl: 14px;
+  --radius-3xl: 14px;
+  --radius-4xl: 14px;
+  --radius-pill: 999px;
 }
-
 @keyframes float {
   0%,
   100% {
@@ -376,6 +689,19 @@
   }
 }
 
+/*
+   --lean drives the hero comparison: one fraction in [-1, 1] that the beam
+   rotation, both rope counter-rotations and both panel translations are
+   computed from. Registering it means the browser treats it as a real number
+   rather than an opaque string, so an invalid value falls back to level
+   instead of leaving the object in whatever state it was last in.
+*/
+@property --lean {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
 /* ==========================================================================
    3. BASE
    ========================================================================== */
@@ -403,8 +729,10 @@
 
   /*
     Never let the browser synthesise a fake bold, which smears the letterforms.
-    Inter carries a real 100 to 900 axis, so every weight a heading asks for is
-    a drawn one.
+    Switzer carries a real 100 to 900 axis, so every weight a heading asks for
+    is a drawn one. This also matters during the swap window: the Arial
+    fallback has no variable axis, and a synthesised 500 would shift the
+    headline's width the instant the real face arrived.
   */
   h1,
   h2,
@@ -416,15 +744,21 @@
     font-synthesis-weight: none;
   }
 
+  /*
+    A visible ring everywhere, in bronze, offset 2px. outline: none does not
+    appear anywhere on this site. In dark the ring swaps to sand, because
+    bronze measures 3.08:1 on the dark page and would be a ring you cannot
+    find.
+  */
   :focus-visible {
-    outline: 2px solid var(--ring);
+    outline: 2px solid var(--focus);
     outline-offset: 2px;
     border-radius: 2px;
   }
 
   ::selection {
-    background: var(--brand);
-    color: var(--brand-ink);
+    background: var(--sand);
+    color: var(--ink);
   }
 }
 
@@ -452,131 +786,249 @@
   }
 
   /*
-    4.4 The glossy button. A rounded rectangle, never a pill. Glass sheen over
-    the top half, a darker bezel, pillowed inner shadows and a drop shadow
-    tinted to the fill. Fully parameterised: set --btn-bg, --btn-ink and
-    --btn-glow inline to recolour it per product.
+  /*
+    4.2 The rail grid.
+
+    The structural spine of the whole site. Twelve columns, and one rail on
+    the left of every section carrying the section's label and a live count.
+    Content sits in the well to the right of it, left aligned.
+
+    The rail is what replaces the eyebrow it is not allowed to be: instead of
+    a tracked out ALL CAPS label announcing a section, there is a name and a
+    number, and the number is real. It is the element that repeats often
+    enough to become the layout's signature.
+
+    Below 1024 the rail unstacks into a single row above the well rather than
+    disappearing, because the count is evidence and the evidence is the point.
+  */
+  .rail-grid {
+    display: grid;
+    gap: 1.5rem 1.5rem;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /*
+    Grid items default to min-width: auto, which means they refuse to shrink
+    below their content's min-content width. The top-rated table has six
+    columns and a min-content width of about 430px, so at 390 the well grew
+    past the container and the whole document scrolled sideways — even though
+    the table itself sits in its own overflow-x: auto scroller.
+
+    This is the single most common way a grid layout leaks horizontally, and
+    it is fixed once here rather than per-section.
+  */
+  .rail-grid > * {
+    min-width: 0;
+  }
+  @media (min-width: 1024px) {
+    .rail-grid {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+    .rail-grid > .rail {
+      grid-column: 1 / span 2;
+    }
+    .rail-grid > .well {
+      grid-column: 3 / span 10;
+    }
+    /* Prose sits on a 68ch measure: 666px at 17px Switzer. */
+    .rail-grid > .well-measure {
+      grid-column: 3 / span 7;
+    }
+  }
+
+  .rail {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  @media (min-width: 1024px) {
+    .rail {
+      position: sticky;
+      top: 6rem;
+      align-self: start;
+      display: block;
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+  }
+
+  /*
+    4.3 Figures.
+
+    en-ZA groups thousands with a space, so 6 196 is two words to a text
+    renderer and reads as two numbers at display sizes. lib/format.ts already
+    substitutes U+202F for the U+00A0 that Intl emits, which fixes the width;
+    this is the render side that stops the pair ever splitting across a line
+    and holds the digits on a common advance.
+
+    tabular-nums looks redundant because Switzer's digits are already tabular
+    (all ten measure 57.6 per 100px, verified). It is here for the swap
+    window, when the Arial fallback is painting and its digits are NOT
+    tabular. That is exactly the moment a comparison table would visibly
+    jitter, so the declaration earns its place.
+  */
+  .data {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    word-spacing: -0.12em;
+    font-weight: 500;
+  }
+
+  /*
+    4.4 The button.
+
+    This was a glossy rounded rectangle built from two stacked gradients, a
+    tinted glow and four inset shadows. Gradients are banned outright now, so
+    it is a flat pill with one inner highlight along the top edge. That
+    highlight is the single scoped exception, and the distinction it carries
+    is gloss from a lit rim rather than gloss from a wash.
+
+    The --btn-bg / --btn-ink parameterisation is kept because the affiliate
+    CTAs set them inline per product, and 13 call sites across four files
+    depend on the class name.
+  */
+  /*
+    THE SHINE IS AN ANIMATION, NOT A FINISH.
+
+    A band of light crosses the button left to right when the reader hovers it,
+    and the button is otherwise flat. That is the opposite of where this ended
+    up last round — a permanently glossy pill — and it is the better trade: at
+    rest the buttons are quiet, and the one moment of shine is a response to
+    something the reader did.
+
+    It is also the one place a gradient earns its keep. §4 bans gradient washes
+    and §7 rule 2 allows motion that answers a user action; a swept highlight
+    is the second, drawn with the first. The banned relative is `.btn-shine`,
+    which did this on a TIMER — an automatic shimmer on a control, which reads
+    as a loading state and never stops.
+
+    overflow: hidden clips the band to the pill. isolation keeps it off any
+    stacking context the caller has set up.
   */
   .btn-glossy {
-    --btn-bg: var(--brand);
-    --btn-ink: var(--brand-ink);
-    --btn-glow: rgba(163, 197, 33, 0.5);
-    border-radius: 0.875rem;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    /*
+      Sand, not ink. It is the brand accent and its whole defined role is
+      fills, and ink on sand measures 8.21:1 so the label is never the thing
+      that suffers for it.
+
+      The rim is a darkened mix of the fill rather than the fill itself. It
+      gives the pill a defined edge on a paper surface — sand against paper is
+      only about 1.5:1 on its own, and WCAG 1.4.11 wants a control boundary to
+      be findable — and it is also half of what makes it look convex.
+    */
+    --btn-bg: var(--sand);
+    --btn-ink: var(--text-on-sand);
+    border-radius: var(--radius-pill);
     color: var(--btn-ink);
-    font-weight: 600;
-    border: 1px solid color-mix(in srgb, var(--btn-bg), #000 22%);
-    background-image:
-      linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.4) 0%,
-        rgba(255, 255, 255, 0.14) 36%,
-        rgba(255, 255, 255, 0) 52%
-      ),
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--btn-bg), #fff 14%) 0%,
-        var(--btn-bg) 55%,
-        color-mix(in srgb, var(--btn-bg), #000 14%) 100%
-      );
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.5),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.14),
-      inset 0 -5px 9px color-mix(in srgb, var(--btn-bg), #000 18%),
-      0 12px 24px -10px var(--btn-glow);
+    background: var(--btn-bg);
+    font-weight: 500;
+    border: 1px solid color-mix(in oklch, var(--btn-bg) 76%, var(--btn-ink));
+    box-shadow: var(--gloss-inset);
     transition:
-      transform 0.2s ease,
-      filter 0.2s ease,
-      box-shadow 0.2s ease;
+      transform var(--dur-micro) var(--ease-in-out),
+      background-color var(--dur-micro) var(--ease-in-out),
+      box-shadow var(--dur-micro) var(--ease-in-out);
     cursor: pointer;
   }
 
-  .btn-glossy:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.06) saturate(1.04);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.55),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.14),
-      inset 0 -5px 9px color-mix(in srgb, var(--btn-bg), #000 18%),
-      0 16px 30px -10px var(--btn-glow);
+  /*
+    Mixed toward the LABEL colour, not toward bone. On a sand or brand fill the
+    label is ink, so the button darkens; on the ink variant the label is bone,
+    so it lightens. One rule, correct in both directions, and it keeps working
+    when AffiliateCTAButton sets a vendor colour inline.
+  */
+  .btn-glossy::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    /* Angled, so the band reads as light crossing a surface rather than a bar
+       sliding past. Narrow, because a wide one washes the label out. */
+    background: linear-gradient(
+      100deg,
+      transparent 38%,
+      rgb(255 255 255 / 0.5) 50%,
+      transparent 62%
+    );
+    transform: translateX(-130%);
+    pointer-events: none;
+  }
+  .btn-glossy:hover::after,
+  .btn-glossy:focus-visible::after {
+    animation: btn-sweep 700ms linear;
+  }
+  /*
+    Linear, deliberately. ease-out-quint puts two thirds of the travel in the
+    first 120ms, so the band was past the label before the eye caught it and
+    the button just looked like it flickered. A light sweep has to move at a
+    constant rate to read as a sweep at all.
+  */
+  @keyframes btn-sweep {
+    from { transform: translateX(-130%); }
+    to { transform: translateX(130%); }
   }
 
+  .btn-glossy:hover {
+    background: color-mix(in oklch, var(--btn-bg) 94%, var(--btn-ink));
+  }
+
+  /* The complete press interaction. 0.98, 120ms, and nothing else. */
   .btn-glossy:active {
-    transform: translateY(0) scale(0.98);
-    filter: brightness(0.97);
-    box-shadow:
-      inset 0 1px 2px color-mix(in srgb, var(--btn-bg), #000 30%),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.1),
-      0 6px 14px -8px var(--btn-glow);
+    transform: scale(0.98);
+    transition-duration: 120ms;
   }
 
   .btn-glossy:disabled {
     cursor: not-allowed;
     opacity: 0.55;
     transform: none;
-    filter: none;
   }
 
   /*
-    A highlight that travels across the face, the way light crosses a curved
-    glossy surface as it turns. It is a modifier rather than part of
-    .btn-glossy, because a page full of buttons all glinting at once would be
-    a nightmare; this is for the one primary button in a view.
-
-    The sweep is short and the rest of the cycle is still, so it reads as an
-    occasional catch of light rather than a loading shimmer.
+    .btn-shine used to sweep a white highlight across the face on a timer. It
+    is an automatic animation on a control, which the motion budget does not
+    have room for and the anti-pattern list would call a loading shimmer. The
+    class is kept as an inert passthrough so the call sites do not break, and
+    it is deleted with them.
   */
   .btn-shine {
     position: relative;
-    overflow: hidden;
-    isolation: isolate;
-  }
-  .btn-shine::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    transform: translateX(-130%);
-    background: linear-gradient(
-      105deg,
-      transparent 38%,
-      rgba(255, 255, 255, 0.7) 50%,
-      transparent 62%
-    );
   }
 
   .btn-glossy-dark {
-    --btn-bg: #232428;
-    --btn-ink: #ffffff;
-    --btn-glow: rgba(10, 12, 16, 0.55);
+    --btn-bg: var(--ink);
+    --btn-ink: var(--bone);
+    border-color: var(--ink);
   }
 
   .btn-glossy-white {
-    --btn-bg: #ffffff;
-    --btn-ink: var(--navy);
-    --btn-glow: rgba(15, 23, 42, 0.22);
-    border-color: color-mix(in srgb, #ffffff, #000 14%);
+    --btn-bg: var(--paper);
+    --btn-ink: var(--ink);
+    border-color: var(--border-control);
+    box-shadow: none;
   }
 
-  /* 4.5 The modern card */
+  /*
+    4.5 The card.
+
+    No shadow. Elevation is --paper sitting lighter than the page plus one
+    hairline, which is why --paper exists at all. The same soft grey shadow
+    under every card is the template tell the brief names, and a hover lift
+    is the other half of it, so neither is here: hover moves the border only.
+  */
   .card-modern {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 1.5rem;
-    box-shadow:
-      0 1px 2px rgba(15, 23, 42, 0.04),
-      0 12px 32px -16px rgba(15, 23, 42, 0.14);
-    transition:
-      transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-      box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-      border-color 0.25s ease;
+    border-radius: var(--radius);
+    transition: border-color var(--dur-micro) var(--ease-in-out);
   }
 
   .card-modern-hover:hover {
-    transform: translateY(-4px);
-    border-color: color-mix(in srgb, var(--foreground) 12%, var(--border));
-    box-shadow:
-      0 1px 2px rgba(15, 23, 42, 0.04),
-      0 24px 48px -20px rgba(15, 23, 42, 0.22);
+    border-color: var(--border-control);
   }
 
   /*
@@ -609,58 +1061,119 @@
   }
 
   /*
-    The lime highlight span. The single most recognisable element of the
-    brand. One heading per section, two or three words, never twice in the
-    same heading.
+    This was the lime highlight span, which set two or three words of every
+    section heading on a lime pill. Accenting one word of a headline in a
+    different colour is on the banned list, so the class is neutralised to
+    plain type rather than left to paint sand behind a word.
+
+    It stays as a no-op selector because SectionHeader still passes a
+    `highlight` prop from 30-odd call sites. Phase 5 deletes the prop and this
+    goes with it.
   */
   .brand-highlight {
-    border-radius: 1rem;
-    background: var(--brand);
-    color: var(--brand-ink);
-    padding: 0.125rem 0.75rem;
     white-space: nowrap;
   }
 }
 
 /* ==========================================================================
    5. MOTION
-   Subtle, mostly CSS only, no animation library.
+   --------------------------------------------------------------------------
+   The budget is small on purpose. One orchestrated, non user triggered moment
+   per viewport, and the hero band spends the whole allowance. Everything
+   below the hero gets exactly one automatic animation: the first line of a
+   section heading, masked.
+
+   What is NOT here, deliberately: a fade and slide up on every section, and a
+   lift on every card. Those two together are the most recognisable signature
+   of a generated page, and they were both in this file.
+
+   Transform, opacity and clip-path only. Nothing animates width, height, top
+   or left.
    ========================================================================== */
 
-/* Scroll reveal as progressive enhancement, zero JS */
-@supports (animation-timeline: scroll()) {
+/*
+  5.1 The section heading reveal.
+
+  The first line of the heading wipes up from under a mask. The rest of the
+  section is simply present: no opacity ramp, no translate, nothing staggered.
+  A reader scrolling fast sees a page that is already there rather than a page
+  assembling itself.
+
+  Scroll driven where the browser supports it, which is every browser in the
+  support matrix (Chrome/Edge 115+, Firefox 114+, Safari 26). No JS, no
+  IntersectionObserver, and nothing to hydrate. The @supports guard means a
+  browser without it renders the final state, which is correct rather than
+  degraded.
+*/
+@supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    .reveal-on-scroll {
-      animation: reveal-rise linear both;
+    .reveal-line > :first-child {
+      display: inline-block;
+      animation: reveal-line-wipe linear both;
       animation-timeline: view();
-      animation-range: entry 0% entry 42%;
+      animation-range: entry 10% entry 60%;
     }
-    @keyframes reveal-rise {
+    @keyframes reveal-line-wipe {
       from {
-        opacity: 0;
-        transform: translateY(28px);
+        clip-path: inset(0 0 100% 0);
+        transform: translateY(0.22em);
       }
       to {
-        opacity: 1;
+        clip-path: inset(0 0 -0.35em 0);
         transform: translateY(0);
       }
     }
   }
 }
 
-/* Rating bars grow from zero */
+/*
+  .reveal-on-scroll was that banned fade-and-slide-up, applied to six whole
+  sections on the home page alone. It is neutralised rather than deleted so
+  the existing call sites keep rendering while Phases 5 and 6 replace them
+  with .reveal-line on the heading. It intentionally does nothing.
+*/
+.reveal-on-scroll {
+  animation: none;
+}
+
+/*
+  5.2 Rating bars.
+
+  This used to animate `width` from 0, which is a layout-thrashing property
+  and explicitly off the list. It is a scaleX on a transform-origin of the
+  left edge instead: same picture, composited, and it cannot reflow the row
+  it sits in.
+
+  The bar is set by --fill (0 to 1) rather than a width percentage, so the
+  track keeps its full measure and only the fill scales.
+*/
 @media (prefers-reduced-motion: no-preference) {
-  .animate-fill-bar {
-    animation: fill-bar 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  @keyframes fill-bar {
-    from {
-      width: 0%;
+  @supports (animation-timeline: view()) {
+    .animate-fill-bar {
+      transform-origin: left center;
+      animation: fill-bar var(--ease-out-quint) both;
+      animation-timeline: view();
+      animation-range: entry 20% entry 70%;
+    }
+    @keyframes fill-bar {
+      from {
+        transform: scaleX(0);
+      }
+      to {
+        transform: scaleX(var(--fill, 1));
+      }
     }
   }
 }
 
-/* Honour the user's setting, always. This wins over everything above. */
+/*
+  Honour the user's setting, always. This wins over everything above.
+
+  Reduced motion renders the FINAL state instantly. It never renders a
+  degraded half animation, which is why this collapses durations to nothing
+  rather than removing the rules: an element mid-way through a clip-path
+  reveal with its animation deleted would be clipped forever.
+*/
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -911,523 +1424,3465 @@
 }
 
 /* ==========================================================================
-   7. HERO
+/* ==========================================================================
+   7. THE NAVBAR, THE LOAD SEQUENCE, AND THE HERO
    --------------------------------------------------------------------------
-   One orchestrated load sequence, no library. Every element enters on opacity
-   and transform only, offset by its own --d, so the order is readable from the
-   markup rather than from a timeline object.
+   These three live together because they share one composition: the bar has
+   no background of its own, so it sits directly on the hero's bone, and the
+   load sequence hands its mark from the middle of the screen to the bar.
+
+   The hero is where all of the site's boldness is spent. One object moves;
+   everything below this band holds still.
    ========================================================================== */
 
 @layer components {
-  /*
-    The one full bleed band on the site. No radius, no inset, no card.
-
-    --hero-nav is the sticky capsule's own height: its top padding plus h-16.
-    The band is pulled up by that much and pads itself back down by the same
-    amount, so the capsule floats on the hero canvas rather than on the page
-    background. In dark mode that closes a visible seam across the top of the
-    page, and it gives every child one honest number to clear the nav by.
-  */
-  .hero-band {
-    --hero-nav: 4.75rem;
-
-    /*
-      The band's own vertical padding, kept here as properties so the top and
-      the bottom can be reasoned about together.
-
-      The top used to be a full capsule height of clearance, which looked
-      considered on a tall window and pushed the counts and the marquee off the
-      bottom of a normal laptop: a 1920x1080 screen at the 125% scaling Windows
-      ships by default reports 1536x864, and browser chrome and the taskbar
-      leave roughly 700px of that. Taking the top back gives the proof row its
-      space without touching anything between them.
-    */
-    --hero-pad-top: 2.5rem;
-    --hero-pad-bottom: 3.5rem;
-
-    background: var(--hero-canvas);
-    border-bottom: 1px solid var(--hero-rule);
-    margin-top: calc(var(--hero-nav) * -1);
-    padding-top: var(--hero-nav);
-  }
-  @media (min-width: 640px) {
-    .hero-band {
-      --hero-nav: 5rem;
-      --hero-pad-top: 3rem;
-      --hero-pad-bottom: 4rem;
-    }
-  }
-  @media (min-width: 1024px) {
-    .hero-band {
-      --hero-pad-top: 2.5rem;
-      --hero-pad-bottom: 4rem;
-    }
-  }
-
   /* ------------------------------------------------------------------ */
-  /* 4.x The navbar: bare at rest, a capsule once the page has moved      */
+  /* The navbar: nothing at rest, an ink capsule once the page has moved  */
   /* ------------------------------------------------------------------ */
 
   /*
     Two states and one gesture.
 
-    At rest the bar is nothing. No fill, no border, no blur, no shadow, no
-    radius that anything could read. The logo sits on the container's own left
-    edge, on the same vertical as the hero headline below it, and the controls
-    sit on the right edge. The only filled object is the glossy CTA. A plate
-    drawn on a white page around links that are already legible is a widget
-    bolted above the content; without it the bar is simply where the page
-    starts.
+    AT REST the bar is nothing. No fill, no border, no blur, no shadow, no
+    radius that anything could read. The page's own background is the
+    navbar's background. The wordmark sits on the container's left edge, on
+    the same vertical as the hero headline below it. The only filled object
+    is the single CTA.
 
-    Scrolled, it contracts inward and materialises as glass.
+    A plate drawn around links that are already legible is a widget bolted
+    above the content; without it the bar is simply where the page starts,
+    and the empty top edge makes the hero read taller.
 
-    The contraction is the whole idea, so the order matters: the shell's
-    padding, the capsule's padding and its radius all start at once, and the
-    fill, border, shadow and blur follow --nav-glass-delay behind. The shape
-    moves first and the material catches up, which reads as one object
-    arriving rather than two properties crossfading past each other.
+    DOCKED, it contracts inward and materialises as an ink capsule.
+
+    The size and position change is animated by motion's `layout` on the
+    element itself, not here — a spring cannot be expressed in a CSS
+    transition, and the brief asks for a layout animation rather than a
+    fade-swap. What CSS owns is the material: the fill, the border, the
+    radius and the inner highlight. Those cross-fade under the spring, so the
+    shape moves first and the surface catches up, which reads as one object
+    arriving rather than two bars trading places.
   */
-  .nav-shell {
-    --nav-ease: cubic-bezier(0.16, 1, 0.3, 1);
-    --nav-dur: 320ms;
-    /*
-      The glass is deliberately behind the shape, but only just. The easing is
-      an expo-out curve, so the width is 83% travelled by 80ms; against that, a
-      70ms delay meant the capsule had finished contracting while it was still
-      85% transparent, and the eye read a snap followed by a fade rather than
-      one movement. 40ms puts the material about a quarter of a beat behind the
-      shape, and the shorter duration lands them together.
-    */
-    --nav-glass-delay: 40ms;
-    --nav-glass-dur: 260ms;
-
-    /*
-      How far the capsule pulls in. Measured against what the bar actually
-      holds, not chosen by eye: below 1024 the desktop links are hidden and the
-      contents come to about 300px, so a proportional inset has room to spare.
-
-      At 1024 the links appear and the contents jump to ~884px inside a 928px
-      shell. There is no room to contract there at all, and a flat 5% overflowed
-      it by 48px. So from lg the inset is a clamp that stays at zero until the
-      viewport is wide enough to afford it, then opens out to 72px a side by
-      1440. Continuous rather than stepped, which suits a gesture better than a
-      jump at a breakpoint would.
-    */
-    --nav-inset: 3%;
-
+  .nav-bare {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
     padding-inline: 0;
+    color: var(--text);
+    transition:
+      background-color var(--dur-component) var(--ease-in-out),
+      border-color var(--dur-component) var(--ease-in-out),
+      color var(--dur-component) var(--ease-in-out),
+      padding var(--dur-component) var(--ease-in-out);
   }
-  @media (min-width: 1024px) {
-    .nav-shell {
-      --nav-inset: clamp(0px, (100vw - 1080px) * 0.2, 4.5rem);
+
+  /*
+    The gloss is an inner highlight along the top edge, the way a real
+    surface catches light at its rim. It is not a gradient wash, and that
+    distinction holds for every glossy thing on this site.
+  */
+  .nav-capsule {
+    background: var(--surface-ink);
+    border: 1px solid var(--surface-ink);
+    border-radius: var(--radius-pill);
+    padding-inline: 0.75rem;
+    color: var(--text-on-ink);
+    box-shadow: var(--gloss-inset), var(--elev-dock);
+    transition:
+      background-color var(--dur-component) var(--ease-in-out),
+      border-color var(--dur-component) var(--ease-in-out),
+      color var(--dur-component) var(--ease-in-out),
+      padding var(--dur-component) var(--ease-in-out);
+  }
+  @media (min-width: 640px) {
+    .nav-capsule {
+      padding-inline: 1rem;
     }
   }
-  [data-nav-frosted="true"] .nav-shell {
-    padding-inline: var(--nav-inset);
-  }
 
-  .nav-capsule {
-    display: flex;
-    border-radius: 1rem;
-    padding-inline: 0;
-    background-color: transparent;
-    border: 1px solid transparent;
-    box-shadow: none;
+  /*
+    Nav links. The complete micro-interaction list is two things: the weight
+    goes 400 to 500, and an ink rule is drawn from the left. Both on the same
+    easing, both 160ms. Anything more reads as nervous rather than considered.
+
+    The underline is a scaleX on a pseudo-element rather than a border or a
+    text-decoration, so it composites and so it can be drawn directionally.
+  */
+  .nav-link {
+    position: relative;
+    padding: 0.5rem 0.75rem;
+    font-size: var(--text-small);
+    font-weight: 400;
+    color: inherit;
+    border-radius: var(--radius-pill);
     /*
-      blur(0) rather than none, because none does not interpolate: the blur
-      would snap in at the end of the transition instead of building with it.
+      Reserving the 500 weight's width up front. Without this the row
+      re-flows by a pixel or two on every hover as the letterforms widen, and
+      the neighbouring items visibly twitch.
     */
-    backdrop-filter: blur(0px) saturate(100%);
+    transition: font-weight var(--dur-micro) var(--ease-in-out);
   }
-  [data-nav-frosted="true"] .nav-capsule {
-    border-radius: 9999px;
-    padding-inline: 1.25rem;
-    background-color: var(--glass-fill-strong);
-    border-color: var(--glass-edge);
-    box-shadow:
-      inset 0 1px 0 var(--glass-sheen),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.06),
-      0 2px 4px -2px var(--glass-shadow),
-      0 26px 54px -28px var(--glass-shadow);
-    backdrop-filter: blur(20px) saturate(180%);
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.3rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform var(--dur-micro) var(--ease-in-out);
   }
-
-  /*
-    The mobile menu is a sheet, not part of the bar's two states. It is only
-    ever on screen because someone opened it, and it always needs a surface
-    under the links, so it carries the glass unconditionally.
-  */
-  .nav-sheet {
-    border-radius: 1.75rem;
-    background-color: var(--glass-fill-strong);
-    border: 1px solid var(--glass-edge);
-    box-shadow:
-      inset 0 1px 0 var(--glass-sheen),
-      0 2px 4px -2px var(--glass-shadow),
-      0 26px 54px -28px var(--glass-shadow);
-    /* Unprefixed only: written as a pair, Lightning CSS keeps just the last
-       declaration and the standard property is lost, which silently drops the
-       blur in every browser that does not take the -webkit- alias. Left alone,
-       it emits both. */
-    backdrop-filter: blur(20px) saturate(180%);
+  .nav-link:hover,
+  .nav-link:focus-visible,
+  .nav-link[data-active="true"] {
+    font-weight: 500;
+  }
+  .nav-link:hover::after,
+  .nav-link:focus-visible::after,
+  .nav-link[data-active="true"]::after {
+    transform: scaleX(1);
+  }
+  .nav-link:active {
+    transform: scale(0.98);
+    transition-duration: 120ms;
   }
 
-  /*
-    A control is bare at rest and cut from the pane once there is a pane to cut
-    it from. Hover still fills, in both states, because a control with no
-    pressed or hovered affordance is not a control.
-  */
+  /* The icon buttons: search, theme, the mobile trigger. */
   .nav-control {
-    border-radius: 9999px;
-    background-color: transparent;
-    border: 1px solid transparent;
-    box-shadow: none;
-  }
-  [data-nav-frosted="true"] .nav-control {
-    background-color: var(--glass-control);
-    border-color: var(--glass-edge);
-    box-shadow: inset 0 1px 0 var(--glass-sheen);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.5rem;
+    padding-inline: 0.625rem;
+    border-radius: var(--radius-pill);
+    color: inherit;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-micro) var(--ease-in-out),
+      transform 120ms var(--ease-in-out);
   }
   .nav-control:hover {
-    background-color: var(--glass-control-hover);
-    transform: translateY(-1px);
+    background: color-mix(in oklch, currentColor 10%, transparent);
   }
   .nav-control:active {
-    transform: translateY(0);
+    transform: scale(0.98);
   }
 
+  .nav-kbd {
+    align-items: center;
+    height: 1.25rem;
+    padding-inline: 0.375rem;
+    border-radius: 6px;
+    border: 1px solid color-mix(in oklch, currentColor 22%, transparent);
+    font-size: 0.6875rem;
+    font-family: inherit;
+    line-height: 1;
+  }
+
+  /* The one filled object at rest, and its inverse once the bar is ink. */
   /*
-    The active marker. A filled pill needs a plate to sit on, and at rest there
-    isn't one, so it would read as a grey lozenge floating on the page. At rest
-    it is a two pixel rule under the active link; scrolled, it grows into the
-    pill. Same element, so the horizontal slide between links is uninterrupted
-    either way.
+    Sand in both states now, matching every other primary button on the site.
+    It used to be ink at rest and sand only once docked, which meant the most
+    visible button changed colour as you scrolled past it.
+
+    The rim is what makes a sand pill work on bone: the fill alone is about
+    1.5:1 against the page, and a darkened mix of the fill gives the boundary
+    WCAG 1.4.11 asks for without adding a second colour.
   */
-  .nav-pill {
-    position: absolute;
-    top: calc(50% + 0.875rem);
-    height: 2px;
-    border-radius: 9999px;
-    background-color: var(--foreground);
-  }
-  [data-nav-frosted="true"] .nav-pill {
-    top: calc(50% - 1.125rem);
-    height: 2.25rem;
-    background-color: var(--muted);
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .nav-shell {
-      transition: padding var(--nav-dur) var(--nav-ease);
-    }
-    .nav-capsule {
-      transition:
-        padding var(--nav-dur) var(--nav-ease),
-        border-radius var(--nav-dur) var(--nav-ease),
-        background-color var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay),
-        border-color var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay),
-        box-shadow var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay),
-        backdrop-filter var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay);
-    }
-    .nav-control {
-      transition:
-        background-color 200ms ease,
-        border-color var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay),
-        box-shadow var(--nav-glass-dur) var(--nav-ease) var(--nav-glass-delay),
-        color 200ms ease,
-        transform 200ms ease;
-    }
-    .nav-pill {
-      transition:
-        left var(--nav-dur) var(--nav-ease),
-        width var(--nav-dur) var(--nav-ease),
-        top var(--nav-dur) var(--nav-ease),
-        height var(--nav-dur) var(--nav-ease),
-        background-color var(--nav-dur) var(--nav-ease);
-    }
-  }
-
-  /* A pill holding a pill: the field takes the same radius language as the
-     nav capsule, and the button inside it repeats the shape one size down. */
-  .hero-field {
-    border-radius: 9999px;
-  }
-
-  /*
-    The category chips, cut from the same pane as the nav controls: a
-    translucent fill, a hairline, and a lit top edge. They catch the light on
-    hover rather than continuously, because five pills all glinting on a loop
-    under the one button that should be drawing the eye is noise.
-  */
-  .hero-chip {
+  .nav-cta {
     position: relative;
     overflow: hidden;
     isolation: isolate;
-    border-radius: 9999px;
-    background: var(--glass-control);
-    border: 1px solid var(--glass-edge);
-    box-shadow: inset 0 1px 0 var(--glass-sheen);
-    transition:
-      background-color 0.2s ease,
-      color 0.2s ease,
-      transform 0.2s ease;
+    background: var(--sand);
+    color: var(--text-on-sand);
+    border: 1px solid color-mix(in oklch, var(--sand) 76%, var(--ink));
+    transition: background-color var(--dur-micro) var(--ease-in-out);
   }
-  .hero-chip:hover {
-    background: var(--glass-control-hover);
-    transform: translateY(-1px);
+  .nav-cta:hover,
+  .nav-cta-on-ink:hover {
+    background: color-mix(in oklch, var(--sand) 94%, var(--ink));
   }
-  .hero-chip::after {
+  /* The same sweep as every other button, and nothing else. The capsule CTA
+     was carrying a full specular finish and reading as a lozenge. */
+
+  .nav-cta::after {
     content: "";
     position: absolute;
     inset: 0;
-    pointer-events: none;
-    transform: translateX(-130%);
     background: linear-gradient(
-      105deg,
+      100deg,
       transparent 38%,
-      rgba(255, 255, 255, 0.55) 50%,
+      rgb(255 255 255 / 0.5) 50%,
       transparent 62%
     );
+    transform: translateX(-130%);
+    pointer-events: none;
+  }
+  .nav-cta:hover::after,
+  .nav-cta:focus-visible::after {
+    animation: btn-sweep 700ms linear;
   }
 
-  /* ------------------------------------------------------------------ */
-  /* The vendor marquee                                                   */
-  /* ------------------------------------------------------------------ */
+  .nav-cta-on-ink {
+    background: var(--sand);
+    color: var(--text-on-sand);
+  }
 
   /*
-    Two identical tracks side by side, translated by exactly half their
-    combined width, which lands copy B precisely where copy A began. The
-    trailing gap lives inside each list as padding rather than between the two
-    lists as a flex gap, because a gap between them would not be part of the
-    50% and the loop would jump by that much on every cycle.
+    The categories mega-sheet. Full width, revealed by a clip-path wipe from
+    the top edge.
+
+    clip-path rather than height: animating height reflows the entire
+    document under the sheet on every frame of the transition, and this sheet
+    is 300px tall over a page of table rows.
   */
-  .hero-marquee {
-    --marquee-fade: 1.5rem;
-    overflow: hidden;
-    /*
-      Belt to the grid's braces. A track that is max-content wide will happily
-      report that width as its own intrinsic contribution and push its
-      container open; hidden overflow does not stop that on its own.
-    */
-    min-width: 0;
-    mask-image: linear-gradient(
-      to right,
-      transparent 0,
-      #000 var(--marquee-fade),
-      #000 calc(100% - var(--marquee-fade)),
-      transparent 100%
-    );
-    -webkit-mask-image: linear-gradient(
-      to right,
-      transparent 0,
-      #000 var(--marquee-fade),
-      #000 calc(100% - var(--marquee-fade)),
-      transparent 100%
-    );
+  .category-sheet {
+    position: fixed;
+    inset-inline: 0;
+    top: 0;
+    z-index: 45;
+    padding-top: 5rem;
+    background: var(--surface-raised);
+    border-bottom: 1px solid var(--border);
+    animation: sheet-wipe var(--dur-component) var(--ease-out-quint) both;
   }
-  @media (min-width: 640px) {
-    .hero-marquee {
-      --marquee-fade: 2.5rem;
+  @keyframes sheet-wipe {
+    from {
+      clip-path: inset(0 0 100% 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
     }
   }
 
+  /*
+    Mobile navigation. A full screen sheet with large type, not a floating
+    card: on a phone the nav is the whole screen while it is open, and
+    pretending otherwise leaves a cramped list of 44px targets under a
+    capsule.
+  */
+  .nav-mobile-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    padding-top: 5rem;
+    background: var(--surface-page);
+    overflow-y: auto;
+    /* Clear of the compare tray, which stays docked above this. */
+    padding-bottom: 7rem;
+  }
+
+  .nav-mobile-link {
+    display: block;
+    padding-block: 0.875rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 1.5rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .nav-mobile-link[aria-current="page"] {
+    color: var(--text-accent);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .nav-mobile-link {
+      animation: mobile-item var(--dur-component) var(--ease-out-quint) both;
+    }
+    @keyframes mobile-item {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* The load sequence                                                    */
+  /* ------------------------------------------------------------------ */
+
+  /*
+    The overlay is bone, opaque, and covers the page for well under a second.
+
+    It is NOT a gate on rendering: the whole page is behind it, complete, from
+    the first byte. That matters for the LCP, because the hero headline is the
+    LCP element and it is painting underneath this the entire time.
+  */
+  /*
+    Hidden by default, shown ONLY when the blocking script has positively
+    decided the intro runs.
+
+    This ordering is the whole point. The overlay markup ships in the server
+    rendered HTML so that, when the intro does run, it is painted in the very
+    first frame rather than mounting after hydration and dropping onto a page
+    the reader has already seen. On every other load — a reload, a reduced
+    motion reader, a crawler that never runs the script — the default below
+    keeps it invisible from the start, and React unmounts it on the first
+    commit.
+  */
+  .intro-overlay {
+    display: none;
+  }
+
+  /*
+    The overlay itself paints nothing. The curtain underneath it carries the
+    bone, so it can retreat upward and uncover the page while the mark is still
+    travelling over the top of it. When one element did both, the mark faded out
+    halfway through its own journey and the handover to the navbar was never
+    actually visible.
+  */
+  :root[data-intro="run"] .intro-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    pointer-events: none;
+  }
+  .intro-curtain {
+    position: absolute;
+    inset: 0;
+    background: var(--surface-page);
+    animation: intro-curtain 420ms var(--ease-out-quint) 640ms both;
+  }
+  @keyframes intro-curtain {
+    from {
+      clip-path: inset(0 0 0 0);
+    }
+    to {
+      clip-path: inset(0 0 100% 0);
+    }
+  }
+
+  /*
+    Mark and wordmark sit as one lockup, so the mark is measured where it
+    actually is rather than at the centre of the screen. The wordmark keeps its
+    box after it fades, which is what keeps that measurement valid while the
+    mark flies.
+  */
+  .intro-lockup {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+  }
+
+  /*
+    The travel. --travel-x / --travel-y / --travel-scale are measured at runtime
+    against the real navbar mark, which is laid out but hidden, so the
+    destination is exact at every breakpoint rather than a magic offset that is
+    right at one width.
+  */
+  .intro-mark {
+    position: relative;
+    animation: intro-travel 380ms var(--ease-out-quint) 640ms both;
+  }
+  @keyframes intro-travel {
+    from {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    to {
+      transform: translate3d(var(--travel-x, 0), var(--travel-y, 0), 0)
+        scale(var(--travel-scale, 1));
+    }
+  }
+
+  /*
+    THE BEAT THAT MEANS SOMETHING. The mark is a balance, so it arrives by
+    finding its own level: it drops in tipped, overshoots the other way, and
+    settles flat. Everything else in this sequence is entrance and exit; this is
+    the only part that says what the brand is.
+
+    It sits on the mark itself rather than on .intro-mark, because that element
+    is already carrying the travel and a second transform would overwrite it.
+  */
+  .intro-mark .brand-logo-mark {
+    animation: intro-settle 620ms var(--ease-out-quint) 120ms both;
+  }
+  @keyframes intro-settle {
+    0% {
+      transform: rotate(-7deg) scale(0.86);
+      opacity: 0;
+    }
+    35% {
+      transform: rotate(4.5deg) scale(1.02);
+      opacity: 1;
+    }
+    65% {
+      transform: rotate(-1.8deg) scale(1);
+    }
+    85% {
+      transform: rotate(0.6deg) scale(1);
+    }
+    100% {
+      transform: rotate(0) scale(1);
+    }
+  }
+
+  /*
+    A 1px sand rule sweeping out through the mark: the beam of the scale, which
+    is the one figure the whole brand rests on. It draws from the centre in both
+    directions and then goes, so it reads as a beam being struck rather than a
+    line being drawn.
+  */
+  .intro-beam {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 46vw;
+    max-width: 26rem;
+    height: 1px;
+    margin-left: -23vw;
+    background: var(--sand);
+    transform-origin: center;
+    animation: intro-beam 460ms var(--ease-out-quint) 80ms both;
+  }
+  @keyframes intro-beam {
+    from {
+      transform: scaleX(0);
+      opacity: 1;
+    }
+    55% {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+    to {
+      transform: scaleX(1);
+      opacity: 0;
+    }
+  }
+
+  /*
+    The wordmark wipes in beside the mark, holds, then lifts away just before
+    the mark leaves. One animation rather than two, because two would need their
+    delays kept in sync by hand and they would drift the first time a beat moved.
+  */
+  .intro-word {
+    font-size: var(--text-display-l);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-weight: 500;
+    color: var(--text);
+    animation: intro-word 900ms var(--ease-out-quint) 200ms both;
+  }
+  @keyframes intro-word {
+    0% {
+      clip-path: inset(0 100% 0 0);
+      opacity: 1;
+      transform: translateY(0);
+    }
+    32% {
+      clip-path: inset(0 0 0 0);
+      opacity: 1;
+      transform: translateY(0);
+    }
+    52% {
+      clip-path: inset(0 0 0 0);
+      opacity: 1;
+      transform: translateY(0);
+    }
+    78%,
+    100% {
+      clip-path: inset(0 0 0 0);
+      opacity: 0;
+      transform: translateY(-0.5rem);
+    }
+  }
+  /*
+    While the intro is running, the navbar's own mark is hidden so the reader
+    sees one mark travelling rather than two marks, one of which teleports.
+
+    visibility, not display: visibility keeps the element in the layout, and
+    the intro measures its box to know where to travel to. display: none would
+    give a zero rect and the mark would fly to the top left corner.
+
+    Keyed off the attribute the blocking script sets before first paint, so
+    there is no frame in which both are visible.
+  */
+  :root[data-intro="run"] header [data-logo-mark] {
+    visibility: hidden;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* The hero                                                            */
+  /* ------------------------------------------------------------------ */
+
+  /*
+    The band. No gradient, no photograph, no glass, no card. Bone, and the
+    objects on it.
+
+    It is pulled up under the navbar and pads itself back down by the same
+    amount, so the bar floats on the hero's own ground rather than on a seam.
+  */
+  .hero-band {
+    --hero-nav: 4.75rem;
+    position: relative;
+    background: var(--surface-page);
+    margin-top: calc(var(--hero-nav) * -1);
+    padding-top: var(--hero-nav);
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+    padding-block: clamp(2rem, 4vh, 3rem) 2.5rem;
+  }
+  .hero-copy, .hero-object { min-width: 0; }
+  @media (min-width: 640px) {
+    .hero-band { --hero-nav: 5rem; }
+  }
+  @media (min-width: 1024px) {
+    .hero-grid {
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(2rem, 4vw, 4rem);
+      /* Content determines height; no empty minimum-height region or clipping. */
+      padding-block: clamp(1.5rem, 4svh, 3rem) clamp(2rem, 5svh, 3rem);
+    }
+  }
+
+  .hero-headline {
+    font-size: var(--text-display-hero);
+    line-height: 0.94;
+    letter-spacing: -0.032em;
+    font-weight: 500;
+    color: var(--text);
+    text-wrap: pretty;
+  }
+  /*
+    The measure is what was leaving a hole under the headline.
+
+    At 46ch the sentence broke after "businesses." and dropped "Free to use."
+    onto a line of its own, three words wide in a 605px column. The eye reads
+    that short orphan plus the empty wedge beside it as a gap in the layout
+    rather than as a line of text, which is what made the left column look
+    abandoned next to the object on the right.
+
+    36rem is wide enough to set the whole sentence on one line from 1280 up
+    and still well inside the 68ch the type rules cap body copy at. Below
+    1024 it wraps, which is correct: there the column is genuinely narrow and
+    two full lines read as two full lines.
+  */
+  .hero-sub {
+    margin-top: 1rem;
+    max-width: 36rem;
+    font-size: var(--text-body);
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  .hero-search-slot {
+    margin-top: 1.5rem;
+    /*
+      The field runs the full width of its column rather than to an arbitrary
+      max-width. On a directory the search box is the product, so it is the
+      largest control in the composition.
+    */
+    max-width: 34rem;
+  }
+
+  /*
+    The field: paper fill, one hairline, pill radius, generous height. Its
+    border goes to the control weight on focus-within, which is the 3:1 the
+    accessibility rules want on something you operate.
+  */
+  .hero-field {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    width: 100%;
+    padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    transition: border-color var(--dur-micro) var(--ease-in-out);
+  }
+  .hero-field:focus-within {
+    border-color: var(--border-control);
+  }
+  .hero-field-icon {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex-shrink: 0;
+    color: var(--text-muted);
+  }
+  .hero-field-input {
+    height: 2.75rem;
+    min-width: 0;
+    flex: 1;
+    background: transparent;
+    outline: none;
+    font-size: 0.9375rem;
+    color: var(--text);
+  }
+  .hero-field-input::placeholder {
+    color: var(--text-muted);
+  }
+  .hero-field-button {
+    height: 2.75rem;
+    flex-shrink: 0;
+    padding-inline: 1.5rem;
+    font-size: var(--text-small);
+  }
+  @media (min-width: 640px) {
+    .hero-field-button {
+      padding-inline: 2rem;
+    }
+  }
+
+  /*
+    Popular categories. Flat outlined pills, from live data. They carry the
+    signal the placeholder cross-fade was going to carry, and unlike the
+    cross-fade they are real links.
+  */
+  .hero-chips {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .hero-chip {
+    padding: 0.375rem 0.875rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    font-size: var(--text-small);
+    color: var(--text-muted);
+    transition:
+      color var(--dur-micro) var(--ease-in-out),
+      border-color var(--dur-micro) var(--ease-in-out);
+  }
+  .hero-chip:hover {
+    color: var(--text);
+    border-color: var(--border-control);
+  }
+  .hero-chip:active {
+    transform: scale(0.98);
+  }
+
+  /* ---- live comparison: the panels ARE the pans ---------------------- */
+
+  /*
+    One object, not a beam sitting near two cards.
+
+    Two earlier attempts are worth knowing about, because this is the merge of
+    them. The first drew a large flat balance on a sand ellipse: decoration,
+    illustrating the idea of comparison instead of performing one. The second
+    put two data panels under a floating beam, and the beam read as unrelated
+    to them. Here the panels ARE the pans, and beam, post, base and ropes are
+    1px ink strokes holding them up.
+
+    EVERYTHING COMES FROM ONE NUMBER. --lean is a fraction in [-1, 1] written
+    by HeroCompare onto .hero-scale and inherited by the whole subtree.
+    Positive means the LEFT product SINKS, because this is a weighing scale and
+    the better-rated product is the heavier one. Four transforms read it:
+
+      beam         rotate      -6.2deg at full lean, which DROPS its LEFT end
+      each rope    rotate      +6.2deg about its own apex, so it hangs plumb
+      panel A      translateY  +2.75cqw
+      panel B      translateY  -2.75cqw
+
+    The arithmetic is what ties the object together. The beam ends sit 25.5%
+    of the width either side of the pivot, so rotating 6.2 degrees drops an end
+    by 25.5 x sin(6.2deg) = 2.75% of the width, which is exactly what the
+    panels travel. Expressing that travel in cqw rather than px is the reason
+    the rope feet stay welded to the panel corners at every column width and
+    not only at the one the numbers were tuned against. At the 32rem cap it is
+    14px of travel; at 1024, where the column is narrower, 11px. Enough to
+    read as weight, never enough to disturb the layout.
+
+    Driving four transforms from one number rather than four springs also means
+    the parts cannot drift out of step during the settle, which is the frame
+    anybody watching is actually looking at.
+  */
+  .hero-compare {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 32rem;
+    margin-inline: auto;
+    /*
+      A rotating object sweeps a wider box than it occupies at rest: the beam
+      wrapper is 80px tall, so at full lean its lower corners swing 80 x
+      sin(6.2deg) = 8.6px outside the column. This padding is where they go.
+      It also does the optical alignment for free — the panels and the pause
+      control both end on the same line, because they share the same inset
+      rather than one of them being nudged out to meet the other.
+    */
+    padding-inline: 0.5625rem;
+  }
+  .hero-scale {
+    /* cqw resolves against this box, which is also the width the two panel
+       columns divide up. Both halves of the mechanism therefore measure
+       themselves against the same number. */
+    container-type: inline-size;
+    color: var(--text);
+  }
+
+  /*
+    The instrument. Fixed height, so nothing below it can be moved by a tilt.
+    Below 1024 it is not drawn at all and the panels stack as plain cards.
+  */
+  .hero-rig {
+    display: none;
+    position: relative;
+    /*
+      4.5rem of instrument plus one full travel of headroom, so the end of the
+      beam that rises has somewhere to rise into. Without it the top of the
+      object is clipped by its own box at exactly the moment it tilts.
+    */
+    height: calc(5rem + 2.75cqw);
+  }
+  .hero-rig-post {
+    position: absolute;
+    top: 2.75cqw;
+    left: 50%;
+    width: 1px;
+    height: 2.375rem;
+    transform: translateX(-50%);
+    background: currentColor;
+  }
+  /*
+    The base: small, wide, low, geometric. A precision instrument foot rather
+    than a sketch of one. Fixed pixel size, so it stays the same object at
+    every width instead of growing with the column.
+  */
+  .hero-rig-base {
+    position: absolute;
+    top: calc(2.375rem + 2.75cqw);
+    left: 50%;
+    transform: translateX(-50%);
+    stroke: currentColor;
+    stroke-width: 1;
+    stroke-linecap: square;
+  }
+  .hero-rig-beam {
+    position: absolute;
+    inset: 2.75cqw 0 0;
+    transform-origin: 50% 0;
+    rotate: calc(var(--lean) * -6.2deg);
+  }
+  .hero-rig-bar {
+    position: absolute;
+    top: 0;
+    left: 24.5%;
+    right: 24.5%;
+    height: 1px;
+    background: currentColor;
+  }
+  /*
+    Each hanger counter-rotates about its own apex, which sits on the end of
+    the beam. The two rotations compose to a pure translation, so the ropes
+    hang plumb at every angle and their feet land exactly as far down as the
+    panel they hold. Rotating the ropes rigidly with the beam instead would
+    swing the outer foot nearly twice as far as the panel travels and pull the
+    object apart at precisely the moment it has to look like one thing.
+  */
+  .hero-rig-hanger {
+    position: absolute;
+    top: 0;
+    width: 49%;
+    height: 100%;
+    transform-origin: 50% 0;
+    rotate: calc(var(--lean) * 6.2deg);
+  }
+  .hero-rig-hanger-a { left: 0; }
+  .hero-rig-hanger-b { right: 0; }
+  /*
+    The ropes sit one step back from the beam. Beam, post and base are the
+    instrument and take full ink; the ropes are thread, and at this span a
+    full-ink diagonal crossing the whole panel width out-weighs the numbers it
+    is holding up. Same family, one step quieter — not a second colour.
+  */
+  .hero-rig-hanger svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    stroke: var(--text-muted);
+    stroke-width: 1;
+  }
+
+  /*
+    The pans. The column gap is a percentage rather than a rem so the panel
+    edges land on exactly 49% and 51% at every width, which is where the rope
+    feet are drawn. A rem gap would leave them a few pixels short at one width
+    and overlapping at another, and a rope that misses its corner is the whole
+    illusion gone.
+
+    padding-bottom reserves the full downward travel so a dropping panel can
+    never reach the row beneath it. Transforms do not reflow, so this is
+    clearance rather than layout: CLS is 0 with or without it.
+  */
+  .hero-pans {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+  @media (min-width: 1024px) {
+    .hero-rig { display: block; }
+    .hero-pans {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2%;
+      padding-bottom: 2.75cqw;
+    }
+    .hero-pan-a { transform: translateY(calc(var(--lean) * 2.75cqw)); }
+    .hero-pan-b { transform: translateY(calc(var(--lean) * -2.75cqw)); }
+  }
+
+  /*
+    Logo, name, rating and price are one dense block. The panels used to read
+    as empty wireframes with the rating and the price floating far apart, which
+    made two products look like two forms rather than one comparison.
+  */
+  .hero-panel {
+    height: 100%;
+    padding: 0.875rem 0.875rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-raised);
+  }
+  /*
+    The winning signal, and there is exactly one: a 1px sand rule along the top
+    edge. No badge, no glow, no fill, no shadow. On a site whose claim is that
+    rankings cannot be bought, the quietest available mark is the credible one.
+  */
+  .hero-pan[data-win="true"] .hero-panel { border-top-color: var(--sand); }
+
+  .hero-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .hero-panel-name {
+    min-width: 0;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.3;
+    /* Nothing truncates. A name too long for the panel is a data problem and
+       is shortened at the data layer, never with an ellipsis. */
+    overflow-wrap: anywhere;
+  }
+  /*
+    The rating is the number the whole comparison turns on, so it is the one
+    figure carrying real weight. Everything else sets at body size or below.
+  */
+  .hero-panel-rating {
+    display: flex;
+    align-items: baseline;
+    column-gap: 0.25rem;
+    margin-top: 0.5rem;
+  }
+  .hero-panel-score {
+    font-size: 1.875rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .hero-panel-outof {
+    font-size: var(--text-small);
+    color: var(--text-muted);
+  }
+  .hero-panel-reviews {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .hero-panel-price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.375rem;
+    margin-top: 0.375rem;
+    font-size: var(--text-small);
+  }
+  .hero-panel-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .hero-panel-diff {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+  }
+  /*
+    <Figure> closes word spacing by 0.12em so "6 196" reads as one number at
+    display sizes. At the 12px these figures set at, that is wider than the
+    narrow no-break space itself and "3 250" collapses to "3250" — the defect
+    the component exists to prevent, inverted by size. The stats band carries
+    the same override for the same reason.
+  */
+  .hero-panel .data { word-spacing: normal; }
+
+  /*
+    The verdict in words, for the widths where the beam is not drawn. Above
+    1024 the tilt already says it, and saying it twice would put two things in
+    one block competing for the same attention.
+  */
+  .hero-compare-verdict {
+    font-size: var(--text-small);
+    line-height: 1.5;
+    color: var(--text-muted);
+    text-wrap: pretty;
+  }
+  @media (min-width: 1024px) {
+    .hero-compare-verdict { display: none; }
+  }
+
+  /*
+    One baseline: the link, then the pair controls. They were small, far apart
+    and detached, which left the dots reading as decoration rather than as
+    something to press.
+  */
+  .hero-compare-foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    min-height: 2.75rem;
+  }
+  .hero-compare-link {
+    font-size: var(--text-small);
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    color: var(--text);
+  }
+  .hero-compare-controls {
+    display: flex;
+    align-items: center;
+  }
+  .hero-dots {
+    display: flex;
+    align-items: center;
+  }
+  /*
+    44px touch targets. The visible dot is 8px and the button around it is the
+    target, so the row reads as three small marks and presses like three real
+    buttons.
+  */
+  .hero-dot,
+  .hero-cycle {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    color: var(--text-muted);
+  }
+  .hero-dot > span {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-control);
+    transition:
+      background-color var(--dur-micro) var(--ease-in-out),
+      transform var(--dur-micro) var(--ease-in-out);
+  }
+  .hero-dot:hover > span {
+    background: var(--border-control);
+  }
+  /* Unmistakable rather than merely different: filled, full-strength ink, and
+     visibly larger than the two it is not. */
+  .hero-dot[data-active="true"] > span {
+    background: var(--text);
+    border-color: var(--text);
+    transform: scale(1.4);
+  }
+  /* The same ring language as an inactive dot, so the control looks like a
+     control before anybody hovers it. */
+  .hero-cycle::before {
+    content: "";
+    position: absolute;
+    inset: 0.5625rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-control);
+  }
+  .hero-cycle > svg {
+    /* Swapping the icon out from under the pointer otherwise eats its
+       pointerout event and leaves the hover pause latched after a click. */
+    pointer-events: none;
+  }
+
+  /* ---- proof: the marquee and the counts ----------------------------- */
+
+  .hero-proof {
+    border-top: 1px solid var(--border);
+  }
+
+  .hero-marquee {
+    --marquee-duration: 60s;
+    --marquee-fade: 8%;
+    padding-block: 1.75rem;
+    overflow: hidden;
+    /*
+      The run fades out at both edges rather than being cut, so a logo does
+      not appear to be sliced by the viewport.
+    */
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 var(--marquee-fade),
+      #000 calc(100% - var(--marquee-fade)),
+      transparent
+    );
+  }
   .hero-marquee-track {
     display: flex;
     width: max-content;
   }
+  /*
+    No fixed height here. Each mark carries its own measured height inline —
+    see VendorMarquee and lib/logo-optics.ts — because one height for every
+    logo is exactly the bounding-box sizing that made the row uneven.
 
+    The run centres them, so marks of different heights share a centre line
+    rather than a baseline, which is how a row of mixed logos reads as level.
+  */
+  .hero-marquee-logo { object-fit: contain; }
   .hero-marquee-run {
     display: flex;
     align-items: center;
-    gap: 2.75rem;
-    padding-inline-end: 2.75rem;
+    gap: 3.5rem;
+    padding-right: 3.5rem;
+    flex-shrink: 0;
   }
-
   /*
-    Optical sizing. A square glyph and a horizontal lockup set to the same
-    height do not read as the same weight: the lockup is five times as wide and
-    swamps everything beside it. Wordmarks are set shorter and capped, so the
-    row reads as one row.
-  */
-  .hero-mark {
-    width: auto;
-    object-fit: contain;
-    height: 1.75rem;
-  }
-  .hero-mark[data-shape="wordmark"] {
-    height: 1.125rem;
-    max-width: 7.5rem;
-  }
-  @media (min-width: 640px) {
-    .hero-mark {
-      height: 2rem;
-    }
-    .hero-mark[data-shape="wordmark"] {
-      height: 1.125rem;
-      max-width: 7rem;
-    }
-  }
+    Logos are neutralised to a flat ink silhouette and come back to full
+    colour on hover. A row of eighteen vendor brand colours under a bone hero
+    is a fruit salad; one texture is what a proof row should be.
 
-  /*
-    A wordmark is type, and type has to be legible before it is anything else.
-    Several of these are set in near black: measured against the dark canvas
-    they come in at a luminance of 44 to 47 on a ground of 25, which is a mark
-    you cannot read. Every brand guideline that ships a dark background version
-    ships it in mono white, so that is what the dark canvas gets. Square glyphs
-    are logo marks rather than type, they carry their own contrast, and they
-    keep full brand colour in both themes.
+    brightness(0), NOT grayscale(1). grayscale maps each vendor colour to its
+    own grey, so a pale mark landed near white and effectively vanished on
+    bone — the row read as half empty rather than uniform, which is the
+    opposite of what it is there to say. brightness(0) discards the source
+    colour entirely and paints every mark the same solid ink, and the opacity
+    then sets one legible weight for all eighteen.
   */
-  .dark .hero-mark[data-shape="wordmark"] {
+  .hero-marquee-run img {
+    filter: brightness(0);
+    opacity: 0.6;
+    transition:
+      filter var(--dur-micro) var(--ease-in-out),
+      opacity var(--dur-micro) var(--ease-in-out);
+  }
+  .hero-marquee-run li:hover img {
+    filter: none;
+    opacity: 1;
+  }
+  /*
+    In dark the silhouette has to invert or it is ink on near-black. Inverting
+    a pure black mark gives pure white, which the same 0.6 then takes to a
+    bone-weight grey — the identical relationship to the page, the other way
+    up.
+  */
+  .dark .hero-marquee-run img {
     filter: brightness(0) invert(1);
-    opacity: 0.92;
+  }
+  .dark .hero-marquee-run li:hover img {
+    filter: none;
   }
 
-  /*
-    The single rule that opens the proof band, with the second and last of the
-    hero's two lime placements sitting on its head. It is one hairline, not
-    two: the lime is a segment of the same line, marking where the band starts
-    and lining up with the container's left edge and everything under it.
-  */
-  .hero-proof::before {
-    content: "";
-    position: absolute;
-    top: -1px;
-    left: 0;
-    width: 3.5rem;
-    height: 2px;
-    background: var(--brand);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  /* Entry. opacity + translateY, 620ms, staggered by --d. */
-  .hero-rise {
-    animation: hero-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms) both;
-  }
-  @keyframes hero-rise {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-  }
-
-  /* The blur is on the headline alone, so the first line resolves into focus. */
-  .hero-rise-blur {
-    animation: hero-rise-blur 680ms cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms)
-      both;
-  }
-  @keyframes hero-rise-blur {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-      filter: blur(6px);
-    }
-  }
-
-  .hero-settle {
-    animation: hero-settle 1500ms cubic-bezier(0.18, 1.5, 0.35, 1) var(--d, 0ms)
-      both;
-    transform-origin: 50% 94%;
-  }
-  @keyframes hero-settle {
-    from {
-      transform: rotate(-3deg);
-    }
-    to {
-      transform: rotate(0deg);
-    }
-  }
-
-  /*
-    The shine sweep. Off-canvas by default, so with reduce on the pseudo
-    element simply never enters the button and there is nothing to settle.
-  */
-  .btn-shine::after {
-    animation: btn-shine 4.5s ease-in-out 1.4s infinite;
-  }
-  @keyframes btn-shine {
-    0% {
-      transform: translateX(-130%);
-    }
-    18%,
-    100% {
-      transform: translateX(130%);
-    }
-  }
-
-  /* One pass across the chip, on hover, then done. */
-  .hero-chip:hover::after,
-  .hero-chip:focus-visible::after {
-    animation: chip-shine 850ms ease-out;
-  }
-  @keyframes chip-shine {
-    from {
-      transform: translateX(-130%);
-    }
-    to {
-      transform: translateX(130%);
-    }
-  }
-
-  /*
-    The marquee. One period is exactly one copy of the list, and the duration
-    comes in per instance as --marquee-duration so the speed stays constant
-    however many brands the catalogue yields.
-
-    Under reduce the whole block is skipped, which leaves the track at
-    translateX(0): a static row of logos, clipped and faded at the right edge
-    by the mask, with nothing left mid transition.
-  */
-  .hero-marquee-track {
-    animation: hero-marquee var(--marquee-duration, 45s) linear infinite;
-    will-change: transform;
-  }
-  .hero-marquee:hover .hero-marquee-track,
-  .hero-marquee:focus-within .hero-marquee-track {
-    animation-play-state: paused;
-  }
-  @keyframes hero-marquee {
-    to {
-      transform: translateX(-50%);
-    }
-  }
-
-  /*
-    Ambient float, starting after the sequence has landed. This one runs
-    forever, so it is the only hero element that earns a will-change.
-  */
-  .hero-float {
-    animation: hero-float 6s ease-in-out 1.7s infinite;
-    will-change: transform;
-  }
-  @keyframes hero-float {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-6px);
-    }
-  }
-}
-
-/*
-  Leaving the viewport. Scroll driven through view(), so there is no listener
-  and nothing forces a reflow. It sits on a wrapper rather than on the entering
-  elements, so the two animations never fight over the same properties.
-*/
-@supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    .hero-exit {
-      animation: hero-exit linear both;
-      animation-timeline: scroll(root block);
-      animation-range: 0 70vh;
+    .hero-marquee-track {
+      /*
+        Exactly -50%, because the run is rendered twice. Any other distance
+        leaves a visible jump once per cycle.
+      */
+      animation: marquee var(--marquee-duration) linear infinite;
     }
-    @keyframes hero-exit {
+    .hero-marquee:hover .hero-marquee-track {
+      animation-play-state: paused;
+    }
+    @keyframes marquee {
       to {
-        opacity: 0;
-        transform: translateY(-28px);
+        transform: translateX(-50%);
       }
     }
   }
+  @media (prefers-reduced-motion: reduce) {
+    /*
+      Not a slower marquee: no marquee. The row wraps and sits still, which is
+      the final state.
+    */
+    .hero-marquee {
+      mask-image: none;
+    }
+    .hero-marquee-track {
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    .hero-marquee-run:last-child {
+      display: none;
+    }
+    .hero-marquee-run {
+      flex-wrap: wrap;
+      gap: 2rem;
+    }
+  }
+
+  /*
+    Three plainly typeset figures on the bone, separated by hairline rules.
+    Not cards, not tiles, not glass.
+  */
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--border);
+  }
+  .hero-stat {
+    padding-block: 1.5rem;
+    padding-inline: 0 1rem;
+  }
+  .hero-stat + .hero-stat {
+    border-left: 1px solid var(--border);
+    padding-inline: 1.5rem 1rem;
+  }
+  .hero-stat-label {
+    margin-top: 0.375rem;
+    font-size: var(--text-small);
+    color: var(--text-muted);
+  }
+  .hero-stat-value {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .hero-stat-value .data {
+    word-spacing: normal;
+  }
+  .count-up {
+    display: inline-grid;
+    text-align: start;
+  }
+  .count-up-reserve, .count-up-value {
+    grid-area: 1 / 1;
+  }
+  .count-up-reserve { visibility: hidden; }
+}
+
+/* ==========================================================================
+   8. SECTIONS
+   --------------------------------------------------------------------------
+   Everything below the hero. One rule governs the lot: nothing here moves on
+   its own except the first line of a heading. No section fades up, no card
+   lifts, no grid staggers.
+   ========================================================================== */
+
+@layer components {
+  /*
+    The section heading. It is the statement in the well, not the rail label —
+    what looks like the heading is the heading, and the document outline
+    agrees with the visual hierarchy rather than working around it.
+  */
+  .section-heading {
+    font-size: var(--text-h2);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    max-width: 22ch;
+    text-wrap: balance;
+  }
+
+  /* ---- shared homepage marks and facts ------------------------------- */
+
+  /*
+    data-bleed: the artwork is scaled to 180% and cropped by design, so the box
+    always reports more content than it shows. That is the mark being framed,
+    not a layout bug, and the screenshot rig has an opt-out for exactly this.
+    It only started reporting once the footer mark got big enough to clear the
+    audit’s minimum-width threshold.
+  */
+  .brand-logo-mark {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    border-radius: 8px;
+    background: transparent;
+  }
+  .brand-logo-mark > img {
+    position: absolute;
+    width: 180%;
+    height: 180%;
+    max-width: none;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  /*
+    Which of the two marks shows, by the surface it sits on.
+
+    This replaces a `brightness(0) invert(0.93)` filter that flattened the mark
+    to one near-white silhouette on every dark surface. It solved the
+    legibility problem and lost the sand in the pans, which is half of the
+    logo. See BrandLogo and scripts/make-logo-variant.ts.
+  */
+  .brand-logo-mark > img[data-on="dark"] { display: none; }
+  .dark .brand-logo-mark > img[data-on="light"],
+  .nav-capsule .brand-logo-mark > img[data-on="light"],
+  .site-footer .brand-logo-mark > img[data-on="light"] { display: none; }
+  .dark .brand-logo-mark > img[data-on="dark"],
+  .nav-capsule .brand-logo-mark > img[data-on="dark"],
+  .site-footer .brand-logo-mark > img[data-on="dark"] { display: block; }
+  .home-vendor-mark { display: block; flex-shrink: 0; object-fit: contain; }
+  .dark .home-vendor-wordmark { filter: brightness(0) invert(1); opacity: 0.85; }
+  .home-detail-label { font-size: 0.8125rem; line-height: 1.5; color: var(--text-muted); }
+  .home-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 1.125rem;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  .home-rating > svg { color: var(--text-accent); fill: var(--sand); }
+  .home-rating > span:last-child { font-size: 0.8125rem; color: var(--text-muted); }
+
+  /* ---- the category index -------------------------------------------- */
+
+  .category-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  @media (min-width: 640px) {
+    .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .category-grid > li { min-width: 0; }
+  .category-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.375rem 1.5rem 1.125rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-raised);
+    color: var(--text);
+    transition: border-color var(--dur-micro) var(--ease-in-out);
+  }
+  .category-card:is(:hover, :focus-visible) { border-color: var(--border-control); }
+  .category-card:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+  .category-card-heading { display: flex; align-items: center; gap: 0.875rem; }
+  .category-symbol { display: grid; place-items: center; flex-shrink: 0; width: 2.75rem; height: 2.75rem; border-radius: 10px; background: color-mix(in oklch, var(--sand) 20%, var(--surface-raised)); color: var(--text-accent); }
+  .category-card-heading > div { min-width: 0; flex: 1; }
+  .category-card-heading > svg { flex-shrink: 0; margin-top: 0.2rem; color: var(--text-muted); }
+  .category-card-name { font-size: 1.375rem; font-weight: 500; line-height: 1.2; letter-spacing: -0.025em; }
+  .category-card-count { margin-top: 0.25rem; font-size: var(--text-small); color: var(--text-muted); }
+  .category-card-logos { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; min-height: 2.125rem; margin-block: 1.125rem; }
+  .category-card-leader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-top: auto;
+    padding-top: 0.875rem;
+    border-top: 1px solid var(--border);
+  }
+  .category-card-product { margin-top: 0.125rem; font-size: 0.9375rem; font-weight: 500; }
+  .category-card-score { flex-shrink: 0; text-align: right; }
+  .category-card-score .home-rating { justify-content: end; font-size: 1.375rem; }
+  @media (max-width: 639px) {
+    .category-card { padding: 1.125rem; }
+    .category-card-name { font-size: 1.25rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .category-card { transition: none; } }
+
+  /* ---- how we rate ----------------------------------------------------- */
+
+  .how-we-rate {
+    display: grid;
+    gap: 0;
+  }
+  .how-step {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 0 1.25rem;
+    padding-block: 2rem;
+    border-top: 1px solid var(--color-line);
+  }
+  .how-step:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  @media (min-width: 900px) {
+    .how-step {
+      grid-template-columns: 2rem minmax(0, 1fr) 10rem;
+      gap: 0 2.5rem;
+      align-items: start;
+    }
+  }
+  .how-step-number {
+    font-size: 1.375rem;
+    line-height: 1.2;
+    color: var(--color-text-muted);
+  }
+  .how-step-body {
+    min-width: 0;
+  }
+  .how-step-evidence {
+    grid-column: 2;
+    margin-top: 1.5rem;
+  }
+  @media (min-width: 900px) {
+    .how-step-evidence {
+      grid-column: 3;
+      margin-top: 0;
+      text-align: right;
+    }
+  }
+
+  /* ---- comparison pairs ---------------------------------------------- */
+
+  .h2h-list { display: grid; gap: 1rem; }
+  .h2h-list > li { min-width: 0; }
+  .h2h-category { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-size: 0.8125rem; color: var(--text-muted); }
+  .h2h {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-raised);
+    transition: border-color var(--dur-micro) var(--ease-in-out);
+  }
+  .h2h:is(:hover, :focus-visible) { border-color: var(--border-control); }
+  .h2h-split { display: grid; grid-template-columns: minmax(0, 1fr) 2.5rem minmax(0, 1fr); }
+  .h2h-axis { position: relative; display: grid; place-items: center; }
+  .h2h-axis::before { content: ""; position: absolute; top: 1.5rem; bottom: 1.5rem; width: 1px; background: var(--border); }
+  .h2h-axis > span {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface-raised);
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+  .h2h-side { min-width: 0; padding: 1.5rem; }
+  .h2h-product { display: flex; align-items: center; gap: 0.875rem; min-height: 2.5rem; }
+  .h2h-product h3 { font-size: 1.125rem; font-weight: 500; line-height: 1.3; letter-spacing: -0.015em; }
+  .h2h-facts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 1rem; margin-top: 1.125rem; }
+  .h2h-price { font-size: 1rem; font-weight: 500; line-height: 1.5; }
+  .h2h-foot { display: flex; justify-content: end; align-items: center; margin-top: auto; border-top: 1px solid var(--border); padding: 0.875rem 1.25rem; font-size: 0.8125rem; color: var(--text-muted); }
+  .h2h-link-label { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text); }
+  @media (min-width: 1100px) { .h2h-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 767px), (min-width: 1100px) {
+    .h2h-split { grid-template-columns: minmax(0, 1fr) 1.75rem minmax(0, 1fr); }
+    .h2h-side { padding: 1.125rem 0.875rem; }
+    .h2h-product { display: grid; grid-template-rows: 2.5rem minmax(2.6rem, auto); align-items: center; gap: 0.625rem; min-height: 0; }
+    .h2h-product h3 { font-size: 1rem; }
+    .h2h-facts { grid-template-columns: minmax(0, 1fr); gap: 0.875rem; margin-top: 0.5rem; }
+    .h2h-price { font-size: 0.9375rem; }
+    .h2h-facts .home-rating { font-size: 1.5rem; }
+    .h2h-foot { padding: 0.75rem 0.875rem; }
+    .h2h-axis > span { width: 1.75rem; height: 1.75rem; }
+  }
+
+  /* ---- the ranked list -------------------------- */
+
+  .top-rated { position: relative; }
+  .ranked-list-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem 1rem; margin-bottom: 0.75rem; font-size: 0.8125rem; color: var(--text-muted); }
+  .ranked-list-heading a { display: inline-flex; align-items: center; gap: 0.375rem; }
+  .ranked-list-heading a:hover { color: var(--text); text-decoration: underline; }
+  .ranked-list { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-raised); padding-inline: 1.25rem; list-style: none; }
+  .ranked-row { display: grid; grid-template-columns: minmax(0, 1fr) 6.5rem 10rem 5.5rem; gap: 1rem; align-items: center; padding-block: 1.25rem; }
+  .ranked-row + .ranked-row { border-top: 1px solid var(--border); }
+  .ranked-product { display: flex; align-items: center; gap: 0.875rem; min-width: 0; }
+  .ranked-product > div { min-width: 0; }
+  .ranked-product-name { font-size: 1rem; font-weight: 500; line-height: 1.3; }
+  .ranked-product-name:hover { color: var(--text-accent); text-decoration: underline; }
+  .ranked-price-amount { font-size: 0.9375rem; font-weight: 500; }
+  .ranked-compare { display: flex; align-items: center; gap: 0.125rem; font-size: 0.75rem; cursor: pointer; }
+  @media (max-width: 767px) {
+    .ranked-list { padding-inline: 0.875rem; }
+    .ranked-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) 3.25rem; gap: 0.875rem 0.625rem; }
+    .ranked-product { grid-column: 1 / 3; grid-row: 1; flex-wrap: wrap; gap: 0.5rem 0.875rem; }
+    .ranked-rating { grid-column: 1; }
+    .ranked-price { grid-column: 2 / -1; }
+    .ranked-compare { grid-column: 3; grid-row: 1; flex-direction: column; gap: 0; font-size: 0.6875rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .h2h { transition: none; } }
+
+  /*
+    The rating bar. Sand on an ink-12% track is a 1.70:1 fill, which is legal
+    here and only here because the numeral is stated beside it: the bar
+    reinforces a value already given as text, so it is decoration rather than
+    the sole carrier of the information (WCAG 1.4.1). The bronze edge is what
+    gives the fill a findable boundary.
+  */
+  .rating-track {
+    position: relative;
+    display: block;
+    width: 5rem;
+    height: 0.375rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-line);
+    overflow: hidden;
+  }
+  .rating-fill {
+    position: absolute;
+    inset: 0;
+    transform-origin: left center;
+    transform: scaleX(var(--fill, 1));
+    background: var(--color-sand);
+    border-right: 1px solid var(--color-bronze);
+    border-radius: var(--radius-pill);
+  }
+
+  /* ---- homepage buying guides ----------------------------------------- */
+
+  .buying-guides { padding-block: var(--section-1); }
+  .buying-guides-heading { display: flex; justify-content: space-between; align-items: end; gap: 1.5rem; margin-bottom: 2rem; }
+  .buying-guides-heading > div > p { margin-top: 0.75rem; color: var(--text-muted); }
+  .buying-guides-all { display: inline-flex; align-items: center; gap: 0.625rem; flex-shrink: 0; font-size: 0.875rem; text-decoration: underline; text-underline-offset: 4px; }
+  .buying-guides-grid { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 1rem; }
+  .buying-guides-grid > li { min-width: 0; }
+  .buying-guide { display: flex; flex-direction: column; height: 100%; padding: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-raised); transition: border-color var(--dur-micro) var(--ease-in-out); }
+  .buying-guide-lead { background: color-mix(in oklch, var(--sand) 25%, var(--surface-raised)); }
+  .buying-guide-lead .buying-guide-meta,
+  .buying-guide-lead .buying-guide-body p { color: var(--text); }
+  .buying-guide:is(:hover, :focus-visible) { border-color: var(--border-control); }
+  .buying-guide:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+  .buying-guide-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; color: var(--text-muted); font-size: 0.8125rem; }
+  .buying-guide-meta > span:last-child { display: inline-flex; align-items: center; gap: 0.25rem; }
+  .buying-guide-body { padding-block: 1.75rem; }
+  .buying-guide-body > svg { color: var(--text-accent); margin-bottom: 1rem; }
+  .buying-guide-body h3 { font-size: clamp(1.375rem, 2vw, 1.75rem); font-weight: 500; line-height: 1.2; letter-spacing: -0.025em; text-wrap: pretty; }
+  .buying-guide-body p { margin-top: 1rem; font-size: 0.875rem; line-height: 1.6; color: var(--text-muted); }
+  .buying-guide-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.875rem; font-weight: 500; }
+  .buying-guide-arrow { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border: 1px solid var(--border-control); border-radius: 50%; }
+  .buying-guide-lead .buying-guide-arrow { background: var(--ink); color: var(--bone); border-color: var(--ink); }
+  @media (max-width: 899px) {
+    .buying-guides-heading { align-items: start; flex-direction: column; }
+    .buying-guides-grid { grid-template-columns: minmax(0, 1fr); }
+    .buying-guide { padding: 1.25rem; }
+    .buying-guide-body { padding-block: 1.25rem; }
+    .buying-guide-body h3 { font-size: 1.5rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .buying-guide { transition: none; } }
+
+  /* ---- testimonials ---------------------------------------------------- */
+
+  .quote-card {
+    break-inside: avoid;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius);
+    background: var(--color-surface-raised);
+  }
+
+  /* ---- the compare tray ------------------------------------------------ */
+
+  /*
+    Docked to the bottom of the viewport, above everything except a modal, and
+    it follows the reader across routes. This is the one element that makes
+    the marketing site behave like the product.
+
+    It is a fixed ink bar, so it takes the same gloss as the nav capsule: the
+    two floating surfaces on the site are one material.
+  */
+  .compare-tray {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 60;
+    background: var(--color-surface-ink);
+    color: var(--color-text-on-ink);
+    box-shadow: var(--gloss-inset), var(--elev-tray);
+    /* Clear of the home indicator on an iPhone. */
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: tray-in var(--dur-component) var(--ease-out-quint) both;
+  }
+  @keyframes tray-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  .compare-tray-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-block: 0.875rem;
+  }
+  .compare-tray-items {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .compare-tray-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.375rem 0.375rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in oklch, var(--color-bone) 12%, transparent);
+    font-size: var(--text-small);
+  }
+  .compare-tray-name {
+    max-width: 14ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .compare-tray-remove {
+    display: grid;
+    place-items: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: var(--radius-pill);
+    color: inherit;
+    opacity: 0.7;
+  }
+  .compare-tray-remove:hover {
+    opacity: 1;
+    background: color-mix(in oklch, var(--color-bone) 18%, transparent);
+  }
+  /*
+    The empty slot is stated, not implied. With one product chosen the tray
+    otherwise looks finished and nothing tells the reader it is waiting.
+  */
+  .compare-tray-slot {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.875rem;
+    border-radius: var(--radius-pill);
+    border: 1px dashed color-mix(in oklch, var(--color-bone) 30%, transparent);
+    font-size: var(--text-small);
+    opacity: 0.7;
+  }
+  .compare-tray-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .compare-tray-clear {
+    font-size: var(--text-small);
+    color: inherit;
+    opacity: 0.75;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .compare-tray-clear:hover {
+    opacity: 1;
+  }
+  .compare-tray-go {
+    --btn-bg: var(--color-sand);
+    --btn-ink: var(--color-text-on-sand);
+    display: inline-flex;
+    align-items: center;
+    height: 2.25rem;
+    padding-inline: 1.25rem;
+    font-size: var(--text-small);
+  }
+
+  /*
+    Anything fixed to the bottom of the page has to clear the tray when the
+    tray is up, or it sits underneath it. The attribute is set on <html> by
+    the provider rather than passed down as a prop, so unrelated components
+    can react to it without knowing about the compare state.
+  */
+  :root[data-compare-open="true"] body {
+    padding-bottom: 5rem;
+  }
+
+  /* ---- the compare checkbox ------------------------------------------- */
+
+  /*
+    A real checkbox role with a real 3:1 boundary, because it is the control
+    the whole tray depends on. This is one of the few places --border-control
+    is allowed.
+  */
+  .compare-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: background-color var(--dur-micro) var(--ease-in-out);
+  }
+  .compare-toggle:hover {
+    background: var(--color-muted);
+  }
+  .compare-toggle:active {
+    transform: scale(0.98);
+  }
+  .compare-toggle-box {
+    display: block;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 5px;
+    border: 1px solid var(--border-control);
+    transition:
+      background-color var(--dur-micro) var(--ease-in-out),
+      border-color var(--dur-micro) var(--ease-in-out);
+  }
+  .compare-toggle[aria-checked="true"] .compare-toggle-box {
+    background: var(--color-surface-ink);
+    border-color: var(--color-surface-ink);
+    position: relative;
+  }
+  /*
+    The tick is two borders on a rotated pseudo-element, not an icon and not a
+    gradient. An icon would need a second element in every row and a gradient
+    is banned outright; this inherits the box's colour and cannot go missing.
+  */
+  .compare-toggle[aria-checked="true"] .compare-toggle-box::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 0.3rem;
+    height: 0.55rem;
+    border: solid var(--color-bone);
+    border-width: 0 1.5px 1.5px 0;
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+}
+
+@layer components {
+  /*
+    The one full-bleed ink band a page is allowed. Radius 0 — a rounded panel
+    floating in the flow is a card, and a card is not a band. It breaks out of
+    the container by spanning the viewport and re-containing its own content.
+  */
+  .ink-band {
+    background: var(--color-surface-ink);
+    color: var(--color-text-on-ink);
+    padding-block: var(--section-4);
+  }
+  .ink-band .rail p {
+    color: color-mix(in oklch, var(--color-bone) 64%, transparent);
+  }
+  .ink-band .rail .data {
+    color: var(--color-bone);
+  }
+}
+
+@layer components {
+  /* ---- the footer ------------------------------------------------------ */
+
+  /*
+    The end of every page, and now the ONLY ink surface at the bottom of one.
+
+    The newsletter used to be a separate full-bleed ink band sitting directly
+    above this, which put two dark slabs back to back with the horizon strip
+    stranded between them as a stripe of bone. The form moved in here, the band
+    went, and the bottom of the page is one surface again.
+
+    The element itself paints nothing: the horizon strip carries the page
+    background and the silhouette, .footer-body carries the ink. Painting ink
+    on .site-footer would put ink behind the silhouette's sky and the drawing
+    would disappear.
+  */
+  .site-footer {
+    background: transparent;
+    color: var(--color-text-on-ink);
+  }
+
+  /*
+    The horizon strip. See components/public/FooterHorizon.tsx for what is
+    drawn and why; these are the rules that make it hold at every width.
+
+    It paints --color-surface-page behind itself so the silhouette always has
+    sky to sit against, whatever section happens to end above it.
+
+    The svg keeps its aspect and is never squashed: min-width holds the artwork
+    at a legible scale on a phone and lets the sides crop instead, and
+    max-height stops it growing to 264px at 1920. Cropping is free in both
+    directions because the artwork below the ground line is solid and the ink
+    body underneath is the same colour, so there is no seam to expose.
+  */
+  .footer-horizon {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow: hidden;
+    background: var(--color-surface-page);
+    color: var(--color-surface-ink);
+  }
+  /*
+    THE STRIP HAS NO HEIGHT OF ITS OWN. It takes the height the artwork wants
+    at the current width, and that is deliberate.
+
+    An earlier version capped it at 11rem to stop it reaching 264px at 1920.
+    That cap is what produced the ledge: the svg is a flex item, the default
+    align-items: stretch handed it the capped 176px height while its width
+    stayed at 100%, and a 1920x176 box does not match the artwork ratio — so
+    preserveAspectRatio letterboxed the drawing into the middle 1280px and the
+    ground stopped 320px short of each edge. What showed either side was the
+    flat top of the footer body, which reads as a step in the ground.
+
+    There is no cap that avoids this. At a fixed height and a growing width you
+    either letterbox (a ledge at both ends) or slice (the tops cut off the
+    towers). Scaling with the viewport is what a full-bleed illustration should
+    do anyway, so align-items is pinned to flex-start and the height is left
+    alone. min-width is the one exception, and it only bites below ~700px,
+    where the sides crop instead of the artwork shrinking to a smudge.
+  */
+  .footer-horizon svg {
+    flex: none;
+    align-self: flex-start;
+    width: 100%;
+    min-width: 44rem;
+    height: auto;
+    display: block;
+  }
+  /*
+    Sand hairline first, ink body over it. The fill covers every stroke that
+    falls inside the union, so only the outer horizon keeps its edge.
+
+    non-scaling-stroke because the svg is scaled by width: without it the line
+    is 1.2px at 1280 and 0.6px at 390, and a hairline that thins with the
+    viewport disappears on the device most likely to be looking at it.
+  */
+  .footer-horizon-edge {
+    fill: none;
+    stroke: var(--color-sand);
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+  }
+  .footer-horizon-edge * { vector-effect: non-scaling-stroke; }
+  .footer-horizon-fill { fill: currentColor; stroke: none; }
+
+  .footer-body {
+    background: var(--color-surface-ink);
+    padding-block: var(--section-1) 2.5rem;
+  }
+  /* Clear of the compare tray when it is docked. */
+  :root[data-compare-open="true"] .footer-body {
+    padding-bottom: 6rem;
+  }
+
+  /* ---- masthead: the name, and the one action -------------------------- */
+
+  /*
+    The wordmark and the sign-up share the top row so the footer opens with a
+    statement rather than a sitemap. Below 1024 they stack and the form comes
+    second, which is the right order: the name identifies, the form asks.
+  */
+  .footer-masthead {
+    display: grid;
+    gap: 3rem;
+    align-items: start;
+  }
+  @media (min-width: 1024px) {
+    .footer-masthead {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: 4rem;
+    }
+  }
+  .footer-brand-block { min-width: 0; }
+  .footer-tagline {
+    margin-top: 1.25rem;
+    max-width: 30ch;
+    line-height: 1.6;
+    color: color-mix(in oklch, var(--color-bone) 66%, transparent);
+  }
+
+  .footer-signup { min-width: 0; }
+  .footer-signup-heading {
+    font-size: var(--text-h2);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    max-width: 20ch;
+    color: var(--color-bone);
+  }
+  .footer-signup-note {
+    margin-top: 1rem;
+    max-width: 52ch;
+    line-height: 1.6;
+    color: color-mix(in oklch, var(--color-bone) 72%, transparent);
+  }
+  .footer-signup-fine {
+    margin-top: 1rem;
+    max-width: 52ch;
+    font-size: var(--text-small);
+    line-height: 1.6;
+    color: color-mix(in oklch, var(--color-bone) 56%, transparent);
+  }
+
+  /* ---- the product, demonstrated --------------------------------------- */
+
+  /*
+    Three live head-to-heads with both vendor marks on them.
+
+    A directory footer that lists only its own pages is describing itself; one
+    that shows two named products being weighed against each other is showing
+    what the site does. These are also three internal links into compare pages,
+    which is where the organic traffic this business runs on actually lands.
+  */
+  .footer-compare {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid color-mix(in oklch, var(--color-bone) 14%, transparent);
+  }
+  /*
+    Centred, and the only centred block on the page. Everything else here is
+    left aligned on the rail; this row is three short pills with no column to
+    align to, and hanging them off the left edge under a full-width rule read
+    as an unfinished row rather than a set.
+  */
+  .footer-compare-title {
+    font-size: var(--text-small);
+    font-weight: 400;
+    text-align: center;
+    color: color-mix(in oklch, var(--color-bone) 52%, transparent);
+  }
+  .footer-compare-list {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  /*
+    A pill, because that is this site's shape for something you press. Border
+    at bone 20% so it reads as pressable without being hovered; sand on hover,
+    the same move the links and the social marks make.
+  */
+  .footer-compare-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid color-mix(in oklch, var(--color-bone) 20%, transparent);
+    font-size: var(--text-small);
+    color: var(--color-bone);
+    transition:
+      border-color var(--dur-micro) var(--ease-in-out),
+      color var(--dur-micro) var(--ease-in-out);
+  }
+  .footer-compare-pill:hover {
+    border-color: var(--color-sand);
+    color: var(--color-sand);
+  }
+  .footer-compare-vs {
+    color: color-mix(in oklch, var(--color-bone) 52%, transparent);
+  }
+
+  /* ---- contact and the sitemap ----------------------------------------- */
+
+  .footer-directory {
+    display: grid;
+    gap: clamp(2rem, 4vw, 4.5rem);
+    margin-top: 3rem;
+    padding-top: 3rem;
+    border-top: 1px solid color-mix(in oklch, var(--color-bone) 14%, transparent);
+  }
+
+  /*
+    One warm panel gives this part of the footer a starting point. The category
+    rows are direct routes into the product, while the quieter utility links
+    remain visible without competing with the primary action. Everything is
+    server rendered; hover and focus feedback need no client-side state.
+  */
+  .footer-discover {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: clamp(1.5rem, 2.4vw, 2.75rem);
+    border-radius: 1.25rem;
+    background: var(--color-sand);
+    color: var(--color-ink);
+  }
+  .footer-discover-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+  .footer-discover-eyebrow > span {
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .footer-discover-heading {
+    margin-top: clamp(1.75rem, 3vw, 3rem);
+    font-family: var(--font-heading);
+    font-size: clamp(2.15rem, 3.3vw, 3.75rem);
+    font-weight: 500;
+    line-height: 1.06;
+    letter-spacing: -0.055em;
+  }
+  .footer-discover-copy {
+    margin-top: 1.25rem;
+    max-width: 32ch;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+  }
+  .footer-discover-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    width: 100%;
+    min-height: 3.5rem;
+    margin-top: 1.75rem;
+    padding: 0.375rem 0.375rem 0.375rem 1.25rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-ink);
+    color: var(--color-bone);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .footer-discover-arrow {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid color-mix(in oklch, var(--color-sand) 45%, transparent);
+    border-radius: 50%;
+    color: var(--color-sand);
+    transition: background 200ms ease, color 200ms ease;
+  }
+  .footer-discover-arrow svg { transition: transform 200ms ease; }
+  .footer-discover-cta:is(:hover, :focus-visible) .footer-discover-arrow {
+    background: var(--color-sand);
+    color: var(--color-ink);
+  }
+  .footer-discover-cta:is(:hover, :focus-visible) svg { transform: rotate(45deg); }
+  .footer-discover a:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 4px; }
+  .footer-explore {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1rem;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 2rem;
+  }
+  .footer-explore a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 2.75rem;
+    font-size: 0.8125rem;
+    text-underline-offset: 0.3em;
+  }
+  .footer-explore a:is(:hover, :focus-visible) { text-decoration: underline; }
+  @media (min-width: 1024px) {
+    .footer-directory { grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.65fr); }
+  }
+
+  .footer-muted { color: color-mix(in oklch, var(--color-bone) 66%, transparent); }
+  .footer-contact {
+    margin-top: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: var(--text-small);
+  }
+
+  .footer-social {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+  /*
+    A 44px target around an 18px glyph, ringed so it reads as a control without
+    being hovered. Same language as the hero's pair controls and the compare
+    pills above.
+  */
+  .footer-social-link {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid color-mix(in oklch, var(--color-bone) 20%, transparent);
+    color: color-mix(in oklch, var(--color-bone) 76%, transparent);
+    transition:
+      color var(--dur-micro) var(--ease-in-out),
+      border-color var(--dur-micro) var(--ease-in-out);
+  }
+  .footer-social-link:hover {
+    color: var(--color-sand);
+    border-color: var(--color-sand);
+  }
+
+  .footer-nav {
+    display: grid;
+    align-content: start;
+    min-width: 0;
+    gap: 2rem;
+  }
+  .footer-category-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.75rem;
+    margin-top: 1.125rem;
+  }
+  .footer-category-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3.5rem;
+    padding: 0.625rem 0.375rem;
+    border-bottom: 1px solid color-mix(in oklch, var(--color-bone) 12%, transparent);
+    color: color-mix(in oklch, var(--color-bone) 85%, transparent);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
+  }
+  .footer-category-icon { flex: none; width: 1.125rem; height: 1.125rem; color: var(--color-sand); stroke-width: 1.5; }
+  .footer-category-arrow {
+    flex: none;
+    margin-left: auto;
+    color: color-mix(in oklch, var(--color-bone) 40%, transparent);
+    transition: transform 200ms ease, color 200ms ease;
+  }
+  .footer-category-link:is(:hover, :focus-visible) {
+    color: var(--color-sand);
+    border-color: var(--color-sand);
+    background: color-mix(in oklch, var(--color-sand) 5%, transparent);
+  }
+  .footer-category-link:is(:hover, :focus-visible) .footer-category-arrow {
+    transform: translate(2px, -2px);
+    color: var(--color-sand);
+  }
+  .footer-utility-nav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 2rem;
+  }
+  .footer-column-title {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--color-bone);
+  }
+  .footer-column-list {
+    margin-top: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    font-size: var(--text-small);
+  }
+  .footer-utility-nav > :last-child .footer-column-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 1.5rem;
+    align-items: start;
+  }
+  .footer-column-list .footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.75rem;
+    padding-block: 0.5rem;
+    text-underline-offset: 0.3em;
+  }
+  .footer-column-list .footer-link svg {
+    flex: none;
+    opacity: 0;
+    transform: translateX(-3px);
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+  .footer-column-list .footer-link:is(:hover, :focus-visible) svg { opacity: 1; transform: translateX(0); }
+  .footer-nav a:focus-visible { outline: 2px solid var(--color-sand); outline-offset: 4px; }
+  @media (max-width: 639px) {
+    .footer-category-list { column-gap: 1rem; }
+    .footer-category-link { gap: 0.5rem; font-size: 0.8125rem; }
+    .footer-category-arrow { width: 0.75rem; }
+    .footer-utility-nav { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; }
+    .footer-utility-nav > :last-child .footer-column-list { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .footer-link {
+    font-size: var(--text-small);
+    color: color-mix(in oklch, var(--color-bone) 76%, transparent);
+    transition: color var(--dur-micro) var(--ease-in-out);
+  }
+  .footer-link:hover {
+    color: var(--color-sand);
+  }
+
+  /* ---- the base --------------------------------------------------------- */
+
+  .footer-base {
+    margin-top: 3rem;
+    border-top: 1px solid color-mix(in oklch, var(--color-bone) 14%, transparent);
+    font-size: var(--text-small);
+    color: color-mix(in oklch, var(--color-bone) 68%, transparent);
+  }
+  .footer-trust-row {
+    display: grid;
+    gap: 2rem clamp(2rem, 6vw, 6rem);
+    align-items: center;
+    padding-block: clamp(2rem, 4vw, 3.5rem);
+    border-bottom: 1px solid color-mix(in oklch, var(--color-bone) 14%, transparent);
+  }
+  .footer-editorial-note { min-width: 0; }
+  .footer-trust-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-sand);
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+  .footer-trust-eyebrow::before {
+    content: "";
+    width: 1.75rem;
+    height: 1px;
+    background: currentColor;
+  }
+  .footer-principle {
+    margin-top: 1.125rem;
+    font-family: var(--font-heading);
+    font-size: clamp(1.75rem, 2.65vw, 2.75rem);
+    font-weight: 500;
+    letter-spacing: -0.045em;
+    line-height: 1.1;
+    color: var(--color-bone);
+  }
+  .footer-disclosure {
+    margin-top: 1rem;
+    max-width: 52ch;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: color-mix(in oklch, var(--color-bone) 76%, transparent);
+  }
+  .footer-policy-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    margin-top: 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-sand);
+    text-underline-offset: 0.3em;
+  }
+  .footer-policy-link svg { transition: transform 200ms ease; }
+  .footer-policy-link:is(:hover, :focus-visible) { text-decoration: underline; }
+  .footer-policy-link:is(:hover, :focus-visible) svg { transform: translate(2px, -2px); }
+
+  /*
+    A single inset panel groups the market facts. The location gets a full row
+    so it never has to compete with two short values on a narrow screen. These
+    values still come from site configuration; the treatment adds no claims.
+  */
+  .footer-signals {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 0;
+    min-width: 0;
+    padding: 1.5rem clamp(1.5rem, 2.5vw, 2.5rem);
+    border: 1px solid color-mix(in oklch, var(--color-bone) 12%, transparent);
+    border-radius: 1.25rem;
+    background: color-mix(in oklch, var(--color-bone) 4%, transparent);
+  }
+  .footer-signals .footer-market {
+    grid-column: 1 / -1;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid color-mix(in oklch, var(--color-bone) 12%, transparent);
+  }
+  .footer-signals > div:last-child {
+    padding-left: 1.5rem;
+    border-left: 1px solid color-mix(in oklch, var(--color-bone) 12%, transparent);
+  }
+  .footer-signals dt {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: color-mix(in oklch, var(--color-bone) 72%, transparent);
+  }
+  .footer-signals dt svg { flex: none; color: var(--color-sand); stroke-width: 1.5; }
+  .footer-signals dd {
+    margin-top: 0.625rem;
+    font-size: 1.75rem;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    color: var(--color-bone);
+  }
+  .footer-market dd { font-size: clamp(1.0625rem, 1.5vw, 1.375rem); line-height: 1.4; }
+
+  /*
+    The promise is the closing headline; the logo signs it. Keeping the lockup
+    at a readable brand size avoids the old stretched wordmark and leaves room
+    for the two lines to carry the same emphasis at desktop and mobile widths.
+  */
+  .footer-signature {
+    container-type: inline-size;
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
+    align-items: center;
+    gap: 2rem;
+    padding-block: clamp(2.5rem, 5vw, 4.75rem);
+  }
+  .footer-signature-brand { min-width: 0; }
+  .footer-endmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.875rem;
+    color: var(--color-bone);
+    border-radius: 0.25rem;
+    transition: color var(--dur-micro) var(--ease-in-out);
+  }
+  .footer-endmark-name {
+    font-size: clamp(2.75rem, 4.5vw, 4.75rem);
+    font-weight: 500;
+    letter-spacing: -0.055em;
+    line-height: 1;
+  }
+  .footer-endmark:hover,
+  .footer-endmark:focus-visible { color: var(--color-sand); }
+  .footer-endmark-caption {
+    margin-top: 1rem;
+    max-width: 30ch;
+    font-size: 0.875rem;
+    line-height: 1.65;
+    color: color-mix(in oklch, var(--color-bone) 72%, transparent);
+  }
+  .footer-closing-line {
+    font-family: var(--font-heading);
+    font-size: clamp(2.25rem, 5.6cqw, 5.75rem);
+    font-weight: 500;
+    letter-spacing: -0.055em;
+    line-height: 1.06;
+    text-align: right;
+    color: var(--color-bone);
+  }
+  .footer-closing-line span { display: inline-block; margin-top: 0.08em; color: var(--color-sand); }
+  .footer-colophon {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 1px solid color-mix(in oklch, var(--color-bone) 14%, transparent);
+    padding-top: 1.25rem;
+    font-size: 0.8125rem;
+  }
+  .footer-copyright { margin: 0; }
+  .footer-back-top {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 0.875rem;
+    min-height: 2.75rem;
+    color: var(--color-bone);
+    text-underline-offset: 0.3em;
+  }
+  .footer-back-top-icon {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    border: 1px solid color-mix(in oklch, var(--color-sand) 50%, transparent);
+    color: var(--color-sand);
+    transition: background 200ms ease, color 200ms ease;
+  }
+  .footer-back-top-icon svg { transition: transform 200ms ease; }
+  .footer-back-top:is(:hover, :focus-visible) .footer-back-top-icon { background: var(--color-sand); color: var(--color-ink); }
+  .footer-back-top:is(:hover, :focus-visible) svg { transform: translateY(-2px); }
+  .footer-base a:focus-visible { outline: 2px solid var(--color-sand); outline-offset: 4px; }
+  @media (min-width: 1024px) {
+    .footer-trust-row { grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.85fr); }
+  }
+  @media (max-width: 767px) {
+    .footer-signature { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+    .footer-closing-line { grid-row: 1; font-size: clamp(2rem, 10cqw, 4rem); text-align: left; }
+    .footer-signature-brand { grid-row: 2; }
+    .footer-endmark-name { font-size: 2.75rem; }
+    .footer-colophon { align-items: center; }
+    .footer-copyright { max-width: 24ch; line-height: 1.6; }
+    .footer-back-top { gap: 0.5rem; font-size: 0.75rem; }
+    .footer-column-list .footer-link { min-height: 2.75rem; padding-block: 0.625rem; }
+  }
+}
+
+@layer components {
+  /* ---- the product grid ------------------------------------------------ */
+
+  /*
+    Twenty products, four across. The card is a paper surface with one hairline
+    and no shadow: §12 bans a grid of identical rounded cards with identical
+    shadows, and what stops these reading that way is that the DATA differs —
+    a vendor mark, a rating bar at its own length, a price. Nothing lifts, and
+    nothing scales. The border goes to control weight on hover and that is all.
+  */
+  .showcase-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+  @media (min-width: 640px) {
+    .showcase-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .showcase-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1280px) {
+    .showcase-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+
+  .showcase-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-raised);
+    transition: border-color var(--dur-micro) var(--ease-in-out);
+  }
+  .showcase-card:hover {
+    border-color: var(--border-control);
+  }
+
+  .showcase-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 3rem;
+  }
+  /*
+    Twenty vendor marks at full chroma is a fruit salad — the same problem the
+    proof marquee solves with brightness(0). Here the fix is gentler, because a
+    product card has to stay recognisable: the marks hold their hue at about
+    half strength, which is enough to tell Xero blue from Sage green, and come
+    back to full colour on the card the reader is actually looking at.
+  */
+  .showcase-head img {
+    filter: saturate(0.5);
+    transition: filter var(--dur-micro) var(--ease-in-out);
+  }
+  .showcase-card:hover .showcase-head img {
+    filter: saturate(1);
+  }
+  .showcase-name {
+    margin-top: 0.875rem;
+    font-size: 1.0625rem;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    /* Nothing truncates. A name too long is a data problem. */
+    overflow-wrap: anywhere;
+  }
+  .showcase-link { color: var(--text); }
+  .showcase-link:hover { color: var(--text-accent); }
+  /* The name is the link, but the whole card is the target for a pointer. */
+  .showcase-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+  }
+  .showcase-card { position: relative; }
+
+  .showcase-category {
+    margin-top: 0.125rem;
+    font-size: var(--text-small);
+    color: var(--text-muted);
+  }
+
+  .showcase-rating {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.875rem;
+  }
+  .showcase-score {
+    font-size: 1.75rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+  .showcase-outof {
+    margin-left: 0.125rem;
+    font-size: var(--text-small);
+    color: var(--text-muted);
+  }
+  .showcase-reviews {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  /* The <Figure> word-spacing correction over-tightens at 12px and closes the
+     thousands separator. Same override the hero panels and the stats carry. */
+  .showcase-card .data { word-spacing: normal; }
+
+  /*
+    Sand fill on an ink track with a bronze edge, driven by --fill rather than
+    a width so it composites and cannot reflow the card. The numeral above it
+    is what makes it legible: sand on paper is 1.70:1 on its own.
+  */
+  .showcase-bar {
+    margin-top: 0.625rem;
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--border);
+    overflow: hidden;
+  }
+  .showcase-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--sand);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--bronze) 45%, transparent);
+    transform-origin: left center;
+    transform: scaleX(var(--fill, 1));
+  }
+
+  .showcase-price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.375rem;
+    /* Pushed to the bottom so every card's price and buttons share a line,
+       whatever the name above them did. */
+    margin-top: auto;
+    padding-top: 1rem;
+  }
+  .showcase-from {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .showcase-amount {
+    font-size: 1.0625rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .showcase-vat {
+    flex-basis: 100%;
+    margin-top: 0.125rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  /*
+    Two actions, and they are deliberately unequal. "Compare" is the site's own
+    product and stays quiet; "Visit site" is the affiliate link and carries the
+    vendor's brand colour, which is also how a reader can tell the two apart at
+    a glance. Both sit above the card-wide link overlay.
+  */
+  /*
+    The two secondary actions share a row and split it evenly; the affiliate
+    link takes the row below on its own. Both rows sit above the card-wide
+    link overlay, or the buttons would not be clickable.
+  */
+  .showcase-actions {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.875rem;
+  }
+  .card-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.5rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-small);
+    white-space: nowrap;
+  }
+  .card-cta-secondary,
+  .card-cta-compare {
+    border: 1px solid var(--border-control);
+    color: var(--text);
+    transition:
+      background-color var(--dur-micro) var(--ease-in-out),
+      color var(--dur-micro) var(--ease-in-out);
+  }
+  .card-cta-secondary:hover,
+  .card-cta-compare:hover,
+  .card-cta-compare[data-selected="true"] {
+    background: var(--text);
+    color: var(--surface-page);
+  }
+  .showcase-visit {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    height: 2.5rem;
+    margin-top: 0.5rem;
+    padding-inline: 0.875rem;
+    /* Without this the label breaks to "Visit / site" in a narrow card. */
+    white-space: nowrap;
+  }
+  /*
+    No dark override needed any more: the base .btn-glossy fill is sand in both
+    themes, which is also what fixed this button vanishing into the ink card.
+  */
+}
+
+/* ==========================================================================
+   9. TEMPLATE PAGES
+   ========================================================================== */
+
+@layer components {
+  /* ---- the category listing -------------------------------------------- */
+
+  .listing {
+    display: grid;
+    gap: 2.5rem;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  @media (min-width: 1024px) {
+    .listing {
+      grid-template-columns: 15rem minmax(0, 1fr);
+      gap: 4rem;
+    }
+  }
+  .listing > * {
+    min-width: 0;
+  }
+
+  .listing-rail-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  @media (min-width: 1024px) {
+    .listing-rail-inner {
+      position: sticky;
+      top: 6rem;
+    }
+  }
+  .listing-group {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .listing-group:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .listing-choice {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: var(--text-small);
+    cursor: pointer;
+  }
+  /*
+    A real <input type="checkbox">, restyled, rather than a div pretending to
+    be one. It is focusable, it is announced correctly, it works with the
+    label, and it responds to the space bar without a keydown handler.
+
+    --border-control, not --border: this is something you operate, so its
+    boundary needs 3:1.
+  */
+  .listing-checkbox {
+    appearance: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    flex-shrink: 0;
+    border-radius: 5px;
+    border: 1px solid var(--border-control);
+    background: var(--color-surface-raised);
+    cursor: pointer;
+    position: relative;
+    transition:
+      background-color var(--dur-micro) var(--ease-in-out),
+      border-color var(--dur-micro) var(--ease-in-out);
+  }
+  .listing-checkbox:checked {
+    background: var(--color-surface-ink);
+    border-color: var(--color-surface-ink);
+  }
+  .listing-checkbox:checked::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 0.3rem;
+    height: 0.55rem;
+    border: solid var(--color-bone);
+    border-width: 0 1.5px 1.5px 0;
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  .listing-clear {
+    align-self: flex-start;
+    font-size: var(--text-small);
+    color: var(--color-text-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /*
+    The result count follows the reader down. It is the answer to what the
+    filters just did, and without it somebody halfway down has to scroll back
+    to find out how many things they are looking at.
+  */
+  .listing-summary {
+    position: sticky;
+    top: 4.5rem;
+    z-index: 10;
+    padding-block: 0.875rem;
+    margin-bottom: 0.5rem;
+    background: var(--color-surface-page);
+    border-bottom: 1px solid var(--color-line);
+    font-size: var(--text-small);
+    color: var(--color-text-muted);
+  }
+
+  .listing-rows {
+    display: grid;
+  }
+  .listing-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding-block: 1.5rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+  @media (min-width: 640px) {
+    .listing-row {
+      gap: 1.25rem;
+    }
+  }
+  .listing-row-end {
+    flex-shrink: 0;
+    text-align: right;
+    min-width: 8rem;
+  }
+  @media (max-width: 639px) {
+    /*
+      On a phone the price column would squeeze the name to a few characters,
+      so it drops under the copy instead of beside it.
+    */
+    .listing-row {
+      flex-wrap: wrap;
+    }
+    .listing-row-end {
+      /*
+        padding-left, not margin-left. The row is a flex container and this
+        child is width: 100%, so a 3.5rem left margin put it exactly 56px past
+        the container — which is precisely what the audit measured. Padding
+        sits inside the box and indents without widening it.
+      */
+      width: 100%;
+      text-align: left;
+      padding-left: 3.5rem;
+      margin-top: 0.75rem;
+      min-width: 0;
+    }
+    .listing-row-end .flex {
+      justify-content: flex-start;
+    }
+  }
+
+  .listing-empty {
+    padding-block: 3rem;
+  }
+
+  .checklist-row {
+    padding-block: 1.5rem;
+    border-top: 1px solid var(--color-line);
+  }
+  .checklist-row:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+}
+
+@layer components {
+  /* ---- the directory ---------------------------------------------------- */
+
+  /*
+    THE EVIDENCE ROW. Four figures about the current result set, plainly
+    typeset on the page with hairlines between them — the same treatment the
+    hero stats get, because they are the same kind of statement.
+
+    It is a row of figures rather than a chart on purpose. Twenty-five of the
+    thirty-nine products publish no price, so a distribution would be one tall
+    bar and five stubs: a picture of missing data. When the story is a single
+    number, the number is the chart.
+  */
+  /*
+    Two shapes, one component. Below 1024 it is a stacked list under the
+    standfirst; from 1024 it is the right-hand column of the masthead, which is
+    the space the heading was leaving empty.
+  */
+  .directory-masthead { display: block; }
+  @media (min-width: 1024px) {
+    .directory-masthead {
+      display: grid;
+      grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+      gap: 4rem;
+      align-items: start;
+    }
+  }
+  .directory-masthead-copy { min-width: 0; }
+
+  .directory-evidence {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+  @media (min-width: 640px) {
+    .directory-evidence { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .directory-evidence {
+      grid-template-columns: minmax(0, 1fr);
+      margin-top: 0;
+    }
+  }
+  .directory-evidence-item {
+    padding: 1.25rem 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+  .directory-evidence-item { padding-left: 0; }
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .directory-evidence-item { border-top: 0; padding-left: 1.25rem; }
+    .directory-evidence-item:first-child { padding-left: 0; }
+    .directory-evidence-item + .directory-evidence-item {
+      border-left: 1px solid var(--border);
+    }
+  }
+  /* Stacked in the masthead column: one hairline between each, none on top. */
+  @media (min-width: 1024px) {
+    .directory-evidence-item { padding: 1rem 0; }
+    .directory-evidence-item:first-child { padding-top: 0.25rem; }
+    .directory-evidence-item:last-child { border-bottom: 0; padding-bottom: 0; }
+  }
+  .directory-evidence-item:last-child { border-bottom: 1px solid var(--border); }
+
+  /*
+    Three of the four filter. The active one takes the sand rule along its top
+    edge — the same single quiet mark the hero panels use for a winning side,
+    so "this one is switched on" looks the same everywhere on the site.
+  */
+  .directory-evidence-item[data-active="true"] {
+    box-shadow: inset 0 2px 0 var(--sand);
+  }
+  .directory-evidence-link {
+    display: block;
+    transition: color var(--dur-micro) var(--ease-in-out);
+  }
+  .directory-evidence-link:hover { color: var(--text-accent); }
+
+  .directory-figure {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    color: var(--text);
+  }
+  /* The stats band carries the same override: <Figure> closes word spacing by
+     0.12em, which at this size would swallow the space before "of". */
+  .directory-figure .data { word-spacing: normal; }
+  .directory-figure-of {
+    font-size: var(--text-small);
+    letter-spacing: 0;
+    color: var(--text-muted);
+  }
+  .directory-figure-label {
+    margin-top: 0.375rem;
+    font-size: var(--text-small);
+    color: var(--text-muted);
+  }
+
+  /*
+    Rail options are links, not checkboxes — the whole filter state lives in
+    the URL. They still have to look operable at a glance, so the active one
+    takes full ink and a sand marker rather than only a weight change.
+  */
+  .directory-option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.3125rem 0 0.3125rem 0.875rem;
+    font-size: var(--text-small);
+    color: var(--text-muted);
+    transition: color var(--dur-micro) var(--ease-in-out);
+  }
+  .directory-option::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 3px;
+    height: 0;
+    border-radius: var(--radius-pill);
+    background: var(--sand);
+    transform: translateY(-50%);
+    transition: height var(--dur-micro) var(--ease-in-out);
+  }
+  .directory-option:hover { color: var(--text); }
+  .directory-option[data-active="true"] { color: var(--text); }
+  .directory-option[data-active="true"]::before { height: 1.125rem; }
+  .directory-count { color: var(--text-muted); }
+  .directory-options {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  /*
+    The active filters, each removable on its own. After four clicks the reader
+    wants to undo one decision, not start again.
+  */
+  .directory-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .directory-chip,
+  .directory-chip-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: 2rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-control);
+    font-size: var(--text-small);
+    color: var(--text);
+    transition:
+      background-color var(--dur-micro) var(--ease-in-out),
+      color var(--dur-micro) var(--ease-in-out);
+  }
+  .directory-chip:hover {
+    background: var(--text);
+    color: var(--surface-page);
+  }
+  .directory-chip-clear {
+    border-style: dashed;
+    color: var(--text-muted);
+  }
+  .directory-chip-clear:hover { color: var(--text); }
+
+  /* The summary is a block here, not a single line: it carries the chips. */
+  .listing-results .listing-summary { display: block; }
+}
+
+@layer components {
+  /*
+    THE FILTER RAIL ON A PHONE.
+
+    Below 1024 the rail sits above the results, and as four stacked lists that
+    was about a thousand pixels of controls before the first product — on the
+    page whose entire job is showing products.
+
+    So under 1024 each group lays its options out as a horizontally scrollable
+    row of pills. Four short rows instead of four long columns, the same links
+    with the same hrefs, and still no JavaScript: a phone gets the whole filter
+    set in roughly 200px and the results start almost immediately.
+
+    A <details> disclosure was the other candidate. It was rejected because
+    forcing a closed <details> open again at the desktop breakpoint depends on
+    overriding UA rendering that browsers have been changing, and a filter
+    panel that silently collapses on a wide screen is a worse failure than a
+    scrolling row.
+  */
+  @media (max-width: 1023px) {
+    .listing-rail-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .listing-group { margin: 0; padding: 0; border: 0; }
+    .listing-group > .directory-options {
+      display: flex;
+      flex-direction: row;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      overflow-x: auto;
+      /* The row is a scroller by design; it must not report as page overflow. */
+      scrollbar-width: none;
+      padding-bottom: 0.125rem;
+    }
+    .listing-group > .directory-options::-webkit-scrollbar { display: none; }
+    .listing-group > .directory-options > li { flex: none; }
+
+    .directory-option {
+      justify-content: flex-start;
+      gap: 0.5rem;
+      padding: 0.375rem 0.875rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .directory-option::before { content: none; }
+    .directory-option[data-active="true"] {
+      border-color: var(--border-control);
+      background: var(--text);
+      color: var(--surface-page);
+    }
+    .directory-option[data-active="true"] .data { color: inherit; }
+  }
+}
+
+@layer components {
+  /*
+    Two specifics under each listing row.
+
+    A directory that carries only a rating and a price makes every product look
+    the same. These come from the catalogue's own top_features, so they are the
+    vendor's actual capabilities rather than copy, and they are the lines a
+    buyer scans for once the price has stopped being the question.
+
+    Two columns from 640 up, because at one column the pair costs a row 40px of
+    height for no gain in scannability.
+  */
+  .listing-specs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.375rem 1.5rem;
+    margin-top: 0.875rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+  @media (min-width: 640px) {
+    .listing-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .listing-specs > li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    min-width: 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+  /*
+    Bronze, not sand. A sand tick measures 1.70:1 on paper and would be a mark
+    nobody can see; bronze is the sand-family colour that survives at this size,
+    which is the same reason the star rating resolves to it.
+  */
+  .listing-spec-tick {
+    flex: none;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-top: 0.15rem;
+    color: var(--bronze);
+  }
+  .dark .listing-spec-tick { color: var(--sand); }
+
+  /* The count-up reserve box must not inherit the row-level figure sizing. */
+  .directory-figure .count-up { text-align: start; }
+}
+
+@layer components {
+  /*
+    Search the catalogue by name. A real GET form: no JavaScript, and the
+    result is a URL like every other filter on this page.
+
+    It sits at the top of the results column rather than in the rail, because
+    it acts on the list rather than narrowing a facet, and because on a phone
+    the rail is a set of scrolling chip rows with nowhere sensible for a text
+    field.
+  */
+  .directory-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.375rem 0.375rem 0.875rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface-raised);
+    transition: border-color var(--dur-micro) var(--ease-in-out);
+  }
+  /* Control weight on focus: 3:1 is what WCAG 1.4.11 wants on a boundary you
+     are operating, and ink 12% computes to 1.25:1. */
+  .directory-search:focus-within { border-color: var(--border-control); }
+  .directory-search-icon {
+    flex: none;
+    width: 1.0625rem;
+    height: 1.0625rem;
+    color: var(--text-muted);
+  }
+  .directory-search-input {
+    flex: 1;
+    min-width: 0;
+    height: 2.25rem;
+    background: transparent;
+    outline: none;
+    font-size: var(--text-small);
+    color: var(--text);
+  }
+  .directory-search-input::placeholder { color: var(--text-muted); }
+  /* The clear affordance browsers add to type="search" is a different shape in
+     every engine and none of them match this design. */
+  .directory-search-input::-webkit-search-cancel-button { display: none; }
+  .directory-search-go {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    height: 2.25rem;
+    padding-inline: 1rem;
+    font-size: var(--text-small);
+  }
+}
+
+@layer components {
+  /* ---- the head-to-head board ------------------------------------------ */
+
+  /*
+    Two columns, and they stay two columns down to 640 — a comparison that
+    stacks has stopped being a comparison. Below that they go one under the
+    other, which is the only honest fallback on a 390px screen.
+  */
+  .cmp-board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+  /* Two columns from 640, and from 768 the balance above takes over the gap
+     so the rope feet line up with the panel edges. */
+  @media (min-width: 640px) {
+    .cmp-board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+  }
+
+  .cmp-col {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-raised);
+  }
+  .cmp-col-head {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+  }
+  .cmp-col-name {
+    font-size: 1.375rem;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+  }
+  .cmp-col-link { color: var(--text); }
+  .cmp-col-link:hover { color: var(--text-accent); }
+  .cmp-col-category {
+    margin-top: 0.125rem;
+    font-size: var(--text-small);
+    color: var(--text-muted);
+  }
+  .cmp-col-tagline {
+    margin-top: 1rem;
+    font-size: var(--text-small);
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+
+  .cmp-col-score {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    margin-top: 1.25rem;
+  }
+  .cmp-col-rating {
+    font-size: 2.5rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .cmp-col-outof {
+    font-size: var(--text-small);
+    color: var(--text-muted);
+  }
+  .cmp-col-reviews {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .cmp-col-price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.375rem;
+    margin-top: 0.875rem;
+    padding-top: 0.875rem;
+    border-top: 1px solid var(--border);
+  }
+  .cmp-col-from { font-size: 0.75rem; color: var(--text-muted); }
+  .cmp-col-amount { font-size: 1.25rem; font-weight: 500; }
+  .cmp-col-note {
+    flex-basis: 100%;
+    margin-top: 0.125rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  /*
+    The plan ladder — the question a pricing page exists to answer and this one
+    never did. An entry price is one number; what a business pays depends on
+    which tier it lands on.
+  */
+  .cmp-plans {
+    margin-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .cmp-plan {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.5rem;
+    font-size: var(--text-small);
+    border-bottom: 1px solid var(--border);
+  }
+  .cmp-plan dt { color: var(--text-muted); min-width: 0; }
+  .cmp-plan dd {
+    display: flex;
+    align-items: baseline;
+    gap: 0.375rem;
+    flex: none;
+    color: var(--text);
+  }
+  .cmp-plan-note { font-size: 0.6875rem; color: var(--text-muted); }
+
+  /*
+    Why you would pick this one. Sand rule down the left because it is the
+    conclusion rather than more evidence, and the eye should be able to find it
+    without reading the heading.
+  */
+  .cmp-reasons {
+    margin-top: 1.25rem;
+    padding-left: 0.875rem;
+    border-left: 2px solid var(--sand);
+  }
+  .cmp-reasons-title {
+    font-size: var(--text-small);
+    font-weight: 500;
+    color: var(--text);
+  }
+  .cmp-reasons ul {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+
+  .cmp-col-actions {
+    /* Pushed down so both columns land their buttons on the same line however
+       many reasons or plans each one has. */
+    margin-top: auto;
+    padding-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+  .cmp-col-cta {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 2.75rem;
+    padding-inline: 1rem;
+    white-space: nowrap;
+  }
+  .cmp-col-secondary {
+    text-align: center;
+    font-size: var(--text-small);
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    color: var(--text-muted);
+  }
+  .cmp-col-secondary:hover { color: var(--text); }
+
+  /* ---- the matrix -------------------------------------------------------- */
+
+  .matrix-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  /*
+    A real switch. aria-pressed carries the state; the box is the visible half
+    and it is never the only signal — the label says what it does in full,
+    because "Differences" alone does not say whether it is a filter or a
+    heading.
+  */
+  .matrix-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    height: 2.5rem;
+    padding-inline: 0.875rem;
+    border: 1px solid var(--border-control);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-small);
+    color: var(--text);
+  }
+  .matrix-toggle-box {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-control);
+    transition: background-color var(--dur-micro) var(--ease-in-out);
+  }
+  .matrix-toggle[aria-pressed="true"] { background: var(--text); color: var(--surface-page); }
+  .matrix-toggle[aria-pressed="true"] .matrix-toggle-box {
+    background: var(--surface-page);
+    border-color: var(--surface-page);
+  }
+
+  .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  /*
+    THE COLUMN HEADER STICKS. Forty rows in, a tick means nothing unless the
+    name above it is still on screen; the old table printed the two names once
+    and expected the reader to remember them past three screens.
+
+    top matches the docked navbar so it parks underneath rather than behind it.
+  */
+  .matrix-th {
+    position: sticky;
+    /*
+      4rem, not 4.5. The docked nav capsule ends at 72px, and parking the
+      header exactly there leaves a 1-2px seam that row text slides through.
+      Overlapping it by 8px costs nothing and closes the gap.
+    */
+    top: 4rem;
+    z-index: 10;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: var(--text-small);
+    font-weight: 500;
+    color: var(--text);
+    background: var(--surface-page);
+    border-bottom: 1px solid var(--border-control);
+  }
+  .matrix-th-label { text-align: left; width: 40%; }
+
+  .matrix-group-th {
+    padding: 2rem 0 0.625rem;
+    text-align: left;
+    font-weight: 400;
+  }
+  .matrix-group-title {
+    display: block;
+    font-size: 1.0625rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .matrix-group-note {
+    display: block;
+    margin-top: 0.125rem;
+    font-size: var(--text-small);
+    color: var(--text-muted);
+  }
+
+  .matrix-row { border-top: 1px solid var(--border); }
+  .matrix-label {
+    padding: 0.75rem 1rem 0.75rem 0;
+    text-align: left;
+    font-weight: 400;
+    font-size: var(--text-small);
+    line-height: 1.45;
+    color: var(--text);
+  }
+  .matrix-cell {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: var(--text-small);
+    color: var(--text);
+  }
+  /*
+    The leading side, marked once and quietly: a sand wash behind the cell.
+    Not a badge and not a colour on the text — the value has to stay the most
+    legible thing in the cell, and a row is a fact about one dimension rather
+    than a verdict.
+  */
+  .matrix-cell[data-leads="true"] {
+    background: color-mix(in oklch, var(--sand) 26%, transparent);
+  }
+  .matrix-muted { color: var(--text-muted); }
+  .matrix-price { font-weight: 500; }
+  .matrix-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .matrix-yes,
+  .matrix-no {
+    display: inline-block;
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+  .matrix-yes { color: var(--bronze); }
+  .dark .matrix-yes { color: var(--sand); }
+  .matrix-no { color: color-mix(in oklch, var(--ink) 28%, transparent); }
+  .dark .matrix-no { color: color-mix(in oklch, var(--bone) 28%, transparent); }
+
+  .matrix-empty {
+    padding: 2rem 0;
+    max-width: 54ch;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 639px) {
+    .matrix-th-label { width: 46%; }
+    .matrix-label { padding-right: 0.5rem; font-size: 0.8125rem; }
+    .matrix-cell { padding-inline: 0.375rem; }
+    .matrix-rating { flex-direction: column; gap: 0.25rem; }
+  }
+}
+
+@layer components {
+  /* ---- the compare page balance ---------------------------------------- */
+
+  /*
+    THE PAGE THAT IS A COMPARISON GETS THE OBJECT THAT MEANS COMPARISON.
+
+    Same mechanism as the hero, at page scale. One --lean in [-1, 1] drives
+    four transforms; positive lifts the LEFT product, because the higher rating
+    wins and the winner goes up. The rope feet stay welded to the panel tops
+    because all four read the same number.
+
+    The arithmetic: beam ends sit 25.5% of the width either side of the pivot,
+    so rotating 5.4deg drops an end by 25.5 x sin(5.4deg) = 2.4% of the width,
+    which is exactly what the panels travel. Travel in cqw rather than px is
+    what keeps that true at every column width.
+  */
+  /*
+    Capped and centred, and the cap is doing two jobs.
+
+    At full container width the beam was a 950px hairline — a 1px stroke reads
+    as a wire at that length, not as a beam — and each card was 900px wide with
+    sparse content stretched across it. At 70rem the beam is about 570px, which
+    is the proportion the hero object was tuned at, and the cards land near a
+    comfortable reading measure.
+  */
+  .cmp-scale {
+    container-type: inline-size;
+    max-width: 70rem;
+    margin-inline: auto;
+    color: var(--text);
+  }
+
+  /*
+    The height is in cqw, not rem, and that is the whole difference between
+    this reading as a balance and reading as a wire.
+
+    The hero rig is 5rem tall in a 512px column. Reused at 1400px the beam
+    became a 950px hairline and the hangers splayed into a shallow tent whose
+    feet missed the panels entirely. Every dimension here is a fraction of the
+    width instead: 12cqw of drop against a hanger half-span of about 7cqw puts
+    the ropes near 30 degrees off vertical, which is what a hanging pan looks
+    like. Plus 2.4cqw of headroom for the end that rises.
+  */
+  .cmp-rig {
+    display: none;
+    position: relative;
+    height: calc(12cqw + 2.4cqw);
+  }
+  @media (min-width: 768px) {
+    .cmp-rig { display: block; }
+  }
+  .cmp-rig-post {
+    position: absolute;
+    top: 2.4cqw;
+    left: 50%;
+    width: 1px;
+    height: 6.5cqw;
+    transform: translateX(-50%);
+    background: currentColor;
+  }
+  .cmp-rig-base {
+    position: absolute;
+    top: calc(6.5cqw + 2.4cqw);
+    left: 50%;
+    transform: translateX(-50%);
+    stroke: currentColor;
+    stroke-width: 1;
+    stroke-linecap: square;
+  }
+  .cmp-rig-beam {
+    position: absolute;
+    inset: 2.4cqw 0 0;
+    transform-origin: 50% 0;
+    rotate: calc(var(--lean) * -5.4deg);
+  }
+  .cmp-rig-bar {
+    position: absolute;
+    top: 0;
+    left: 24.5%;
+    right: 24.5%;
+    height: 1px;
+    background: currentColor;
+  }
+  /*
+    Each hanger counter-rotates about its own apex, which sits on the beam end.
+    The two rotations compose to a pure translation, so the ropes hang plumb and
+    their feet land exactly as far down as the panel they hold.
+  */
+  .cmp-rig-hanger {
+    position: absolute;
+    top: 0;
+    width: 49%;
+    height: 100%;
+    transform-origin: 50% 0;
+    rotate: calc(var(--lean) * 5.4deg);
+  }
+  .cmp-rig-hanger-a { left: 0; }
+  .cmp-rig-hanger-b { right: 0; }
+  .cmp-rig-hanger svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    stroke: var(--text-muted);
+    stroke-width: 1;
+  }
+
+  /* The gap is a percentage so the panel edges land on 49% and 51% at every
+     width, which is where the rope feet are drawn. */
+  @media (min-width: 768px) {
+    .cmp-board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2%; }
+    .cmp-pan-a { transform: translateY(calc(var(--lean) * 2.4cqw)); }
+    .cmp-pan-b { transform: translateY(calc(var(--lean) * -2.4cqw)); }
+    /* Reserves the full downward travel so a dropping panel cannot reach the
+       verdict band. Transforms do not reflow, so this is clearance, not layout. */
+    .cmp-board { padding-bottom: 2.4cqw; }
+  }
+  .cmp-pan { min-width: 0; }
+
+  /*
+    The leading side, marked once: a 1px sand rule along the top edge. The same
+    quiet mark the hero panels use, so "this one is ahead" looks identical
+    wherever it appears on the site. No badge, no fill, no shadow.
+  */
+  .cmp-col[data-leads="true"] { border-top-color: var(--sand); }
 }

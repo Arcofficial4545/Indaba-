@@ -16,10 +16,11 @@ import {
 
 import { AlternativeCard } from "@/components/public/AlternativeCard";
 import { Breadcrumbs } from "@/components/public/Breadcrumbs";
+import { Figure } from "@/components/public/Figure";
+import { Rail } from "@/components/public/Rail";
 import { CircularRating } from "@/components/public/CircularRating";
 import { CompanySizeChart } from "@/components/public/CompanySizeChart";
 import { FaqAccordion } from "@/components/public/FaqAccordion";
-import { GlossyButton } from "@/components/public/GlossyButton";
 import { GlossyCTA } from "@/components/public/GlossyCTA";
 import { PricingCards } from "@/components/public/PricingCards";
 import { PricingTable } from "@/components/public/PricingTable";
@@ -35,7 +36,6 @@ import { SoftwareSidebar } from "@/components/public/SoftwareSidebar";
 import { SponsoredAd } from "@/components/public/SponsoredAd";
 import { StarRating } from "@/components/public/StarRating";
 import { Badge } from "@/components/ui/badge";
-import { getBrandColor } from "@/lib/brandColors";
 import { buildFaqs, faqJsonLd } from "@/lib/content/faqs";
 import { formatNumber, formatRating } from "@/lib/format";
 import {
@@ -150,7 +150,18 @@ export default async function SoftwareProfilePage(
     ? software.screenshots.filter((shot) => shot?.url && shot?.alt)
     : [];
 
-  const colour = getBrandColor(software.slug, software.brand_color);
+  /*
+    Charts are drawn in the site's own series colours, never in the vendor's.
+
+    A ratings chart in the vendor's blue reads as the vendor's own marketing
+    material, which is the opposite of what this page is for, and it made the
+    same chart a different colour on every product so no two could be compared
+    by eye. Petrol is 10.62:1 on bone and identical on every profile.
+
+    The affiliate CTA still carries the vendor's colour, but it takes
+    software.brand_color directly, so nothing here needs getBrandColor.
+  */
+  const seriesCool = "var(--color-petrol)";
   const faqs = buildFaqs(software);
   const topAlternative = alternatives[0];
 
@@ -224,50 +235,54 @@ export default async function SoftwareProfilePage(
       />
 
       {/* ------------------------------------------------------------------ */}
-      {/* Header                                                              */}
+      {/* Header. Left aligned on the rail, like every other page.            */}
       {/* ------------------------------------------------------------------ */}
-      <header className="mx-auto flex max-w-2xl flex-col items-center gap-5 text-center">
-        <SoftwareLogo
-          name={software.name}
-          slug={software.slug}
-          logoUrl={software.logo_url}
-          brandColor={software.brand_color}
-          size={84}
+      <header className="rail-grid">
+        <Rail
+          label={software.category?.name ?? "Software"}
+          count={formatRating(software.overall_rating)}
+          note="Weighted average out of 5."
         />
 
-        <div className="flex flex-col items-center gap-3">
-          <h1 className="font-heading text-4xl font-bold tracking-tight text-balance sm:text-5xl sm:leading-[1.12]">
-            {software.name}
-          </h1>
-          {software.featured && <Badge variant="success">Featured</Badge>}
+        <div className="well">
+          <div className="flex items-start gap-5">
+            <SoftwareLogo
+              name={software.name}
+              slug={software.slug}
+              logoUrl={software.logo_url}
+              brandColor={software.brand_color}
+              size={64}
+              className="shrink-0"
+            />
+            <div className="min-w-0">
+              <h1 className="section-heading reveal-line">
+                <span>{software.name}</span>
+              </h1>
+              {software.tagline && (
+                <p className="mt-4 max-w-[62ch] leading-relaxed text-[var(--color-text-muted)]">
+                  {software.tagline}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <span className="flex items-center gap-3">
+              <Figure className="text-[1.375rem] leading-none">
+                {formatRating(software.overall_rating)}
+              </Figure>
+              <StarRating rating={software.overall_rating} showNumber={false} />
+            </span>
+            <Link
+              href={`/software/${software.slug}/reviews`}
+              className="text-small text-[var(--color-text-accent)] underline underline-offset-4"
+            >
+              <Figure as="span">{formatNumber(software.review_count)}</Figure>{" "}
+              verified reviews
+            </Link>
+            {software.featured && <Badge variant="success">Featured</Badge>}
+          </div>
         </div>
-
-        {software.tagline && (
-          <p className="text-base leading-relaxed text-pretty text-muted-foreground sm:text-lg">
-            {software.tagline}
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <span className="font-heading text-2xl font-bold tabular-nums">
-            {formatRating(software.overall_rating)}
-          </span>
-          <StarRating rating={software.overall_rating} showNumber={false} />
-          <Link
-            href={`/software/${software.slug}/reviews`}
-            className="text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
-          >
-            {formatNumber(software.review_count)} verified reviews
-          </Link>
-        </div>
-
-        <GlossyButton
-          href={`/software/${software.slug}/reviews/new`}
-          size="lg"
-          variant="dark"
-        >
-          Write a review
-        </GlossyButton>
       </header>
 
       <ProfileNav sections={sectionsFor(screenshots.length > 0)} />
@@ -415,7 +430,10 @@ export default async function SoftwareProfilePage(
             <div className="rounded-[1.75rem] bg-zinc-100/80 p-2 dark:bg-zinc-900/60">
               <div className="grid gap-2 md:grid-cols-2">
                 <div className="flex flex-col items-center gap-5 rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 dark:border-zinc-800">
-                  <CircularRating rating={software.overall_rating} colour={colour} />
+                  <CircularRating
+                    rating={software.overall_rating}
+                    colour={seriesCool}
+                  />
                   <StarRating
                     rating={software.overall_rating}
                     showNumber={false}
@@ -438,7 +456,10 @@ export default async function SoftwareProfilePage(
                   <h3 className="mb-4 font-heading text-base font-bold tracking-tight">
                     Rated by dimension
                   </h3>
-                  <SoftwareRatingsChart scores={dimensionScores} colour={colour} />
+                  <SoftwareRatingsChart
+                    scores={dimensionScores}
+                    colour={seriesCool}
+                  />
                 </div>
 
                 <div className="rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 dark:border-zinc-800">

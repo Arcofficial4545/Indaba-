@@ -4,20 +4,33 @@ import { SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { useSearch } from "@/components/public/SearchProvider";
 import { HERO_COPY } from "@/lib/site";
 
 /**
- * The only client component in the hero.
+ * The hero's primary object.
  *
- * It exists on its own so the rest of the hero stays a Server Component: the
- * headline, the chips, the counts and the illustration are all rendered on the
- * server and never enter the bundle.
+ * On a directory, search is the product, so this is not an afterthought below
+ * the fold. It is the largest control on the page.
  *
- * The site wide GlossyButton is deliberately not used here. It is built from
- * stacked linear-gradients, and the hero carries no gradient of any kind.
+ * TWO ENTRY POINTS, ONE IMPLEMENTATION. Focusing this field opens the same
+ * cmdk panel that ⌘K opens, which lives in SearchProvider. That is why this
+ * does not maintain its own results list.
+ *
+ * It is still a real GET form. With JavaScript off the field submits to
+ * /search and the page works; the cmdk panel is the enhancement layered on
+ * top. Losing search entirely without JS would be a poor trade on a site
+ * whose whole business is organic traffic.
+ *
+ * The placeholder is STATIC. An earlier plan had it cross-fading between
+ * category names behind a mask wipe; that is a second automatic animation in
+ * the same viewport as the scale, and the hero's entire argument is that one
+ * object moves. The popular-category chips underneath carry that signal
+ * instead, and they are real links rather than decoration.
  */
 export function HeroSearch() {
   const router = useRouter();
+  const search = useSearch();
   const [query, setQuery] = useState("");
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -31,17 +44,16 @@ export function HeroSearch() {
   return (
     <form
       role="search"
+      action="/search"
+      method="get"
       onSubmit={onSubmit}
-      className="hero-field flex w-full max-w-xl items-center gap-1 border border-hero-ink/20 bg-hero-canvas p-2 ps-3 transition-colors focus-within:border-hero-ink/50"
+      className="hero-field"
     >
       <label htmlFor="hero-search" className="sr-only">
         {HERO_COPY.searchLabel}
       </label>
 
-      <span
-        aria-hidden="true"
-        className="grid size-10 shrink-0 place-items-center text-muted-foreground"
-      >
+      <span aria-hidden="true" className="hero-field-icon">
         <SearchIcon className="size-[1.125rem]" />
       </span>
 
@@ -51,21 +63,16 @@ export function HeroSearch() {
         name="q"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
+        /*
+          Opening on focus rather than on click means the keyboard reaches it
+          too: tabbing into the field is the same gesture as clicking it.
+        */
+        onFocus={search.open}
         placeholder={HERO_COPY.searchPlaceholder}
-        className="h-11 min-w-0 flex-1 bg-transparent text-[0.9375rem] text-hero-ink outline-none placeholder:text-muted-foreground"
+        className="hero-field-input"
       />
 
-      {/*
-        The lime CTA, and one of exactly two places the brand accent appears in
-        the hero. It runs on .btn-glossy, the same class as the navbar's own
-        call to action, so the two primary buttons on the page are one material
-        rather than two takes on lime. .btn-shine adds the travelling
-        highlight; the pill radius matches the field around it.
-      */}
-      <button
-        type="submit"
-        className="btn-glossy btn-shine h-11 shrink-0 rounded-full px-6 text-sm sm:px-8"
-      >
+      <button type="submit" className="btn-glossy hero-field-button">
         Search
       </button>
     </form>

@@ -1,5 +1,5 @@
 import { FALLBACK_COMPARISONS } from "@/lib/fallback-data";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { Comparison, SoftwareWithCategory } from "@/lib/types";
 
 import { getAllSoftware } from "./software";
@@ -37,7 +37,7 @@ export async function getComparisonPair(
 export async function getTrendingComparisons(
   limit = 3,
 ): Promise<ComparisonPair[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const software = await getAllSoftware();
   const byId = new Map(software.map((s) => [s.id, s]));
 

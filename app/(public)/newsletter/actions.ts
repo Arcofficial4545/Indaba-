@@ -3,6 +3,7 @@
 import { randomBytes } from "node:crypto";
 import { headers } from "next/headers";
 
+import { sendNewsletterConfirmation } from "@/lib/email";
 import { clientIp, hashIp } from "@/lib/hash";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
@@ -19,12 +20,10 @@ export type NewsletterFormState = {
  * consent being freely given rather than assumed from a form submission. The
  * confirmation itself happens in /api/newsletter/confirm.
  *
- * NOTE FOR WHOEVER WIRES THE MAIL PROVIDER: this stores the pending row and
- * mints the token, but nothing dispatches the confirmation email yet, because
- * no sending provider is configured. Until one is, subscriptions accumulate as
- * pending and the reader is told exactly that. When the provider lands, send
- * `${SITE_URL}/api/newsletter/confirm?token=${token}` and revisit the success
- * copy below, which is deliberately worded not to promise an inbox.
+ * The confirmation email goes out through lib/email.ts. Until Resend has a
+ * key and a verified domain it can refuse, and the row still stands as
+ * pending. The success copy below changes with the outcome, so the reader is
+ * only told to check an inbox when an email was actually accepted.
  */
 export async function subscribeToNewsletter(
   _previous: NewsletterFormState,
@@ -103,9 +102,12 @@ export async function subscribeToNewsletter(
     };
   }
 
+  const sent = await sendNewsletterConfirmation(email, token);
+
   return {
     status: "success",
-    message:
-      "Thank you. Your address is recorded as pending and becomes a subscription only once you confirm it.",
+    message: sent
+      ? "Thank you. Check your inbox and click the link in our email to confirm your subscription."
+      : "Thank you. Your address is recorded as pending. Confirmation emails are not switched on yet, so we will not email you until they are and you have confirmed.",
   };
 }

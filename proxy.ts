@@ -70,6 +70,7 @@ export async function proxy(request: NextRequest) {
   /* 2. Session refresh and admin guard                                  */
   /* ------------------------------------------------------------------ */
   let response = NextResponse.next({ request });
+  let sessionHeaders: Record<string, string> = {};
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     // Without Supabase there is no admin to protect and no session to refresh.
@@ -81,13 +82,20 @@ export async function proxy(request: NextRequest) {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         for (const { name, value } of cookiesToSet) {
           request.cookies.set(name, value);
         }
         response = NextResponse.next({ request });
         for (const { name, value, options } of cookiesToSet) {
           response.cookies.set(name, value, options);
+        }
+        // Supabase passes no-store headers alongside a refreshed session. A
+        // cached copy of this response would hand one visitor's tokens to the
+        // next, so they go on the response with the cookies.
+        sessionHeaders = headers;
+        for (const [key, value] of Object.entries(headers)) {
+          response.headers.set(key, value);
         }
       },
     },
@@ -99,18 +107,34 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAdminRoute =
-    pathname.startsWith("/admin") && pathname !== "/admin/login";
+  const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/");
+  const isLoginPage = pathname === "/admin/login";
 
-  if (isAdminRoute && !user) {
+  /*
+    A redirect is a new response, so it does not inherit what getUser() just
+    wrote. Dropping those cookies leaves the browser holding a refresh token
+    Supabase has already rotated out, and the next request signs the admin out.
+  */
+  const redirectWithSession = (url: URL) => {
+    const redirect = NextResponse.redirect(url);
+    for (const cookie of response.cookies.getAll()) {
+      redirect.cookies.set(cookie);
+    }
+    for (const [key, value] of Object.entries(sessionHeaders)) {
+      redirect.headers.set(key, value);
+    }
+    return redirect;
+  };
+
+  if (isAdminArea && !isLoginPage && !user) {
     const url = new URL("/admin/login", request.url);
     url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
+    return redirectWithSession(url);
   }
 
   // Already signed in, so the login page has nothing to offer.
-  if (pathname === "/admin/login" && user) {
-    return NextResponse.redirect(new URL("/admin", request.url));
+  if (isLoginPage && user) {
+    return redirectWithSession(new URL("/admin", request.url));
   }
 
   return response;
@@ -119,10 +143,10 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-      Everything except static assets and image files. Those never need a
-      redirect lookup or a session, and matching them would waste a function
-      invocation on each one.
+      Everything except static assets, image files and the OG image route.
+      Those never need a redirect lookup or a session, and matching them would
+      put an auth round trip in front of every asset request.
     */
-    "/((?!_next/static|_next/image|favicon.ico|logos/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|txt|xml)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/og|logos/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|txt|xml|css|js|map|woff|woff2|ttf|otf|mp4|webm|pdf|webmanifest)$).*)",
   ],
 };

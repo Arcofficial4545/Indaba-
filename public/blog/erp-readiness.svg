@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<rect width="1200" height="630" fill="#262626"/>
+<path d="M648 0v630M0 550h1200" stroke="#474741" stroke-width="1"/>
+<circle cx="1200" cy="0" r="220" fill="#30302d"/>
+<text x="65" y="94" fill="#d1bd91" font-family="Arial, sans-serif" font-size="17" font-weight="700">ERP / THE BIG DECISION</text>
+<text x="62" y="271" fill="#eeefe9" font-family="Arial, sans-serif" font-size="49" font-weight="700">Connect the work.</text>
+<text x="62" y="335" fill="#eeefe9" font-family="Arial, sans-serif" font-size="49" font-weight="700">Then the systems.</text>
+<text x="65" y="397" fill="#b4bdae" font-family="Arial, sans-serif" font-size="22">Is your business ready for ERP?</text>
+<text x="65" y="594" fill="#eeefe9" font-family="Arial, sans-serif" font-size="28" font-weight="700">indaba</text>
+<text x="908" y="590" fill="#d1bd91" font-family="Arial, sans-serif" font-size="15" font-weight="700">FIELD GUIDE / 06</text>
+<path d="M784 223H921V322" fill="none" stroke="#778c68" stroke-width="5" stroke-linecap="round"/><path d="M1048 223H921V322" fill="none" stroke="#778c68" stroke-width="5" stroke-linecap="round"/><path d="M784 433H921V322" fill="none" stroke="#778c68" stroke-width="5" stroke-linecap="round"/><path d="M1048 433H921V322" fill="none" stroke="#778c68" stroke-width="5" stroke-linecap="round"/><rect x="722" y="173" width="124" height="91" rx="18" fill="#eeefe9"/><rect x="986" y="173" width="124" height="91" rx="18" fill="#eeefe9"/><rect x="722" y="390" width="124" height="91" rx="18" fill="#eeefe9"/><rect x="986" y="390" width="124" height="91" rx="18" fill="#eeefe9"/><text x="742" y="225" fill="#262626" font-family="Arial, sans-serif" font-size="16" font-weight="700">ORDERS</text><text x="1007" y="225" fill="#262626" font-family="Arial, sans-serif" font-size="16" font-weight="700">STOCK</text><text x="739" y="443" fill="#262626" font-family="Arial, sans-serif" font-size="16" font-weight="700">FINANCE</text><text x="1004" y="443" fill="#262626" font-family="Arial, sans-serif" font-size="16" font-weight="700">PEOPLE</text><circle cx="921" cy="322" r="62" fill="#d1bd91"/><path d="m895 308 26-14 26 14v29l-26 15-26-15zm0 0 26 15 26-15m-26 15v29" stroke="#262626" stroke-width="4" fill="none" stroke-linejoin="round"/>
+</svg>

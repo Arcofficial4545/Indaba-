@@ -1,298 +1,126 @@
-import Link from "next/link";
-import {
-  ArrowUpRightIcon,
-  BookOpenIcon,
-  ClockIcon,
-  LayersIcon,
-  ScaleIcon,
-  TrophyIcon,
-} from "lucide-react";
-
-import { ComparisonCard } from "@/components/public/ComparisonCard";
 import { Hero } from "@/components/public/Hero";
-import { HomepageExplore } from "@/components/public/HomepageExplore";
-import { NewsletterSection } from "@/components/public/NewsletterSection";
-import { SectionHeader } from "@/components/public/SectionHeader";
-import { SoftwareCard } from "@/components/public/SoftwareCard";
-import { SoftwareLogo } from "@/components/public/SoftwareLogo";
-import { StarRating } from "@/components/public/StarRating";
-import { GlossyCTA } from "@/components/public/GlossyCTA";
-import { formatDate, formatNumber, formatReadTime } from "@/lib/format";
+import { CategoryIndex } from "@/components/public/home/CategoryIndex";
+import { Guides } from "@/components/public/home/Guides";
+import { HeadToHead } from "@/components/public/home/HeadToHead";
+import { RailSection } from "@/components/public/Rail";
+import { SoftwareShowcase } from "@/components/public/home/SoftwareShowcase";
+import { TopRatedTable } from "@/components/public/home/TopRatedTable";
+import { formatNumber } from "@/lib/format";
 import { getLatestArticles } from "@/lib/queries/articles";
 import { getCategories } from "@/lib/queries/categories";
 import { getTrendingComparisons } from "@/lib/queries/comparisons";
+import { getHeroMatchups } from "@/lib/queries/hero";
+import { getNavCategories } from "@/lib/queries/nav";
 import {
   getAllSoftware,
-  getRecentlyReviewedSoftware,
-  getSoftwareByCategory,
-  getStarDistributions,
+  getSoftwareShowcase,
   getTopRatedSoftware,
 } from "@/lib/queries/software";
 import { getSiteStats } from "@/lib/queries/stats";
-import type { SoftwareWithCategory } from "@/lib/types";
 
 export const revalidate = 3600;
 
 export default async function HomePage() {
   const [
     categories,
+    navCategories,
     stats,
     topRated,
-    heroSoftware,
-    recent,
+    allSoftware,
     articles,
     comparisons,
+    showcase,
   ] = await Promise.all([
     getCategories(),
+    getNavCategories(),
     getSiteStats(),
-    getTopRatedSoftware(3),
+    getTopRatedSoftware(8),
     getAllSoftware(),
-    getRecentlyReviewedSoftware(3),
     getLatestArticles(3),
     getTrendingComparisons(3),
+    getSoftwareShowcase(20),
   ]);
 
-  // Live star spreads, so the sentiment strip on each card is real data.
-  const distributions = await getStarDistributions(topRated.map((s) => s.id));
-
-  const softwareByCategory: Record<string, SoftwareWithCategory[]> = {};
-  await Promise.all(
-    categories.map(async (category) => {
-      softwareByCategory[category.id] = await getSoftwareByCategory(
-        category.id,
-        6,
-      );
+  // The navigation query already ranks each category. Reuse its first product
+  // and the loaded catalogue for the always-visible card details.
+  const softwareBySlug = new Map(allSoftware.map((product) => [product.slug, product]));
+  const sage = softwareBySlug.get("sage-accounting");
+  // Homepage recommendations are editorial; review-based queries stay intact.
+  const recommended = sage
+    ? [sage, ...topRated.filter((product) => product.slug !== sage.slug)].slice(0, 8)
+    : topRated;
+  const leaders = Object.fromEntries(
+    navCategories.map((category) => {
+      const top = softwareBySlug.get(category.leaders[0]?.slug ?? "");
+      return [
+        category.slug,
+        top
+          ? {
+              name: top.name,
+              rating: top.overall_rating,
+              reviews: top.review_count,
+            }
+          : undefined,
+      ] as const;
     }),
   );
 
   return (
     <>
-      {/* ---------------------------------------------------------------- */}
-      {/* 1. Hero. Full bleed, so it sits outside the site container and    */}
-      {/*    manages its own padding.                                       */}
-      {/* ---------------------------------------------------------------- */}
-      <Hero categories={categories} stats={stats} software={heroSoftware} />
+      <Hero
+        categories={categories}
+        stats={stats}
+        software={allSoftware}
+        matchups={getHeroMatchups(allSoftware)}
+      />
 
-      <div className="container-site flex flex-col gap-16 pt-16 pb-8 sm:gap-20 sm:pt-20">
-        {/* ---------------------------------------------------------------- */}
-        {/* 3. Category explorer                                              */}
-        {/* ---------------------------------------------------------------- */}
-        <section aria-labelledby="explore-heading" className="reveal-on-scroll">
-          <SectionHeader
-            eyebrow="Browse by category"
-            icon={LayersIcon}
-            title="Start with"
-            highlight="what you need"
-            subtitle="Six categories, each judged against the same local yardstick: SARS compliance, rand pricing and support you can actually reach."
-            headingId="explore-heading"
-            className="mb-10"
-          />
-          <HomepageExplore
-            categories={categories}
-            softwareByCategory={softwareByCategory}
-          />
-        </section>
+      <RailSection
+        id="categories-heading"
+        label="Categories"
+        count={formatNumber(navCategories.length)}
+        note="Each judged against the same local yardstick."
+        heading="Browse by category"
+        rhythm={1}
+      >
+        <CategoryIndex categories={navCategories} leaders={leaders} />
+      </RailSection>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* 4. Comparisons strip                                              */}
-        {/* ---------------------------------------------------------------- */}
-        {comparisons.length > 0 && (
-          <section
-            aria-labelledby="compare-heading"
-            className="reveal-on-scroll"
-          >
-            <SectionHeader
-              eyebrow="Head to head"
-              icon={ScaleIcon}
-              title="The shortlists people"
-              highlight="keep arguing about"
-              subtitle="Same feature set, same price table, no marketing copy. Read both sides and decide."
-              headingId="compare-heading"
-              className="mb-10"
-            />
-            <div className="grid gap-5 md:grid-cols-3">
-              {comparisons.map((pair) => (
-                <ComparisonCard key={pair.comparison.id} pair={pair} />
-              ))}
-            </div>
-          </section>
-        )}
+      <RailSection
+        id="showcase-heading"
+        label="Software"
+        count={formatNumber(stats.softwareCount)}
+        note="Prices checked against the vendor&rsquo;s own page."
+        heading="Browse software by price and rating"
+        rhythm={1}
+      >
+        <SoftwareShowcase software={showcase} />
+      </RailSection>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* 5. Top rated                                                      */}
-        {/* ---------------------------------------------------------------- */}
-        <section
-          aria-labelledby="top-rated-heading"
-          className="reveal-on-scroll"
+      {comparisons.length > 0 && (
+        <RailSection
+          id="h2h-heading"
+          label="Comparisons"
+          count={formatNumber(comparisons.length)}
+          note="Ratings and starting prices, side by side."
+          heading="Compare two products"
+          rhythm={1}
         >
-          <SectionHeader
-            eyebrow="Top rated"
-            icon={TrophyIcon}
-            title="Rated highest by"
-            highlight="people who use it"
-            subtitle="Ranked by a weighted average, not a raw star count, so a product with four hundred reviews is not beaten by one with thirty."
-            headingId="top-rated-heading"
-            className="mb-10"
-          />
-          <div className="grid gap-5 md:grid-cols-3">
-            {topRated.map((software, index) => (
-              <SoftwareCard
-                key={software.id}
-                software={software}
-                distribution={distributions[software.id]}
-                rank={index + 1}
-              />
-            ))}
-          </div>
-        </section>
+          <HeadToHead pairs={comparisons} />
+        </RailSection>
+      )}
 
-        {/* ---------------------------------------------------------------- */}
-        {/* 6. Newsletter band                                                */}
-        {/* ---------------------------------------------------------------- */}
-        <div className="reveal-on-scroll">
-          <NewsletterSection />
-        </div>
+      <RailSection
+        id="top-rated-heading"
+        label="Recommendations"
+        count={formatNumber(recommended.length)}
+        note="Software selected by Indaba."
+        heading="Recommended software"
+        rhythm={1}
+      >
+        <TopRatedTable software={recommended} />
+      </RailSection>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* 7. Recently reviewed                                              */}
-        {/* ---------------------------------------------------------------- */}
-        <section aria-labelledby="recent-heading" className="reveal-on-scroll">
-          <SectionHeader
-            eyebrow="Recently reviewed"
-            icon={ClockIcon}
-            title="Fresh off"
-            highlight="the desk"
-            subtitle="Every listing is re checked quarterly, including the price and whether it includes VAT."
-            headingId="recent-heading"
-            className="mb-10"
-          />
-
-          <div className="rounded-[1.75rem] bg-zinc-100/80 p-2 dark:bg-zinc-900/60">
-            <div className="grid gap-2 md:grid-cols-3">
-              {recent.map((software, index) => (
-                <Link
-                  key={software.id}
-                  href={`/software/${software.slug}`}
-                  className="group flex items-start gap-4 rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 transition-colors hover:border-zinc-300 focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:outline-none dark:border-zinc-800 dark:hover:border-zinc-700"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="font-heading text-2xl font-bold text-muted-foreground/30 tabular-nums transition-colors group-hover:text-[var(--color-brand-dark)]"
-                  >
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-3">
-                      <SoftwareLogo
-                        name={software.name}
-                        slug={software.slug}
-                        logoUrl={software.logo_url}
-                        brandColor={software.brand_color}
-                        size={36}
-                      />
-                      <p className="truncate font-heading text-base font-bold tracking-tight">
-                        {software.name}
-                      </p>
-                    </div>
-
-                    <StarRating
-                      rating={software.overall_rating}
-                      size="sm"
-                      reviewCount={software.review_count}
-                      className="mt-3"
-                    />
-
-                    <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                      {software.description_short}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ---------------------------------------------------------------- */}
-        {/* 8. Blog preview                                                   */}
-        {/* ---------------------------------------------------------------- */}
-        <section aria-labelledby="guides-heading" className="reveal-on-scroll">
-          <SectionHeader
-            eyebrow="Buying guides"
-            icon={BookOpenIcon}
-            title="Work out what"
-            highlight="you actually need"
-            subtitle="Long form guides written by people who have done the migration, not by a marketing team."
-            headingId="guides-heading"
-            className="mb-10"
-          />
-
-          <ul className="flex flex-col">
-            {articles.map((article, index) => (
-              <li
-                key={article.id}
-                className="group relative flex items-start gap-5 border-t border-border py-8 last:border-b sm:gap-8"
-              >
-                <span
-                  aria-hidden="true"
-                  className="font-heading text-4xl font-bold text-muted-foreground/20 tabular-nums transition-colors group-hover:text-[var(--color-brand-dark)] sm:text-6xl"
-                >
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    {article.category_tag && (
-                      <span className="rounded-full bg-muted px-2.5 py-1 font-semibold text-foreground/70">
-                        {article.category_tag}
-                      </span>
-                    )}
-                    <time dateTime={article.published_date}>
-                      {formatDate(article.published_date)}
-                    </time>
-                    <span aria-hidden="true">/</span>
-                    <span>{formatReadTime(article.read_time_minutes)}</span>
-                  </div>
-
-                  <h3 className="mt-3 font-heading text-xl font-bold tracking-tight text-balance sm:text-2xl">
-                    <Link
-                      href={`/blog/${article.slug}`}
-                      className="after:absolute after:inset-0 focus-visible:outline-none"
-                    >
-                      {article.title}
-                    </Link>
-                  </h3>
-
-                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-pretty text-muted-foreground">
-                    {article.excerpt}
-                  </p>
-
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    {article.author_name}
-                    {article.author_title && (
-                      <span className="text-muted-foreground/60">
-                        {" "}
-                        / {article.author_title}
-                      </span>
-                    )}
-                  </p>
-                </div>
-
-                <span
-                  aria-hidden="true"
-                  className="hidden size-11 shrink-0 place-items-center self-center rounded-xl border border-border text-muted-foreground transition-colors group-hover:bg-[var(--color-brand)] group-hover:text-[var(--color-brand-ink)] sm:grid"
-                >
-                  <ArrowUpRightIcon className="size-4" />
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-10 flex justify-center">
-            <GlossyCTA href="/blog">Read all guides</GlossyCTA>
-          </div>
-        </section>
-      </div>
+      <Guides articles={articles} />
     </>
   );
 }

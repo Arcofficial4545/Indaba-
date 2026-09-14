@@ -3,7 +3,7 @@ import {
   fallbackDistribution,
 } from "@/lib/fallback-data";
 import { rankByBayesian } from "@/lib/ranking";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { SoftwareWithCategory, StarDistribution } from "@/lib/types";
 
 const SOFTWARE_SELECT = `
@@ -12,7 +12,7 @@ const SOFTWARE_SELECT = `
 `;
 
 async function fetchPublished(): Promise<SoftwareWithCategory[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   if (!supabase) return FALLBACK_SOFTWARE;
 
   const { data, error } = await supabase
@@ -73,14 +73,40 @@ export async function getSoftwareByCategory(
 }
 
 export type DirectoryFilters = {
+  /** Free text, matched against the product name and its tagline. */
+  query?: string;
   category?: string;
   minRating?: number;
   freeTrial?: boolean;
   freeVersion?: boolean;
   paidOnly?: boolean;
+  /**
+   * Only products whose vendor publishes a list price.
+   *
+   * Added rather than reshaped: every existing caller omits it and behaves
+   * exactly as before. It exists because 25 of the 39 products in the
+   * catalogue publish nothing, which is the single most useful thing the
+   * directory can filter on and the least likely thing a buyer expects.
+   */
+  hasPrice?: boolean;
   sort?: "reviewed" | "rated" | "updated" | "price";
   page?: number;
   perPage?: number;
+};
+
+/**
+ * Counts over the whole filtered set, before pagination.
+ *
+ * The page leads with these as plain figures, so they have to describe every
+ * matching product rather than the slice currently on screen. Computing them
+ * here keeps that guarantee in one place: a caller cannot accidentally count
+ * `items` and be quietly wrong on page two.
+ */
+export type DirectoryFacets = {
+  total: number;
+  withPrice: number;
+  freeVersion: number;
+  freeTrial: number;
 };
 
 export type DirectoryResult = {
@@ -88,6 +114,7 @@ export type DirectoryResult = {
   total: number;
   page: number;
   totalPages: number;
+  facets: DirectoryFacets;
 };
 
 /**
@@ -99,11 +126,13 @@ export async function getDirectory(
   filters: DirectoryFilters = {},
 ): Promise<DirectoryResult> {
   const {
+    query,
     category,
     minRating,
     freeTrial,
     freeVersion,
     paidOnly,
+    hasPrice,
     sort = "reviewed",
     page = 1,
     perPage = 10,
@@ -111,7 +140,23 @@ export async function getDirectory(
 
   const all = await fetchPublished();
 
+  /*
+    Name and tagline only, not the full description. A directory search that
+    matches body copy returns half the catalogue for a word like "invoice",
+    which is worse than returning nothing: the reader cannot tell whether the
+    match meant anything. Both fields are short and are what a product is
+    actually called and actually does.
+  */
+  const needle = query?.trim().toLowerCase();
+
   let items = all.filter((software) => {
+    if (
+      needle &&
+      !software.name.toLowerCase().includes(needle) &&
+      !(software.tagline ?? "").toLowerCase().includes(needle)
+    ) {
+      return false;
+    }
     if (category && software.category?.slug !== category) return false;
     if (minRating && software.overall_rating < minRating) return false;
     if (freeTrial && !software.free_trial) return false;
@@ -120,6 +165,7 @@ export async function getDirectory(
     if (paidOnly && (software.free_version || software.starting_price === 0)) {
       return false;
     }
+    if (hasPrice && software.starting_price === null) return false;
     return true;
   });
 
@@ -155,6 +201,12 @@ export async function getDirectory(
     total,
     page: current,
     totalPages,
+    facets: {
+      total,
+      withPrice: items.filter((s) => s.starting_price !== null).length,
+      freeVersion: items.filter((s) => s.free_version).length,
+      freeTrial: items.filter((s) => s.free_trial).length,
+    },
   };
 }
 
@@ -163,7 +215,7 @@ export async function getAlternatives(
   software: SoftwareWithCategory,
   limit = 3,
 ): Promise<SoftwareWithCategory[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const all = await fetchPublished();
 
   if (supabase) {
@@ -193,7 +245,7 @@ export async function getAlternatives(
 export async function getSoftwareBySlug(
   slug: string,
 ): Promise<SoftwareWithCategory | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   if (!supabase) {
     return FALLBACK_SOFTWARE.find((s) => s.slug === slug) ?? null;
   }
@@ -218,7 +270,7 @@ export async function getSoftwareBySlug(
 export async function getStarDistributions(
   softwareIds: string[],
 ): Promise<Record<string, StarDistribution>> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   if (!supabase) {
     const result: Record<string, StarDistribution> = {};
@@ -251,4 +303,27 @@ export async function getStarDistributions(
     if (star >= 1 && star <= 5) result[row.software_id][star] += 1;
   }
   return result;
+}
+
+/**
+ * The home page showcase: the products a buyer should look at first.
+ *
+ * Appended, not a reshape — nothing that already calls into this module
+ * changes shape.
+ *
+ * Order is the site's normal Bayesian ranking and nothing else. There is no
+ * pinning and no chip, because the section heading — "Browse software by price
+ * and rating" — is a claim about the order, and a promoted row inside it would
+ * make that claim false whether or not it carried a label.
+ *
+ * Editorial prominence lives in the recommendations section instead, which
+ * says on its face that it is a selection rather than a ranking. That is the
+ * honest place to put it: the label belongs to the section, so the cards need
+ * none.
+ */
+export async function getSoftwareShowcase(
+  limit = 20,
+): Promise<SoftwareWithCategory[]> {
+  const all = await fetchPublished();
+  return rankByBayesian(all).slice(0, limit);
 }

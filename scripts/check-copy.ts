@@ -19,6 +19,7 @@ import path from "node:path";
 
 const FILES = [
   "lib/content/articles.ts",
+  "lib/content/additional-articles.ts",
   "lib/content/catalogue.ts",
   "lib/content/pages.ts",
   "lib/content/corpus.ts",

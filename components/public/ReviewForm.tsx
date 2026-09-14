@@ -12,7 +12,7 @@ import {
   submitReview,
   type ReviewFormState,
 } from "@/app/(public)/software/[slug]/reviews/new/actions";
-import { REVIEWER_COUNTRIES } from "@/lib/site";
+import { DEFAULT_REVIEWER_COUNTRY, REVIEWER_COUNTRIES } from "@/lib/site";
 import { COMPANY_SIZES } from "@/lib/types";
 
 const DURATIONS = [
@@ -187,7 +187,7 @@ export function ReviewForm({
               id="reviewer_country"
               name="reviewer_country"
               options={REVIEWER_COUNTRIES}
-              defaultValue="South Africa"
+              defaultValue={DEFAULT_REVIEWER_COUNTRY}
             />
           </Field>
         </div>

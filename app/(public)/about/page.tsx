@@ -6,7 +6,7 @@ import { Breadcrumbs } from "@/components/public/Breadcrumbs";
 import { GlossyButton } from "@/components/public/GlossyButton";
 import { formatNumber } from "@/lib/format";
 import { getSiteStats } from "@/lib/queries/stats";
-import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
+import { SITE_NAME, SITE_TAGLINE, SITE_URL, VAT_RATE } from "@/lib/site";
 
 export const revalidate = 3600;
 
@@ -36,7 +36,7 @@ const PRINCIPLES = [
 
 const COMPLIANCE = [
   "SARS eFiling submissions that transfer without rebuilding figures",
-  "VAT201 returns at the 15% standard rate, covering standard, zero rated and exempt supplies",
+  `VAT201 returns at the ${Math.round(VAT_RATE * 100)}% standard rate, covering standard, zero rated and exempt supplies`,
   "EMP201 monthly declarations and EMP501 biannual reconciliations",
   "IRP5 and IT3(a) employee tax certificates, and e@syFile exports",
   "UIF declarations to the Department of Employment and Labour",

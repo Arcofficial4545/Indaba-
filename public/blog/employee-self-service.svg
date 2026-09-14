@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<rect width="1200" height="630" fill="#262626"/>
+<path d="M648 0v630M0 550h1200" stroke="#474741" stroke-width="1"/>
+<circle cx="1200" cy="0" r="220" fill="#30302d"/>
+<text x="65" y="94" fill="#d1bd91" font-family="Arial, sans-serif" font-size="17" font-weight="700">HR / EVERYDAY ACCESS</text>
+<text x="62" y="271" fill="#eeefe9" font-family="Arial, sans-serif" font-size="49" font-weight="700">Less admin.</text>
+<text x="62" y="335" fill="#eeefe9" font-family="Arial, sans-serif" font-size="49" font-weight="700">More access.</text>
+<text x="65" y="397" fill="#b4bdae" font-family="Arial, sans-serif" font-size="22">Self-service that works</text>
+<text x="65" y="594" fill="#eeefe9" font-family="Arial, sans-serif" font-size="28" font-weight="700">indaba</text>
+<text x="908" y="590" fill="#d1bd91" font-family="Arial, sans-serif" font-size="15" font-weight="700">FIELD GUIDE / 04</text>
+<rect x="804" y="113" width="224" height="403" rx="37" fill="#85927b"/><rect x="814" y="123" width="204" height="383" rx="29" fill="#eeefe9"/><rect x="872" y="137" width="89" height="13" rx="6" fill="#262626"/><circle cx="915" cy="215" r="38" fill="#d1bd91"/><circle cx="915" cy="204" r="12" fill="#262626"/><path d="M891 236q24-29 48 0" fill="#262626"/><rect x="839" y="278" width="154" height="51" rx="12" fill="#e0e5d7"/><text x="856" y="309" fill="#262626" font-family="Arial, sans-serif" font-size="13" font-weight="700">MY REQUESTS</text><rect x="839" y="344" width="154" height="51" rx="12" fill="#d1bd91"/><text x="856" y="375" fill="#262626" font-family="Arial, sans-serif" font-size="14" font-weight="700">APPROVED</text><rect x="878" y="474" width="76" height="5" rx="2" fill="#262626"/><circle cx="765" cy="372" r="29" fill="#d1bd91"/><circle cx="1067" cy="246" r="18" fill="#d1bd91"/>
+</svg>
