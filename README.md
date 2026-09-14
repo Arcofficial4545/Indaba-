@@ -76,7 +76,8 @@ Every variable the code reads is listed, with a comment, in
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only | Production builds |
 | `IP_HASH_PEPPER` | Server only | Production builds |
 | `NEXT_PUBLIC_SITE_URL` | Public | No, falls back to the production URL |
-| `RESEND_API_KEY` and `EMAIL_FROM` | Server only | No, but set both or neither |
+| `SMTP_USER`, `SMTP_PASSWORD` | Server only | No. Interim email through Gmail, used first when set |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Server only | No. Email once a domain is verified, set both |
 
 A production build fails fast when a required variable is missing. For a local
 build with no Supabase project, set `SKIP_ENV_VALIDATION=1`. Never commit

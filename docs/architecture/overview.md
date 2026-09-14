@@ -80,10 +80,13 @@ it. Lists, cards and the home page link to those pages instead.
 
 ## Email
 
-`lib/email.ts` sends through the Resend HTTP API. Markup lives in
-`lib/email-templates.ts`, which has no server-only import so it can be rendered
-to a file for preview. Email is optional: without `RESEND_API_KEY` and
-`EMAIL_FROM` the site works and says so rather than promising an inbox.
+`lib/email.ts` sends through whichever transport is configured: Gmail SMTP when
+`SMTP_USER` and `SMTP_PASSWORD` are set (the interim route, sending as
+"Indaba <SMTP_USER>"), otherwise the Resend HTTP API from `EMAIL_FROM`. Markup
+lives in `lib/email-templates.ts`,
+which has no server-only import so it can be rendered to a file for preview.
+Email is optional: with no transport configured the site works and says so
+rather than promising an inbox.
 
 ## Configuration and environment
 

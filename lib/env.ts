@@ -57,12 +57,20 @@ export function validateEnv(env: NodeJS.ProcessEnv = process.env): void {
 
   required("IP_HASH_PEPPER");
 
-  // Email is optional until a sending domain exists, but half configured is a
-  // mistake worth catching: a key with no sender address sends nothing.
-  const hasResendKey = Boolean(env.RESEND_API_KEY?.trim());
-  const hasEmailFrom = Boolean(env.EMAIL_FROM?.trim());
-  if (hasResendKey !== hasEmailFrom) {
-    problems.push("RESEND_API_KEY and EMAIL_FROM must be set together");
+  /*
+    Email is optional, but half configured is a mistake worth catching. Two
+    transports (see lib/email.ts): SMTP needs its user and password together,
+    and Resend, when it is the transport in use, needs a sender address. SMTP
+    builds its own sender from SMTP_USER.
+  */
+  const smtpVars = ["SMTP_USER", "SMTP_PASSWORD"];
+  const smtpSet = smtpVars.filter((name) => env[name]?.trim());
+  if (smtpSet.length === 1) {
+    problems.push("SMTP_USER and SMTP_PASSWORD must be set together");
+  }
+  const hasSmtp = smtpSet.length === smtpVars.length;
+  if (env.RESEND_API_KEY?.trim() && !hasSmtp && !env.EMAIL_FROM?.trim()) {
+    problems.push("EMAIL_FROM must be set when RESEND_API_KEY is the email transport");
   }
 
   // Optional, because lib/site.ts falls back to the real domain. A localhost

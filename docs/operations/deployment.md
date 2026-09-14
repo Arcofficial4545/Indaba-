@@ -23,8 +23,10 @@ Preview for each. Mark server-only values **Sensitive**.
 | `SUPABASE_SERVICE_ROLE_KEY` | Secret key, `sb_secret_…` | Yes |
 | `IP_HASH_PEPPER` | 64 hex characters | Yes |
 | `NEXT_PUBLIC_SITE_URL` | `https://indaba-one.vercel.app`, never localhost | No |
-| `RESEND_API_KEY` | Resend key, `re_…` | Yes |
-| `EMAIL_FROM` | `Indaba <sender@verified-domain>` | No |
+| `SMTP_USER` | The Gmail address, while on the interim Gmail route | No |
+| `SMTP_PASSWORD` | Google App Password for that account | Yes |
+| `RESEND_API_KEY` | Resend key, `re_…`, once a domain is verified | Yes |
+| `EMAIL_FROM` | `Indaba <newsletter@yourdomain>`, with Resend only. See [Email](#email) | No |
 
 Each value box holds the value only: no `NAME=` prefix, no quotes, no spaces.
 Changing a variable takes effect only after a redeploy.
@@ -69,15 +71,35 @@ migration is written to be additive and safe to re-run.
 When a key may have been exposed: create a replacement at the source, update
 Vercel and `.env.local`, redeploy, then revoke the old key.
 
-## Email deliverability
+## Email
 
-Until a sending domain is verified in Resend, email reaches only the Resend
-account owner. For production:
+`lib/email.ts` uses Gmail SMTP when `SMTP_USER` and `SMTP_PASSWORD` are both set,
+and Resend otherwise.
 
-1. Add the domain in **Resend > Domains** and create its DNS records (SPF, DKIM,
-   DMARC) at the registrar.
-2. Set `EMAIL_FROM` to an address on that domain.
-3. Redeploy.
+### Now: Gmail over SMTP (no domain needed)
+
+1. The Google account needs **2-Step Verification** turned on.
+2. Create an App Password: **Google Account > Security > 2-Step Verification >
+   App passwords**. Copy the 16 characters.
+3. Set `SMTP_USER` to the Gmail address and `SMTP_PASSWORD` to the App Password.
+   Emails are sent as "Indaba <that Gmail address>".
+4. Redeploy.
+
+Gmail allows roughly 500 recipients a day from a personal account, which suits
+welcome emails at launch volume but not a newsletter send to a large list.
+
+### Later: a verified domain with Resend
+
+1. Buy the domain and add it in **Resend > Domains** (a sending subdomain such as
+   `mail.yourdomain` is best).
+2. Create the DNS records Resend shows (SPF, DKIM, DMARC) at the registrar and
+   wait for **Verified**.
+3. Create a Resend API key with sending access for that domain.
+4. In Vercel: **remove** `SMTP_USER` and `SMTP_PASSWORD`; set `RESEND_API_KEY`;
+   set `EMAIL_FROM=Indaba <newsletter@mail.yourdomain>`.
+5. Redeploy, subscribe with a test address, and confirm the welcome email
+   arrives.
+6. Revoke the Gmail App Password.
 
 A verified domain is the largest single factor in landing in the Gmail
 Primary tab.
