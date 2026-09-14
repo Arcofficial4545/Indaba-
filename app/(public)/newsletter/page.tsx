@@ -23,7 +23,7 @@ const PROMISES = [
   },
   {
     title: "POPIA compliant, properly",
-    body: "We use double opt in, so nothing happens until you confirm from your inbox. We record your address and the moment you consented, and nothing else. We never sell or share it.",
+    body: "Subscribing takes one step, and a welcome email follows straight away so you know it worked. We record your address and the moment you subscribed, and nothing else. We never sell or share it.",
   },
   {
     title: "One click to leave",

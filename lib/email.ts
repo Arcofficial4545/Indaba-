@@ -1,6 +1,7 @@
 import "server-only";
 
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { newsletterWelcomeEmail } from "@/lib/email-templates";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * Transactional email through Resend's HTTP API.
@@ -51,39 +52,22 @@ async function send(message: {
 }
 
 /**
- * The double opt in email. The token is the pending row's confirm_token, which
- * is also what the unsubscribe page matches on.
+ * The welcome email, sent the moment someone subscribes. The token is the
+ * subscriber row's confirm_token, which is what the unsubscribe page matches on.
  */
-export function sendNewsletterConfirmation(
+export function sendNewsletterWelcome(
   email: string,
   token: string,
 ): Promise<boolean> {
-  const confirmUrl = `${SITE_URL}/api/newsletter/confirm?token=${token}`;
   const unsubscribeUrl = `${SITE_URL}/newsletter/unsubscribe?token=${token}`;
 
-  const text = [
-    "Hello,",
-    "",
-    `Someone, hopefully you, asked to receive the ${SITE_NAME} newsletter at this address. Nothing is sent until you confirm.`,
-    "",
-    `Confirm your subscription: ${confirmUrl}`,
-    "",
-    `If this was not you, ignore this email and you will not hear from us again. You can also remove this address now: ${unsubscribeUrl}`,
-    "",
-    `${SITE_NAME}, ${SITE_URL}`,
-  ].join("\n");
+  const message = newsletterWelcomeEmail({ email, unsubscribeUrl });
 
-  const html = `<p>Hello,</p>
-<p>Someone, hopefully you, asked to receive the ${SITE_NAME} newsletter at this address. Nothing is sent until you confirm.</p>
-<p><a href="${confirmUrl}">Confirm your subscription</a></p>
-<p>If this was not you, ignore this email and you will not hear from us again. You can also <a href="${unsubscribeUrl}">remove this address now</a>.</p>
-<p>${SITE_NAME}, <a href="${SITE_URL}">${SITE_URL}</a></p>`;
-
-  return send({
-    to: email,
-    subject: `Confirm your ${SITE_NAME} subscription`,
-    text,
-    html,
-    headers: { "List-Unsubscribe": `<${unsubscribeUrl}>` },
-  });
+  /*
+    No List-Unsubscribe header on this one. It is a one-off receipt, the header
+    is a bulk mail signal that pushes Gmail towards the Promotions tab, and the
+    unsubscribe link is in the body. The actual newsletter sends are bulk mail
+    and must carry the header.
+  */
+  return send({ to: email, ...message });
 }

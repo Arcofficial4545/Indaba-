@@ -14,6 +14,8 @@ import {
   SparklesIcon,
 } from "lucide-react";
 
+import { AffiliateCTAButton } from "@/components/public/AffiliateCTAButton";
+import { AffiliateDisclosureNote } from "@/components/public/AffiliateDisclosureNote";
 import { AlternativeCard } from "@/components/public/AlternativeCard";
 import { Breadcrumbs } from "@/components/public/Breadcrumbs";
 import { Figure } from "@/components/public/Figure";
@@ -37,6 +39,7 @@ import { SponsoredAd } from "@/components/public/SponsoredAd";
 import { StarRating } from "@/components/public/StarRating";
 import { Badge } from "@/components/ui/badge";
 import { buildFaqs, faqJsonLd } from "@/lib/content/faqs";
+import { serializeJsonLd } from "@/lib/json-ld";
 import { formatNumber, formatRating } from "@/lib/format";
 import {
   getAllSoftware,
@@ -282,6 +285,26 @@ export default async function SoftwareProfilePage(
             </Link>
             {software.featured && <Badge variant="success">Featured</Badge>}
           </div>
+
+          {/*
+            The visit CTA above the fold. On a phone the sidebar, and with it
+            the only other CTA on the page, sits below every section.
+          */}
+          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <AffiliateCTAButton
+              slug={software.slug}
+              name={software.name}
+              brandColor={software.brand_color}
+            />
+            {software.free_trial && (
+              <span className="text-small text-[var(--color-text-muted)]">
+                {software.free_trial_days
+                  ? `${software.free_trial_days} day free trial`
+                  : "Free trial available"}
+              </span>
+            )}
+          </div>
+          <AffiliateDisclosureNote className="mt-3 max-w-[62ch]" />
         </div>
       </header>
 
@@ -611,13 +634,13 @@ export default async function SoftwareProfilePage(
       <script
         type="application/ld+json"
          
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(productJsonLd) }}
       />
       {faqs.length > 0 && (
         <script
           type="application/ld+json"
            
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faqs)) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqJsonLd(faqs)) }}
         />
       )}
     </div>

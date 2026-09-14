@@ -84,6 +84,7 @@ export const LEGAL_NAV = [
 
 export const COMPANY_NAV = [
   { label: "About", href: "/about" },
+  { label: "For vendors", href: "/for-vendors" },
   { label: "Contact", href: "/contact" },
   { label: "Newsletter", href: "/newsletter" },
   { label: "Editorial policy", href: "/editorial-policy" },

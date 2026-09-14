@@ -5,9 +5,9 @@
 
 ## 0. HOW TO USE THIS FILE
 
-Save at `docs/REDESIGN-BRIEF.md`, replacing v1. Then:
+Save at `docs/design/redesign-brief.md`, replacing v1. Then:
 
-> Read `docs/REDESIGN-BRIEF.md` in full. It replaces the previous brief. Keep your Phase 2 foundation work, discard everything after it, and restart at Phase 3 against this document.
+> Read `docs/design/redesign-brief.md` in full. It replaces the previous brief. Keep your Phase 2 foundation work, discard everything after it, and restart at Phase 3 against this document.
 
 v1 was wrong in four ways and this file corrects them. Where v1 and v2 disagree, **v2 wins**, including where you have already built to v1.
 
@@ -355,7 +355,7 @@ WCAG AA on every text pair. Visible keyboard focus everywhere: a `bronze` ring a
 
 After each: screenshot at 1280 and 390 in light mode, critique your own work against §2 and §12, then **stop and wait.** No git operations at any point.
 
-Keep `docs/DESIGN-NOTES.md` of what you tried and rejected, so later phases do not re-litigate settled decisions.
+Keep `docs/design/design-notes.md` of what you tried and rejected, so later phases do not re-litigate settled decisions.
 
 ---
 

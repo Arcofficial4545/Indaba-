@@ -16,9 +16,11 @@ export default async function AdminLoginPage(
     ? searchParams.next[0]
     : searchParams.next;
 
-  // Only accept an internal path, so the login page cannot be used as an open
-  // redirect to somebody else's site.
-  const next = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/admin";
+  // Only an admin path on this site. A leading "//", or a backslash such as
+  // "/\evil.com" which browsers read as "//evil.com", would otherwise turn the
+  // login page into an open redirect.
+  const next =
+    raw && raw.startsWith("/admin") && !raw.includes("\\") ? raw : "/admin";
 
   return (
     <div className="grid min-h-screen place-items-center px-4 py-12">

@@ -85,7 +85,7 @@ is meaningful non-text content, so WCAG 1.4.11 wants 3:1.
 `--star` therefore resolves to `--bronze` (5.52:1 on paper). This is the
 palette's own rule applied rather than an exception to it: §4 says that when
 you want "sand text" you actually want bronze, and a star is a mark of exactly
-that kind. The same reasoning already governs the rating bar (DESIGN.md §1.5),
+that kind. The same reasoning already governs the rating bar (design-system.md §1.5),
 where sand survives only because a numeral sits next to it.
 
 ### `.btn-glossy` rebuilt rather than replaced
@@ -201,7 +201,7 @@ Run against the dev server after the swap:
   the font swap contributes zero CLS.
 - **`display-hero` sets in three lines.** At 1280 the `h1` computes to
   **66.56px** — exactly 5.2vw — and measures **3 lines** tall. The arithmetic
-  in DESIGN.md §2.4 holds in a real browser, so the existing headline survives
+  in design-system.md §2.4 holds in a real browser, so the existing headline survives
   as written and no copy had to be cut to fit a clamp.
 - **Admin renders correctly.** `/admin` and `/admin/login` both 200 and paint
   in bone/paper/ink with visible `--border-control` outlines on the fields.

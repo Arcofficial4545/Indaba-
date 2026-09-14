@@ -17,14 +17,22 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/contact` },
 };
 
+/** Subject lines prefilled from the /for-vendors links and the listing CTAs. */
+const SUBJECTS: Record<string, string> = {
+  listing: "Listing my software on Indaba",
+  correction: "Correction to a product listing",
+  reviews: "Replying to reviews as a vendor",
+  partnership: "Affiliate or partner programme",
+  advertising: "Sponsored placement enquiry",
+};
+
 export default async function ContactPage(props: PageProps<"/contact">) {
   const searchParams = await props.searchParams;
   const intent = Array.isArray(searchParams.intent)
     ? searchParams.intent[0]
     : searchParams.intent;
 
-  const defaultSubject =
-    intent === "listing" ? "Listing my software on Indaba" : undefined;
+  const defaultSubject = intent ? SUBJECTS[intent] : undefined;
 
   return (
     <div className="container-site flex flex-col gap-10 py-8">

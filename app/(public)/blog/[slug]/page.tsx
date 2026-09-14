@@ -3,11 +3,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AffiliateCTAButton } from "@/components/public/AffiliateCTAButton";
+import { AffiliateDisclosureNote } from "@/components/public/AffiliateDisclosureNote";
 import { Breadcrumbs } from "@/components/public/Breadcrumbs";
+import { SoftwareLogo } from "@/components/public/SoftwareLogo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { formatDate, formatReadTime } from "@/lib/format";
+import {
+  formatDate,
+  formatNumber,
+  formatRating,
+  formatReadTime,
+  startingPriceLabel,
+} from "@/lib/format";
+import { serializeJsonLd } from "@/lib/json-ld";
 import { getArticleBySlug, getLatestArticles } from "@/lib/queries/articles";
+import { getAllSoftware } from "@/lib/queries/software";
 import { ogImageUrl, SITE_NAME, SITE_URL } from "@/lib/site";
+import type { SoftwareWithCategory } from "@/lib/types";
 
 export const revalidate = 3600;
 
@@ -55,9 +67,17 @@ export default async function ArticlePage(props: PageProps<"/blog/[slug]">) {
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const related = (await getLatestArticles(4)).filter(
-    (item) => item.slug !== article.slug,
-  );
+  // The catalogue is only read when the guide is about one product.
+  const [latest, catalogue] = await Promise.all([
+    getLatestArticles(4),
+    article.related_software_id
+      ? getAllSoftware()
+      : Promise.resolve<SoftwareWithCategory[]>([]),
+  ]);
+  const related = latest.filter((item) => item.slug !== article.slug);
+  const product =
+    catalogue.find((item) => item.id === article.related_software_id) ?? null;
+  const productPrice = product ? startingPriceLabel(product) : null;
 
   const initials = article.author_name
     .split(" ")
@@ -134,6 +154,49 @@ export default async function ArticlePage(props: PageProps<"/blog/[slug]">) {
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
+        {product && productPrice && (
+          <div className="flex flex-col gap-3">
+            <aside
+              aria-label={`${product.name}, the product this guide covers`}
+              className="card-modern flex flex-col gap-4 p-6 sm:flex-row sm:items-center"
+            >
+              <SoftwareLogo
+                name={product.name}
+                slug={product.slug}
+                logoUrl={product.logo_url}
+                brandColor={product.brand_color}
+                size={48}
+                className="shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="font-heading text-base font-bold tracking-tight">
+                  <Link
+                    href={`/software/${product.slug}`}
+                    className="hover:text-[var(--color-text-accent)]"
+                  >
+                    {product.name}
+                  </Link>
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Rated {formatRating(product.overall_rating)} out of 5 from{" "}
+                  {formatNumber(product.review_count)} reviews.{" "}
+                  {productPrice.isCustom || product.starting_price === 0
+                    ? productPrice.amount
+                    : `From ${productPrice.amount}`}
+                  .
+                </p>
+              </div>
+              <AffiliateCTAButton
+                slug={product.slug}
+                name={product.name}
+                brandColor={product.brand_color}
+                className="shrink-0"
+              />
+            </aside>
+            <AffiliateDisclosureNote />
+          </div>
+        )}
+
         {article.author_bio && (
           <footer className="rounded-3xl bg-muted p-6">
             <p className="text-[0.7rem] font-bold tracking-widest text-muted-foreground uppercase">
@@ -184,7 +247,7 @@ export default async function ArticlePage(props: PageProps<"/blog/[slug]">) {
 
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
       </div>
 

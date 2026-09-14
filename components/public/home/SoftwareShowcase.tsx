@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { AffiliateCTAButton } from "@/components/public/AffiliateCTAButton";
 import { CompareButton } from "@/components/public/CompareTray";
 import { Figure } from "@/components/public/Figure";
 import { SoftwareLogo } from "@/components/public/SoftwareLogo";
@@ -144,33 +143,25 @@ function ShowcaseCard({ product }: { product: SoftwareWithCategory }) {
       </p>
 
       {/*
-        Three actions on two rows, in order of how committed the reader is.
+        Two actions, in order of how committed the reader is: fill the compare
+        tray, or open the review.
 
-        The two secondary ones share a row as outlined pills: "Read review" is
-        the page this site actually wrote, "Compare" fills the tray. The
-        affiliate link gets the row beneath to itself, at full width and in
-        sand, because it is the only one of the three that earns anything and
-        it should be unmistakable which button leaves the site.
-
-        Three across one row was tried first. At 1280 a card is 290px wide and
-        the labels either truncated or wrapped, and the brief does not allow
-        either.
+        The review takes the full-width sand row. This used to be a "Visit
+        site" button straight to the vendor, but a reader on the home page is
+        still browsing, and the page that earns the click is the review, where
+        the vendor link sits beside its disclosure. See AffiliateCTAButton for
+        the rule.
       */}
       <div className="showcase-actions">
-        <Link href={`/software/${product.slug}`} className="card-cta card-cta-secondary">
-          Read review
-          <span className="sr-only"> of {product.name}</span>
-        </Link>
         <CompareButton slug={product.slug} name={product.name} />
       </div>
-      <AffiliateCTAButton
-        slug={product.slug}
-        name={product.name}
-        tone="site"
-        className="showcase-visit"
+      <Link
+        href={`/software/${product.slug}`}
+        className="btn-glossy showcase-visit items-center justify-center gap-2 text-sm"
       >
-        Visit site
-      </AffiliateCTAButton>
+        Read review
+        <span className="sr-only"> of {product.name}</span>
+      </Link>
     </article>
   );
 }

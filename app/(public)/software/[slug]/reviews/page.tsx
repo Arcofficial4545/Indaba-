@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { AffiliateCTAButton } from "@/components/public/AffiliateCTAButton";
+import { AffiliateDisclosureNote } from "@/components/public/AffiliateDisclosureNote";
 import { Breadcrumbs } from "@/components/public/Breadcrumbs";
 import { GlossyButton } from "@/components/public/GlossyButton";
 import { Pagination } from "@/components/public/Pagination";
 import { ReviewCard } from "@/components/public/ReviewCard";
 import { ReviewFilters } from "@/components/public/ReviewFilters";
 import { SoftwareLogo } from "@/components/public/SoftwareLogo";
-import { SponsoredAd } from "@/components/public/SponsoredAd";
+import { SoftwareSidebar } from "@/components/public/SoftwareSidebar";
 import { StarRating } from "@/components/public/StarRating";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatNumber, formatRating } from "@/lib/format";
@@ -91,13 +93,22 @@ export default async function ReviewArchivePage(
             {formatNumber(software.review_count)} verified reviews
           </span>
         </div>
-        <GlossyButton
-          href={`/software/${software.slug}/reviews/new`}
-          size="lg"
-          variant="dark"
-        >
-          Write a review
-        </GlossyButton>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <AffiliateCTAButton
+            slug={software.slug}
+            name={software.name}
+            brandColor={software.brand_color}
+            className="h-13 px-7 text-base"
+          />
+          <GlossyButton
+            href={`/software/${software.slug}/reviews/new`}
+            size="lg"
+            variant="dark"
+          >
+            Write a review
+          </GlossyButton>
+        </div>
+        <AffiliateDisclosureNote className="max-w-[52ch]" />
       </header>
 
       <div className="grid gap-10 lg:grid-cols-[1fr_20rem] lg:items-start">
@@ -133,7 +144,11 @@ export default async function ReviewArchivePage(
         </div>
 
         <div className="lg:sticky lg:top-28">
-          <SponsoredAd format="halfpage" />
+          {/*
+            The spec sheet from the profile, in the slot an empty ad box held:
+            price, facts, the visit CTA, add to compare and the disclosure.
+          */}
+          <SoftwareSidebar software={software} />
         </div>
       </div>
     </div>

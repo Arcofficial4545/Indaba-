@@ -13,9 +13,9 @@ import { cn } from "@/lib/utils";
 const initialState: NewsletterFormState = { status: "idle", message: "" };
 
 /**
- * Double opt in signup. POPIA requires consent to be freely given and
- * recorded, so the confirmation link is the actual subscription event and this
- * form only ever creates a pending row.
+ * Single step signup. Submitting is the subscription; the action records the
+ * consent POPIA asks for and sends a welcome email with a one-click
+ * unsubscribe.
  *
  * `source` travels with the submission because the same form sits in the
  * footer of every page and on the newsletter landing page, and knowing which
@@ -82,7 +82,9 @@ export function NewsletterForm({
           aria-invalid={failed}
           aria-describedby={failed ? "newsletter-error" : undefined}
           className={cn(
-            "h-12 w-full flex-1 rounded-xl border px-4 text-sm outline-none transition-colors",
+            // sm:flex-1, not flex-1: in the stacked phone layout the row is a
+            // column, and flex-basis 0 overrode h-12 and squashed the input.
+            "h-12 w-full rounded-xl border px-4 text-sm outline-none transition-colors sm:flex-1",
             "focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]",
             isDark
               ? "border-white/15 bg-white/10 text-white placeholder:text-white/45"

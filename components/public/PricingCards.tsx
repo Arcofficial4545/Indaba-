@@ -1,6 +1,7 @@
 import { CheckIcon, InfoIcon } from "lucide-react";
 
 import { AffiliateCTAButton } from "@/components/public/AffiliateCTAButton";
+import { AffiliateDisclosureNote } from "@/components/public/AffiliateDisclosureNote";
 import { Badge } from "@/components/ui/badge";
 import { formatPricePerPeriod, startingPriceLabel } from "@/lib/format";
 import type { SoftwareWithCategory } from "@/lib/types";
@@ -108,6 +109,24 @@ export function PricingCards({
           </AffiliateCTAButton>
         </div>
       )}
+
+      {/*
+        The plan cards carry no button of their own, so the visit link sits once
+        beneath them rather than once inside each. The disclosure sits next to
+        whichever pricing CTA is showing.
+      */}
+      <div className="flex flex-col items-start gap-3">
+        {plans.length > 0 && (
+          <AffiliateCTAButton
+            slug={software.slug}
+            name={software.name}
+            brandColor={software.brand_color}
+          >
+            See {software.name} plans
+          </AffiliateCTAButton>
+        )}
+        <AffiliateDisclosureNote className="max-w-[62ch]" />
+      </div>
 
       <p className="flex items-start gap-2 rounded-2xl bg-muted p-4 text-xs leading-relaxed text-muted-foreground">
         <InfoIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />

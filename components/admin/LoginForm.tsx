@@ -27,7 +27,7 @@ export function LoginForm({ next }: { next: string }) {
 
     const supabase = createClient();
     if (!supabase) {
-      setError("Supabase is not configured. See docs/SUPABASE_SETUP.md.");
+      setError("Supabase is not configured. See docs/operations/supabase-setup.md.");
       setPending(false);
       return;
     }

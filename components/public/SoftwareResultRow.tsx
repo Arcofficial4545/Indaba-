@@ -143,6 +143,20 @@ export function SoftwareResultRow({
           </span>
           <CompareToggle slug={software.slug} name={software.name} />
         </div>
+        {/*
+          To the review, not to the vendor. A listing is where a buyer is still
+          choosing, so the next step is the page that helps them choose; the
+          vendor link lives on the profile, beside its disclosure. See
+          AffiliateCTAButton for the rule.
+        */}
+        <div className="mt-3 flex justify-end">
+          <Link
+            href={`/software/${software.slug}`}
+            className="btn-glossy inline-flex h-9 items-center px-4 text-sm"
+          >
+            Read review<span className="sr-only"> of {software.name}</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
+import { getAdmin } from "@/lib/admin/auth";
 
 /**
  * Only these keys can be written. Same whitelist discipline as the resource
@@ -17,13 +17,9 @@ const ALLOWED_KEYS = [
 ] as const;
 
 export async function saveSettings(form: FormData): Promise<void> {
-  const supabase = await createClient();
-  if (!supabase) return;
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
+  const admin = await getAdmin();
+  if (!admin) return;
+  const { supabase } = admin;
 
   const rows = ALLOWED_KEYS.map((key) => ({
     key,

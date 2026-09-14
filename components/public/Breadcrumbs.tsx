@@ -10,6 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { serializeJsonLd } from "@/lib/json-ld";
 import { SITE_URL } from "@/lib/site";
 
 export type Crumb = { label: string; href?: string };
@@ -59,7 +60,7 @@ export function Breadcrumbs({ items }: { items: Crumb[] }) {
       <script
         type="application/ld+json"
          
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
     </>
   );

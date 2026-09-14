@@ -282,7 +282,7 @@ export function Navbar({
               <ThemeToggle />
 
               <Link
-                href="/contact?intent=listing"
+                href="/for-vendors"
                 className={cn(
                   "hidden h-10 items-center rounded-full px-5 text-sm font-medium md:inline-flex",
                   "transition-colors active:scale-[0.98]",

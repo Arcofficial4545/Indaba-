@@ -4,6 +4,7 @@ import { AlertTriangleIcon, ArrowRightIcon } from "lucide-react";
 
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Badge } from "@/components/ui/badge";
+import { requireAdmin } from "@/lib/admin/auth";
 import { formatDate, formatNumber } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -26,6 +27,7 @@ async function count(table: string, filter?: [string, string]) {
 }
 
 export default async function AdminDashboard() {
+  await requireAdmin();
   const supabase = await createClient();
 
   const [
@@ -75,7 +77,7 @@ export default async function AdminDashboard() {
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             The public site is running on local fallback data. Follow
-            docs/SUPABASE_SETUP.md to connect a database, then reload this page.
+            docs/operations/supabase-setup.md to connect a database, then reload this page.
           </p>
         </div>
       </AdminShell>

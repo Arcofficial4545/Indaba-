@@ -6,6 +6,15 @@ import { cn } from "@/lib/utils";
 /**
  * The "Visit website" call to action.
  *
+ * WHERE IT BELONGS: only where the reader has already been given the evidence.
+ * That is the product profile (header, sidebar, pricing), its reviews page, a
+ * head-to-head comparison, and a guide about that one product. Lists, cards
+ * and the hero link to those pages instead. Sending a reader who is still
+ * browsing straight to a vendor skips the page that earns the click, converts
+ * worse for the vendor (programmes pay on signups, not clicks), and is the
+ * outbound-heavy pattern that affiliate programmes and search engines both
+ * mark down as thin.
+ *
  * It never points at the vendor directly. It points at /api/track-click, which
  * logs the click and then redirects. That route is built so a logging failure
  * still issues the redirect: money first, analytics second.

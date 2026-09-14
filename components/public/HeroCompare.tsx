@@ -196,11 +196,21 @@ function Comparison({ matchups, reduced }: { matchups: HeroMatchup[]; reduced: b
           animate={{ opacity: !reduced && state.phase === "fade" ? 0 : 1 }}
           transition={{ duration: reduced ? 0 : FADE_MS / 1000, ease: EASE_IN_OUT }}
         >
+          {/*
+            Each pan is a click target for the comparison, so the whole card
+            answers "show me this pair". Out of the tab order: the button below
+            is the one keyboard stop for the same destination, rather than
+            three stops that all go to one place.
+          */}
           <div className="hero-pan hero-pan-a" data-win={winner > 0 ? "true" : "false"}>
-            <Panel side={matchup.a} />
+            <Link href={matchup.href} className="hero-pan-link" tabIndex={-1}>
+              <Panel side={matchup.a} />
+            </Link>
           </div>
           <div className="hero-pan hero-pan-b" data-win={winner < 0 ? "true" : "false"}>
-            <Panel side={matchup.b} />
+            <Link href={matchup.href} className="hero-pan-link" tabIndex={-1}>
+              <Panel side={matchup.b} />
+            </Link>
           </div>
         </motion.div>
       </motion.div>
@@ -226,8 +236,24 @@ function Comparison({ matchups, reduced }: { matchups: HeroMatchup[]; reduced: b
       </p>
 
       <div className="hero-compare-foot">
-        <Link href={matchup.href} className="hero-compare-link">
-          See the full comparison
+        {/*
+          The pair's own marks lead the label, overlapped like a head-to-head,
+          so the button names what it opens and changes with the scale. The
+          label stays fixed, so the button never changes width mid-cycle.
+        */}
+        <Link href={matchup.href} className="btn-glossy hero-compare-cta">
+          <span className="hero-cta-marks" aria-hidden="true">
+            <span className="hero-cta-mark">
+              <SoftwareLogo name={matchup.a.name} slug={matchup.a.slug} logoUrl={matchup.a.logoUrl} size={20} />
+            </span>
+            <span className="hero-cta-mark">
+              <SoftwareLogo name={matchup.b.name} slug={matchup.b.slug} logoUrl={matchup.b.logoUrl} size={20} />
+            </span>
+          </span>
+          <span>
+            See the full comparison
+            <span className="sr-only"> of {matchup.a.name} and {matchup.b.name}</span>
+          </span>
         </Link>
 
         {!reduced && matchups.length > 1 && (

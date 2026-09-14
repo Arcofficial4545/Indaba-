@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowRightIcon } from "lucide-react";
 
 import { SoftwareLogo } from "@/components/public/SoftwareLogo";
 import { StarRating } from "@/components/public/StarRating";
@@ -87,10 +86,17 @@ export function AlternativeCard({
         <p className="font-heading text-base font-bold tabular-nums">
           {price.amount}
         </p>
-        <ArrowRightIcon
-          className="size-4 text-muted-foreground transition-transform group-hover:translate-x-1"
+        {/*
+          A label, not a second link. The whole card already links to the
+          review, which is the right next step from a list of alternatives; the
+          label only makes that destination visible.
+        */}
+        <span
           aria-hidden="true"
-        />
+          className="inline-flex h-9 items-center rounded-full border border-border px-4 text-sm font-medium transition-colors group-hover:border-[var(--border-control)]"
+        >
+          Read review
+        </span>
       </div>
     </article>
   );

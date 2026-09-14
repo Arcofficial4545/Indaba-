@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { CheckCircle2Icon, XCircleIcon } from "lucide-react";
+import { CheckCircle2Icon, MailIcon, XCircleIcon } from "lucide-react";
 
 import { Breadcrumbs } from "@/components/public/Breadcrumbs";
 import { GlossyButton } from "@/components/public/GlossyButton";
-import { createServiceRoleClient } from "@/lib/supabase/server";
 import { SITE_URL } from "@/lib/site";
+
+import { unsubscribe } from "./actions";
 
 export const metadata: Metadata = {
   title: "Unsubscribe",
@@ -14,41 +15,25 @@ export const metadata: Metadata = {
 };
 
 /**
- * One click unsubscribe.
+ * Unsubscribe, confirmed with one click on this page.
  *
- * POPIA requires withdrawing consent to be as easy as giving it, so this acts
- * on the token in the link with no confirmation step, no survey and no
- * retention flow.
+ * The link in an email only opens this page; the change happens on the button,
+ * which posts. Mail security scanners (Outlook Safe Links among them) open every
+ * link in a message to check it, and when opening the link was itself the
+ * unsubscribe, they silently removed people who never asked to leave.
+ *
+ * Leaving is still one click once the page is open, with no survey and no
+ * retention flow, which is what POPIA asks for.
  */
 export default async function UnsubscribePage(
   props: PageProps<"/newsletter/unsubscribe">,
 ) {
   const searchParams = await props.searchParams;
-  const token = Array.isArray(searchParams.token)
-    ? searchParams.token[0]
-    : searchParams.token;
+  const read = (value: string | string[] | undefined) =>
+    Array.isArray(value) ? value[0] : value;
 
-  let outcome: "done" | "missing" | "unavailable" = "missing";
-
-  if (token) {
-    const supabase = createServiceRoleClient();
-    if (!supabase) {
-      outcome = "unavailable";
-    } else {
-      // Returning the affected rows tells us whether the token matched
-      // anything, which is what separates "done" from "that link is stale".
-      const { data, error } = await supabase
-        .from("newsletter_subscribers")
-        .update({
-          status: "unsubscribed",
-          unsubscribed_at: new Date().toISOString(),
-        })
-        .eq("confirm_token", token)
-        .select("id");
-
-      outcome = !error && (data?.length ?? 0) > 0 ? "done" : "missing";
-    }
-  }
+  const token = read(searchParams.token);
+  const outcome = read(searchParams.outcome);
 
   return (
     <div className="container-site flex flex-col gap-10 py-8">
@@ -74,6 +59,23 @@ export default async function UnsubscribePage(
               again unless you subscribe once more.
             </p>
           </>
+        ) : token && !outcome ? (
+          <>
+            <MailIcon
+              className="size-10 text-[var(--color-brand-dark)]"
+              aria-hidden="true"
+            />
+            <h1 className="font-heading text-2xl font-bold tracking-tight">
+              Unsubscribe from the newsletter?
+            </h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              You will stop receiving our emails straight away.
+            </p>
+            <form action={unsubscribe} className="mt-2">
+              <input type="hidden" name="token" value={token} />
+              <GlossyButton type="submit">Unsubscribe</GlossyButton>
+            </form>
+          </>
         ) : (
           <>
             <XCircleIcon
@@ -87,15 +89,17 @@ export default async function UnsubscribePage(
             </h1>
             <p className="text-sm leading-relaxed text-muted-foreground">
               {outcome === "unavailable"
-                ? "Something is wrong at our end. Please try again shortly, or email us and we will remove you by hand."
-                : "The link may have expired or already been used. If you are still receiving emails, email us and we will remove you by hand."}
+                ? "Something is wrong at our end. Please try again shortly."
+                : "The link may have expired or already been used. If you are still receiving emails, use the unsubscribe link in the latest one."}
             </p>
           </>
         )}
 
-        <GlossyButton href="/" className="mt-2">
-          Back to the site
-        </GlossyButton>
+        {outcome && (
+          <GlossyButton href="/" className="mt-2">
+            Back to the site
+          </GlossyButton>
+        )}
       </div>
     </div>
   );

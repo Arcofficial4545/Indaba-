@@ -27,7 +27,7 @@ export function getServiceClient(): SupabaseClient {
         "    NEXT_PUBLIC_SUPABASE_URL",
         "    SUPABASE_SERVICE_ROLE_KEY",
         "",
-        "  See docs/SUPABASE_SETUP.md for where to find them.",
+        "  See docs/operations/supabase-setup.md for where to find them.",
         "",
       ].join("\n"),
     );

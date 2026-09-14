@@ -4,6 +4,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { GlossyButton } from "@/components/public/GlossyButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { requireAdmin } from "@/lib/admin/auth";
 import { createClient } from "@/lib/supabase/server";
 import { saveSettings } from "./actions";
 
@@ -28,6 +29,7 @@ const SETTINGS = [
 ];
 
 export default async function AdminSettingsPage() {
+  await requireAdmin();
   const supabase = await createClient();
 
   const rows = supabase

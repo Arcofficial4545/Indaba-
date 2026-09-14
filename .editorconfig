@@ -1,0 +1,12 @@
+# Editor defaults. Line endings are deliberately not set: the tree is mixed and
+# forcing one would rewrite whole files on save.
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { AdminShell } from "@/components/admin/AdminShell";
+import { requireAdmin } from "@/lib/admin/auth";
 import { formatNumber } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -35,6 +36,7 @@ async function loadClicks(): Promise<{ software_name: string }[]> {
 }
 
 export default async function AdminAnalyticsPage() {
+  await requireAdmin();
   const clicks = await loadClicks();
 
   // Aggregated here rather than in SQL because the volume is small and this

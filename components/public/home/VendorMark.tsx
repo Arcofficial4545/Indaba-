@@ -4,7 +4,7 @@ import { LOGO_OPTICS, opticalHeight } from "@/lib/logo-optics";
 import { getBrandKey } from "@/lib/logos";
 
 // The catalogue still names Paymaster. Its original vendor wordmark is scoped
-// to the homepage; provenance is recorded in docs/DESIGN-NOTES.md.
+// to the homepage; provenance is recorded in docs/design/design-notes.md.
 const PAYMASTER_LOGO = { file: "/logos/category-paymaster.png", height: 22, aspect: 300 / 57 };
 
 /** Preserve measured proportions of both wordmarks and compact symbols. */

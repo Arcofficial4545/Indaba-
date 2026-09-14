@@ -66,8 +66,13 @@ export async function search(query: string): Promise<SearchResults> {
   if (!trimmed) return { software: [], articles: [], total: 0 };
 
   const supabase = createPublicClient();
+  const catalogue = await getAllSoftware();
 
-  if (supabase) {
+  // Connected but not seeded: every page is serving the fallback catalogue,
+  // and Postgres would search empty tables. Search what the pages show.
+  const seeded = !catalogue.some((item) => item.id.startsWith("sw-"));
+
+  if (supabase && seeded) {
     const [softwareResult, articleResult] = await Promise.all([
       supabase
         .from("software")
@@ -96,12 +101,9 @@ export async function search(query: string): Promise<SearchResults> {
     }
   }
 
-  const [allSoftware, allArticles] = await Promise.all([
-    getAllSoftware(),
-    getLatestArticles(200),
-  ]);
+  const allArticles = await getLatestArticles(200);
 
-  const software = allSoftware.filter((item) =>
+  const software = catalogue.filter((item) =>
     matches(
       [item.name, item.tagline, item.description_short, item.vendor_name],
       trimmed,

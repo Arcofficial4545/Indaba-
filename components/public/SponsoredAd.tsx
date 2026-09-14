@@ -9,6 +9,14 @@ const FORMATS = {
 
 export type AdFormat = keyof typeof FORMATS;
 
+/*
+  Off until an ad network is wired in. An empty dashed box reading "Billboard
+  970x250" looks like an unfinished site to exactly the people who approve
+  affiliate applications and sponsorship deals. Flip this when a network goes
+  live, and every slot reserves its dimensions again from that point.
+*/
+const ADS_LIVE = false;
+
 /**
  * A display advertising slot.
  *
@@ -27,6 +35,8 @@ export function SponsoredAd({
   format: AdFormat;
   className?: string;
 }) {
+  if (!ADS_LIVE) return null;
+
   const { width, height, label } = FORMATS[format];
 
   return (

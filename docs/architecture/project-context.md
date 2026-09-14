@@ -867,7 +867,7 @@ NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=   # optional
 NEXT_PUBLIC_ADSENSE_ACCOUNT=            # optional
 ```
 
-Setup walkthrough: `docs/SUPABASE_SETUP.md`. Recommended region `eu-west-1` or
+Setup walkthrough: `docs/operations/supabase-setup.md`. Recommended region `eu-west-1` or
 `eu-central-1` (there is no African region; ~150–180ms from Johannesburg, which
 is fine because every public page is statically generated with hourly
 revalidation). **Public signups must be turned off** — the site has exactly one

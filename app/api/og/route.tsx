@@ -36,8 +36,10 @@ export async function GET(request: NextRequest) {
   // would push the rating off the card.
   const title = (params.get("title") ?? SITE_NAME).slice(0, 80);
   const eyebrow = params.get("eyebrow")?.slice(0, 40) ?? null;
-  const rating = params.get("rating");
-  const reviews = params.get("reviews");
+  // Capped like the text fields, so a crafted URL cannot make the renderer
+  // lay out an arbitrarily long string.
+  const rating = params.get("rating")?.slice(0, 12) ?? null;
+  const reviews = params.get("reviews")?.slice(0, 12) ?? null;
   const subtitle = params.get("subtitle")?.slice(0, 120) ?? SITE_TAGLINE;
 
   return new ImageResponse(

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Badge } from "@/components/ui/badge";
+import { requireAdmin } from "@/lib/admin/auth";
 import { formatDate, formatNumber } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { markMessageHandled } from "./actions";
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminContactPage() {
+  await requireAdmin();
   const supabase = await createClient();
 
   const rows = supabase

@@ -1,10 +1,10 @@
 # Indaba v2 — design plan
 
-Phase 1 deliverable for `docs/REDESIGN-BRIEF.md`. Every number in here was
+Phase 1 deliverable for `docs/design/redesign-brief.md`. Every number in here was
 computed or measured, not estimated. Where this document departs from the
 brief, the departure is marked **DEVIATION** and carries its arithmetic.
 
-Companion file: `docs/DESIGN-NOTES.md` records what gets tried and rejected
+Companion file: `docs/design/design-notes.md` records what gets tried and rejected
 during the build so later phases do not re-argue settled points.
 
 ---
@@ -105,7 +105,7 @@ Resolution, which keeps sand and stays legal:
 
 Flagged for a visual check at Phase 5. If it still reads weak in a screenshot,
 the fill goes to `bronze` and sand moves to the sponsored-slot highlight only.
-That decision gets recorded in `DESIGN-NOTES.md` rather than reopened.
+That decision gets recorded in `docs/design/design-notes.md` rather than reopened.
 
 ### 1.6 Dark theme — the gap the brief leaves
 

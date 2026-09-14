@@ -150,8 +150,8 @@ export async function Footer() {
               </p>
               <NewsletterForm tone="dark" source="footer" className="mt-6" />
               <p className="footer-signup-fine">
-                Double opt-in: you are only subscribed once you confirm by
-                email.
+                A welcome email arrives straight away, and every email has a
+                one-click unsubscribe.
               </p>
             </div>
           </div>

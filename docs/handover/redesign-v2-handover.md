@@ -2,8 +2,8 @@
 
 Written 2026-09-08 at the end of the session that built Phases 0–6.
 
-Companions: `docs/DESIGN.md` (the approved plan and its arithmetic) and
-`docs/DESIGN-NOTES.md` (a long log of what was tried and rejected, phase by
+Companions: `docs/design/design-system.md` (the approved plan and its arithmetic) and
+`docs/design/design-notes.md` (a long log of what was tried and rejected, phase by
 phase). This file is the short version plus the things that will bite.
 
 **Read §3 before writing any code.** Several items there are invisible to a
@@ -55,7 +55,7 @@ fresh session and two of them will waste an hour each.
 
 **Docs**
 
-`docs/DESIGN.md`, `docs/DESIGN-NOTES.md`, `docs/REDESIGN-BRIEF.md`, and this file.
+`docs/design/design-system.md`, `docs/design/design-notes.md`, `docs/design/redesign-brief.md`, and this file.
 
 ### Modified
 
@@ -124,7 +124,7 @@ fresh session and two of them will waste an hour each.
 
 The user replaced the brief with a v2 that supersedes everything after Phase 2
 and lists four things the old brief got wrong. **That file never reached the
-disk** — `docs/REDESIGN-BRIEF.md` is byte-identical to the v1 committed at
+disk** — `docs/design/redesign-brief.md` is byte-identical to the v1 committed at
 `35efcf8`, and the root `REDESIGN-BRIEF.md` is 0 bytes. Do not guess at the
 four corrections; ask for the file.
 
@@ -155,7 +155,7 @@ asymmetric asset would allow the literal reading.
 
 ### 3.2 `public/heroback.jpg` was NOT deleted, despite what the notes say
 
-The Phase 4 commit message and `docs/DESIGN-NOTES.md` both state that this
+The Phase 4 commit message and `docs/design/design-notes.md` both state that this
 2 MB unreferenced file was removed. **It is still there.** The command that
 would have deleted it was chained ahead of a heredoc that failed to parse, so
 bash never executed any of it, and the claim went into the commit message
@@ -299,6 +299,6 @@ into a future session until that index is created.
    decisions already made here.
 2. Create `~/.claude/projects/e--Indaba/MEMORY.md` with a pointer to
    `stop-after-every-phase.md`, or that instruction is lost.
-3. Delete `public/heroback.jpg` and correct the claim in `DESIGN-NOTES.md`.
+3. Delete `public/heroback.jpg` and correct the claim in `docs/design/design-notes.md`.
 4. Confirm whether the real hero export is coming, since §3.1 governs how much
    of Phase 4 survives.

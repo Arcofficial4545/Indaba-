@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
+import { getAdmin } from "@/lib/admin/auth";
 
 /**
  * CSV export of confirmed subscribers.
@@ -10,17 +10,13 @@ import { createClient } from "@/lib/supabase/server";
  * never agreed to it.
  */
 export async function GET() {
-  const supabase = await createClient();
-  if (!supabase) {
-    return new NextResponse("Database not configured", { status: 503 });
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
+  // The full subscriber list is the most sensitive thing the admin can read,
+  // so it checks the allowlist itself rather than relying on proxy.ts.
+  const admin = await getAdmin();
+  if (!admin) {
     return new NextResponse("Not authorised", { status: 401 });
   }
+  const { supabase } = admin;
 
   const { data, error } = await supabase
     .from("newsletter_subscribers")

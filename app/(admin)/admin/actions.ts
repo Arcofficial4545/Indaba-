@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { getAdmin } from "@/lib/admin/auth";
 import { getResource, sanitisePayload } from "@/lib/admin/resources";
 import { createClient } from "@/lib/supabase/server";
 
@@ -15,8 +16,8 @@ export type SaveState = {
 /**
  * Every write goes through here.
  *
- * Two guarantees. The caller must be signed in, which the row level security
- * policies also enforce independently. And the payload is reduced to the
+ * Two guarantees. The caller must be on the admin allowlist, which the row
+ * level security policies also enforce independently. And the payload is reduced to the
  * registry's whitelist before it reaches the database, so a crafted form post
  * cannot set a column the admin was never shown, including a rating.
  */
@@ -32,17 +33,11 @@ export async function saveResource(
     return { status: "error", message: "Unknown resource." };
   }
 
-  const supabase = await createClient();
-  if (!supabase) {
-    return { status: "error", message: "The database is not configured." };
+  const admin = await getAdmin();
+  if (!admin) {
+    return { status: "error", message: "You are not authorised to do that." };
   }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { status: "error", message: "You are not signed in." };
-  }
+  const { supabase } = admin;
 
   const { values, errors } = sanitisePayload(resource, form);
   if (Object.keys(errors).length > 0) {
@@ -81,15 +76,10 @@ export async function deleteResource(form: FormData): Promise<void> {
   const resource = getResource(resourceKey);
   if (!resource || !id || resource.canDelete === false) return;
 
-  const supabase = await createClient();
-  if (!supabase) return;
+  const admin = await getAdmin();
+  if (!admin) return;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
-
-  await supabase.from(resource.table).delete().eq("id", id);
+  await admin.supabase.from(resource.table).delete().eq("id", id);
 
   revalidatePath(`/admin/${resource.key}`);
   revalidatePath("/", "layout");
@@ -102,15 +92,10 @@ export async function setReviewStatus(form: FormData): Promise<void> {
   const status = String(form.get("status") ?? "");
   if (!id || !["published", "hidden"].includes(status)) return;
 
-  const supabase = await createClient();
-  if (!supabase) return;
+  const admin = await getAdmin();
+  if (!admin) return;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
-
-  await supabase.from("reviews").update({ status }).eq("id", id);
+  await admin.supabase.from("reviews").update({ status }).eq("id", id);
 
   revalidatePath("/admin/reviews");
   revalidatePath("/", "layout");

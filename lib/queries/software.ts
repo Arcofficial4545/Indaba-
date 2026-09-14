@@ -272,7 +272,9 @@ export async function getStarDistributions(
 ): Promise<Record<string, StarDistribution>> {
   const supabase = createPublicClient();
 
-  if (!supabase) {
+  // `sw-` ids are the fallback catalogue, served while the database is
+  // connected but not seeded. Their reviews are not in the database either.
+  if (!supabase || softwareIds.every((id) => id.startsWith("sw-"))) {
     const result: Record<string, StarDistribution> = {};
     for (const id of softwareIds) {
       const software = FALLBACK_SOFTWARE.find((s) => s.id === id);

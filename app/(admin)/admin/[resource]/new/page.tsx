@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ResourceForm } from "@/components/admin/ResourceForm";
+import { requireAdmin } from "@/lib/admin/auth";
 import { loadOptions } from "@/lib/admin/data";
 import { getResource } from "@/lib/admin/resources";
 
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 export default async function NewResourcePage(
   props: PageProps<"/admin/[resource]/new">,
 ) {
+  await requireAdmin();
   const { resource } = await props.params;
   const definition = getResource(resource);
   if (!definition || definition.canCreate === false) notFound();

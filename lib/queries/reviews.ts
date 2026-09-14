@@ -1,5 +1,6 @@
 import { generateReviews } from "@/lib/content/generateReviews";
 import { FALLBACK_SOFTWARE } from "@/lib/fallback-data";
+import { getAllSoftware } from "@/lib/queries/software";
 import { createPublicClient } from "@/lib/supabase/public";
 import type { Review } from "@/lib/types";
 
@@ -37,7 +38,9 @@ export async function getReviews(
   const { rating, companySize, sort = "recent", limit = 10, offset = 0 } = filters;
   const supabase = createPublicClient();
 
-  if (!supabase) {
+  // A `sw-` id is a fallback catalogue product: the database is connected but
+  // not seeded yet, so this product's reviews live in the fallback data too.
+  if (!supabase || softwareId.startsWith("sw-")) {
     let rows = fallbackReviews(softwareId);
     if (rating) rows = rows.filter((r) => r.overall_rating === rating);
     if (companySize) {
@@ -102,7 +105,7 @@ export async function getCompanySizeBreakdown(
   softwareId: string,
 ): Promise<Record<string, number>> {
   const supabase = createPublicClient();
-  const rows = supabase
+  const rows = supabase && !softwareId.startsWith("sw-")
     ? ((
         await supabase
           .from("reviews")
@@ -138,27 +141,7 @@ export async function getCompanySizeBreakdown(
 export async function getFeaturedReviews(limit = 7): Promise<Review[]> {
   const supabase = createPublicClient();
 
-  if (!supabase) {
-    /*
-      Every product's pool is offered, not just its best review, and the
-      de-duplication below chooses across all of them.
-
-      Taking the single highest-rated review from each product looked correct
-      and was not: the generated reviews are templated, so the top-rated one
-      from every product used the SAME template and the section rendered seven
-      copies of two sentences. On a page whose argument is "these are real
-      named people", that is worse than showing nothing.
-    */
-    const pool: Review[] = [];
-    for (const software of FALLBACK_SOFTWARE) {
-      pool.push(
-        ...sortReviews(fallbackReviews(software.id), "highest").filter(
-          (review) => review.reviewer_company && review.summary,
-        ),
-      );
-    }
-    return pickVaried(pool, limit);
-  }
+  if (!supabase) return fallbackFeatured(limit);
 
   const { data, error } = await supabase
     .from("reviews")
@@ -175,9 +158,38 @@ export async function getFeaturedReviews(limit = 7): Promise<Review[]> {
     .order("helpful_count", { ascending: false })
     .limit(limit * 6);
 
-  if (error || !data) return [];
+  if (!error && data && data.length > 0) {
+    return pickVaried(data as Review[], limit);
+  }
 
-  return pickVaried(data as Review[], limit);
+  // Connected but not seeded: the pages are serving the fallback catalogue, so
+  // its reviews are the ones that belong in this section.
+  const catalogue = await getAllSoftware();
+  return catalogue.some((software) => software.id.startsWith("sw-"))
+    ? fallbackFeatured(limit)
+    : [];
+}
+
+function fallbackFeatured(limit: number): Review[] {
+  /*
+    Every product's pool is offered, not just its best review, and the
+    de-duplication in pickVaried chooses across all of them.
+
+    Taking the single highest-rated review from each product looked correct
+    and was not: the generated reviews are templated, so the top-rated one
+    from every product used the SAME template and the section rendered seven
+    copies of two sentences. On a page whose argument is "these are real
+    named people", that is worse than showing nothing.
+  */
+  const pool: Review[] = [];
+  for (const software of FALLBACK_SOFTWARE) {
+    pool.push(
+      ...sortReviews(fallbackReviews(software.id), "highest").filter(
+        (review) => review.reviewer_company && review.summary,
+      ),
+    );
+  }
+  return pickVaried(pool, limit);
 }
 
 /**

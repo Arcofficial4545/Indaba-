@@ -27,11 +27,15 @@ export async function submitContact(
 
   const fieldErrors: Record<string, string> = {};
   if (name.length < 2) fieldErrors.name = "Please give your name.";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  else if (name.length > 200) fieldErrors.name = "Please shorten your name.";
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     fieldErrors.email = "That does not look like an email address.";
   }
+  if (subject.length > 300) fieldErrors.subject = "Please shorten the subject.";
   if (message.length < 10) {
     fieldErrors.message = "Please tell us a little more.";
+  } else if (message.length > 5000) {
+    fieldErrors.message = "Please keep your message under 5 000 characters.";
   }
 
   if (Object.keys(fieldErrors).length > 0) {
@@ -51,13 +55,35 @@ export async function submitContact(
   }
 
   const headerList = await headers();
+  const ipHash = hashIp(clientIp(headerList));
+
+  /*
+    Throttle per connection: at most three messages in ten minutes. It keys on
+    the same peppered hash stored with each message, so no raw IP is read or
+    kept for it. Without a pepper there is no hash, and no throttle.
+  */
+  if (ipHash) {
+    const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { count } = await supabase
+      .from("contact_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("ip_hash", ipHash)
+      .gte("created_at", since);
+    if ((count ?? 0) >= 3) {
+      return {
+        status: "error",
+        message:
+          "You have sent a few messages in the last few minutes. Please wait a little before sending another.",
+      };
+    }
+  }
 
   const { error } = await supabase.from("contact_messages").insert({
     name,
     email,
     subject: subject || null,
     message,
-    ip_hash: hashIp(clientIp(headerList)),
+    ip_hash: ipHash,
     user_agent: headerList.get("user-agent"),
   });
 

@@ -30,6 +30,11 @@ export function TopRatedTable({ software }: {
             <div className="ranked-rating"><Rating software={item} /></div>
             <div className="ranked-price"><Price software={item} /></div>
             <label className="ranked-compare" aria-label={`Compare ${item.name}`}><CompareToggle slug={item.slug} name={item.name} /><span aria-hidden="true">Compare</span></label>
+            <div className="ranked-action">
+              <Link href={`/software/${item.slug}`} className="btn-glossy inline-flex h-9 items-center px-4 text-sm">
+                Read review<span className="sr-only"> of {item.name}</span>
+              </Link>
+            </div>
           </li>
         ))}
       </ul>

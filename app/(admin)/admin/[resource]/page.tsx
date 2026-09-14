@@ -7,6 +7,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { GlossyButton } from "@/components/public/GlossyButton";
 import { Badge } from "@/components/ui/badge";
 import { Pagination } from "@/components/public/Pagination";
+import { requireAdmin } from "@/lib/admin/auth";
 import { listRows } from "@/lib/admin/data";
 import { RESOURCE_KEYS, getResource } from "@/lib/admin/resources";
 import { formatDate, formatNumber } from "@/lib/format";
@@ -33,6 +34,7 @@ export function generateStaticParams() {
 export default async function ResourceListPage(
   props: PageProps<"/admin/[resource]">,
 ) {
+  await requireAdmin();
   const { resource } = await props.params;
   const searchParams = await props.searchParams;
 

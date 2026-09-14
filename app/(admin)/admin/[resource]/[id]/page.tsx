@@ -5,6 +5,7 @@ import { ExternalLinkIcon } from "lucide-react";
 
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ResourceForm } from "@/components/admin/ResourceForm";
+import { requireAdmin } from "@/lib/admin/auth";
 import { getRow, loadOptions } from "@/lib/admin/data";
 import { getResource } from "@/lib/admin/resources";
 
@@ -38,6 +39,7 @@ function publicHref(resourceKey: string, row: Record<string, unknown>) {
 export default async function EditResourcePage(
   props: PageProps<"/admin/[resource]/[id]">,
 ) {
+  await requireAdmin();
   const { resource, id } = await props.params;
 
   const definition = getResource(resource);

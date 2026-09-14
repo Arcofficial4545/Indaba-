@@ -3,7 +3,7 @@
 import { randomBytes } from "node:crypto";
 import { headers } from "next/headers";
 
-import { sendNewsletterConfirmation } from "@/lib/email";
+import { sendNewsletterWelcome } from "@/lib/email";
 import { clientIp, hashIp } from "@/lib/hash";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
@@ -13,17 +13,20 @@ export type NewsletterFormState = {
 };
 
 /**
- * Double opt in signup.
+ * Single step signup.
  *
- * The row this writes is always `pending`. Nothing about it counts as consent
- * until the reader acts on the confirmation link, which is what POPIA means by
- * consent being freely given rather than assumed from a form submission. The
- * confirmation itself happens in /api/newsletter/confirm.
+ * Submitting the form is the subscription: the row is written as `confirmed`
+ * straight away, with the consent record POPIA asks for (when, from which
+ * form, a peppered IP hash and the user agent). A welcome email follows as the
+ * receipt, and its one-click unsubscribe is the safeguard against an address
+ * somebody else typed in.
  *
- * The confirmation email goes out through lib/email.ts. Until Resend has a
- * key and a verified domain it can refuse, and the row still stands as
- * pending. The success copy below changes with the outcome, so the reader is
- * only told to check an inbox when an email was actually accepted.
+ * The welcome email goes out through lib/email.ts. Until Resend has a verified
+ * domain it can refuse, and the subscription still stands; the success copy
+ * only mentions an email when one was actually accepted.
+ *
+ * /api/newsletter/confirm is kept so confirmation links in emails sent before
+ * this change still work.
  */
 export async function subscribeToNewsletter(
   _previous: NewsletterFormState,
@@ -39,7 +42,7 @@ export async function subscribeToNewsletter(
     .toLowerCase();
   const source = String(form.get("source") ?? "").trim() || "site";
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return {
       status: "error",
       message: "That does not look like an email address.",
@@ -56,6 +59,29 @@ export async function subscribeToNewsletter(
   }
 
   const headerList = await headers();
+  const ipHash = hashIp(clientIp(headerList));
+
+  /*
+    Throttle per connection: at most five new sign-ups in ten minutes, so the
+    form cannot be used to pour addresses into the list or send welcome emails
+    to strangers in bulk. Same peppered hash as the consent record; no hash, no
+    throttle.
+  */
+  if (ipHash) {
+    const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { count } = await supabase
+      .from("newsletter_subscribers")
+      .select("id", { count: "exact", head: true })
+      .eq("consent_ip_hash", ipHash)
+      .gte("created_at", since);
+    if ((count ?? 0) >= 5) {
+      return {
+        status: "error",
+        message:
+          "Too many sign-ups from this connection. Please try again in a few minutes.",
+      };
+    }
+  }
 
   const { data: existing } = await supabase
     .from("newsletter_subscribers")
@@ -64,36 +90,42 @@ export async function subscribeToNewsletter(
     .maybeSingle();
 
   /*
-    Already confirmed, so stop here. Reissuing a token would let anyone who
-    knows an address churn confirmation mail at its owner.
+    Already subscribed, so stop here without sending anything. Sending a fresh
+    welcome on every submission would let anyone who knows an address fill its
+    owner's inbox.
   */
   if (existing?.status === "confirmed") {
     return {
       status: "success",
-      message: "You are already on the list, so there is nothing more to do.",
+      message: "You are already subscribed, so there is nothing more to do.",
     };
   }
 
   const token = randomBytes(32).toString("hex");
-  const consent = {
-    status: "pending" as const,
+  const subscription = {
+    status: "confirmed" as const,
+    // Kept in confirm_token because the unsubscribe page matches on it.
     confirm_token: token,
-    consent_ip_hash: hashIp(clientIp(headerList)),
+    confirmed_at: new Date().toISOString(),
+    unsubscribed_at: null,
+    consent_ip_hash: ipHash,
     consent_source: source,
     user_agent: headerList.get("user-agent"),
   };
 
   /*
-    A pending row gets a fresh token, and so does an address that unsubscribed
-    and has come back. Both are the same write, which is why this upserts on
-    the email rather than branching.
+    A new address is inserted. An address left pending by the old two step
+    flow, or one that unsubscribed and has come back, is the same write as an
+    update, so this branches only on whether the row exists.
   */
   const { error } = existing
     ? await supabase
         .from("newsletter_subscribers")
-        .update({ ...consent, confirmed_at: null, unsubscribed_at: null })
+        .update(subscription)
         .eq("id", existing.id)
-    : await supabase.from("newsletter_subscribers").insert({ email, ...consent });
+    : await supabase
+        .from("newsletter_subscribers")
+        .insert({ email, ...subscription });
 
   if (error) {
     return {
@@ -102,12 +134,12 @@ export async function subscribeToNewsletter(
     };
   }
 
-  const sent = await sendNewsletterConfirmation(email, token);
+  const sent = await sendNewsletterWelcome(email, token);
 
   return {
     status: "success",
     message: sent
-      ? "Thank you. Check your inbox and click the link in our email to confirm your subscription."
-      : "Thank you. Your address is recorded as pending. Confirmation emails are not switched on yet, so we will not email you until they are and you have confirmed.",
+      ? "You are subscribed. We have sent a welcome email to your inbox."
+      : "You are subscribed. Welcome to Indaba.",
   };
 }
