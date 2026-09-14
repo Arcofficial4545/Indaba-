@@ -162,7 +162,7 @@ export default async function AboutPage() {
         </h2>
         <div className="prose-content mt-5">
           <p>
-            A small editorial team based in Cape Town, with contributors who
+            A small editorial team working across South Africa, with contributors who
             have done the work they write about: chartered accountants in
             practice, payroll administrators who have survived reconciliation
             season, and people who have migrated a ledger and lived to describe

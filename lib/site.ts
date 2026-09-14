@@ -19,7 +19,7 @@ export const SITE_DESCRIPTION =
 
 export const CONTACT_EMAIL = "hello@indaba.co.za";
 export const CONTACT_PHONE = "+27 21 300 4820";
-export const SITE_LOCATION = "Cape Town, South Africa";
+export const SITE_LOCATION = "South Africa";
 export const SITE_COUNTRY = "South Africa";
 export const SITE_LOCALE = "en-ZA";
 export const OG_LOCALE = "en_ZA";

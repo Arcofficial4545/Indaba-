@@ -320,6 +320,11 @@ export const BRAND_BY_SLUG: Record<string, string> = {
   "sage-business-cloud-payroll": "sage",
   "sage-hr": "sage",
   "sage-200-evolution": "sage",
+  "sage-x3": "sage",
+  "sage-intacct": "sage",
+  "sage-300": "sage",
+  "sage-300-people": "sage",
+  "sage-crm": "sage",
 
   // Zoho, one mark across the suite
   "zoho-books": "zoho",

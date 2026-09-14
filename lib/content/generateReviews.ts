@@ -21,6 +21,16 @@ import {
   TITLE_POSITIVE,
   VENDOR_RESPONSES,
 } from "./corpus";
+import { CATALOGUE } from "./catalogue";
+
+/*
+  Products whose ratings are a sourced third-party snapshot get no generated
+  reviews. Their numbers belong to someone else, and text written to match them
+  would present reviews that nobody wrote on this site.
+*/
+const SOURCED_RATINGS = new Set(
+  CATALOGUE.filter((entry) => entry.ratingSource).map((entry) => entry.slug),
+);
 
 /**
  * Deterministic review generation.
@@ -147,6 +157,8 @@ export function generateReviews({
   until = new Date("2026-08-01T00:00:00.000Z"),
   monthsBack = 30,
 }: GenerateOptions): GeneratedReview[] {
+  if (SOURCED_RATINGS.has(slug)) return [];
+
   const random = makeRandom(hashString(slug));
   const weights = starWeights(targetRating);
   const stars = [1, 2, 3, 4, 5];

@@ -1,7 +1,7 @@
 /**
  * The product catalogue.
  *
- * 39 products across six categories, chosen because South African businesses
+ * Products across six categories, chosen because South African businesses
  * actually shortlist them rather than because they rank well globally. That is
  * why SYSPRO, Omni Accounts, PaySoft and Paymaster appear alongside Salesforce
  * and Asana.
@@ -34,13 +34,22 @@ export type CatalogueEntry = {
   countries: string[];
   languages: string[];
 
-  /** Target averages the review generator aims at. */
+  /**
+   * Target averages the review generator aims at. When ratingSource is set they
+   * are instead a public third-party snapshot, copied as published, and the
+   * generator writes no reviews for the product.
+   */
   rating: number;
   ease: number;
   value: number;
   service: number;
   functionality: number;
   reviewCount: number;
+  /**
+   * Where the ratings come from when they are not generated targets. Shown with
+   * a link and the date wherever the rating appears.
+   */
+  ratingSource?: { name: string; url: string; retrieved: string };
 
   /** Curated alternatives by slug, in order. Never left to chance. */
   alternatives: string[];
@@ -184,7 +193,7 @@ export const CATALOGUE: CatalogueEntry[] = [
     supportTypes: ["Email", "Live chat", "Knowledge base"],
     countries: ["South Africa", "United Kingdom", "United States"],
     languages: ["English"],
-    rating: 4.0, ease: 4.2, value: 3.9, service: 3.6, functionality: 4.2,
+    rating: 4.0, ease: 4.2, value: 4.1, service: 3.6, functionality: 4.2,
     reviewCount: 231,
     alternatives: ["xero", "sage-accounting", "zoho-books", "freshbooks"],
     bestFor: ["small-business", "growing-business"],
@@ -230,7 +239,7 @@ export const CATALOGUE: CatalogueEntry[] = [
     supportTypes: ["Email", "Telephone", "Live chat", "Knowledge base"],
     countries: ["South Africa", "Kenya", "Nigeria", "India"],
     languages: ["English"],
-    rating: 4.1, ease: 4.0, value: 4.6, service: 3.9, functionality: 3.9,
+    rating: 4.1, ease: 4.0, value: 4.6, service: 3.9, functionality: 4.1,
     reviewCount: 145,
     alternatives: ["xero", "sage-accounting", "quickbooks-online", "wave-accounting"],
     bestFor: ["sole-trader", "small-business", "zoho-users"],
@@ -276,7 +285,7 @@ export const CATALOGUE: CatalogueEntry[] = [
     supportTypes: ["Telephone", "Email", "Partner network", "Knowledge base"],
     countries: ["South Africa", "Namibia", "Botswana", "Zimbabwe", "Zambia"],
     languages: ["English", "Afrikaans"],
-    rating: 3.7, ease: 3.2, value: 3.6, service: 3.5, functionality: 4.3,
+    rating: 4.2, ease: 3.2, value: 4.2, service: 3.5, functionality: 4.3,
     reviewCount: 326,
     alternatives: ["sage-accounting", "omni-accounts", "quickeasy-bos", "sage-200-evolution"],
     bestFor: ["stock-heavy", "unreliable-connectivity", "established-business"],
@@ -405,7 +414,7 @@ export const CATALOGUE: CatalogueEntry[] = [
     supportTypes: ["Telephone", "Email", "Partner network"],
     countries: ["South Africa", "Namibia", "Botswana"],
     languages: ["English", "Afrikaans"],
-    rating: 3.9, ease: 3.5, value: 4.2, service: 4.0, functionality: 4.5,
+    rating: 4.44, ease: 3.5, value: 4.2, service: 4.0, functionality: 4.5,
     reviewCount: 49,
     alternatives: ["sage-50cloud-pastel", "quickeasy-bos", "sage-accounting", "syspro"],
     bestFor: ["stock-heavy", "retail", "small-business"],
@@ -448,7 +457,7 @@ export const CATALOGUE: CatalogueEntry[] = [
     supportTypes: ["Telephone", "Email", "On site training"],
     countries: ["South Africa"],
     languages: ["English", "Afrikaans"],
-    rating: 3.8, ease: 3.3, value: 3.9, service: 4.5, functionality: 4.3,
+    rating: 4.48, ease: 3.3, value: 4.48, service: 4.5, functionality: 4.3,
     reviewCount: 32,
     alternatives: ["omni-accounts", "sage-200-evolution", "syspro", "sage-50cloud-pastel"],
     bestFor: ["manufacturing", "print", "growing-business"],
@@ -590,7 +599,7 @@ export const CATALOGUE: CatalogueEntry[] = [
     supportTypes: ["Telephone", "Email", "Partner network", "Knowledge base"],
     countries: ["South Africa", "Namibia", "Botswana"],
     languages: ["English", "Afrikaans"],
-    rating: 3.9, ease: 3.4, value: 3.7, service: 3.8, functionality: 4.4,
+    rating: 4.3, ease: 3.4, value: 3.7, service:4.3 , functionality: 4.4,
     reviewCount: 301,
     alternatives: ["simplepay", "sage-business-cloud-payroll", "payspace", "paysoft"],
     bestFor: ["established-business", "complex-payroll", "medium-business"],
@@ -634,7 +643,7 @@ export const CATALOGUE: CatalogueEntry[] = [
     supportTypes: ["Telephone", "Email", "Knowledge base"],
     countries: ["South Africa"],
     languages: ["English", "Afrikaans"],
-    rating: 3.8, ease: 4.5, value: 3.8, service: 3.6, functionality: 3.7,
+    rating: 4.6, ease: 4.5, value: 3.8, service: 3.6, functionality: 3.7,
     reviewCount: 153,
     alternatives: ["simplepay", "sage-pastel-payroll", "paysoft", "payspace"],
     bestFor: ["small-business", "simple-payroll"],
@@ -1820,6 +1829,260 @@ export const CATALOGUE: CatalogueEntry[] = [
     reviewCount: 68,
     alternatives: ["asana", "monday-com", "clickup", "insightly"],
     bestFor: ["agencies", "consultants", "medium-business"],
+  },
+
+  /* ==================================================================== */
+  /* The wider Sage range                                                  */
+  /*                                                                       */
+  /* Ratings are Capterra's published figures, read 2026-09-15, not       */
+  /* targets. Sage 300 People had no published rating, so it shows none.  */
+  /* ==================================================================== */
+  {
+    slug: "sage-x3",
+    name: "Sage X3",
+    categorySlug: "erp-software",
+    tagline: "Configurable ERP for manufacturers and distributors",
+    descriptionShort:
+      "Sage X3 is the most capable ERP in the Sage range, built for multi site, multi currency manufacturers and distributors, and it rewards a careful implementation more than most.",
+    descriptionFull: `
+<p>Sage X3 sits at the top of the Sage range. It is aimed at businesses whose operations span several sites, currencies or legal entities, and whose processes are specific enough that an off the shelf system would force them into workarounds. Sage positions it for chemicals, distribution, food and beverage, industrial and process manufacturing, services and construction.</p>
+<p>The manufacturing side covers production management, bill of materials planning, shop floor control and quality control. The financial side covers general, cost and budget accounting, commitments and fixed assets. It can run on your own servers or in the cloud, which still matters to businesses with strict data or connectivity requirements.</p>
+<p>The strength reviewers mention most is configurability: much of what needs custom development in other ERPs can be done in X3 through settings, options and formulas. The same flexibility is its main cost. Reviewers describe a steep learning curve and say getting value from it without a specialist partner is difficult, so budget for implementation and training as well as licences.</p>
+<p>It is sold on a quoted basis through Sage partners, scoped by modules, users and deployment.</p>`,
+    vendorName: "Sage South Africa",
+    vendorWebsite: "https://www.sage.com/en-za/sage-business-cloud/sage-x3/industry/",
+    foundedYear: null,
+    featured: false,
+    topFeatures: [
+      "Multi site, multi currency and multi entity",
+      "Production management and shop floor control",
+      "Bill of materials planning",
+      "On premises or cloud deployment",
+    ],
+    features: [
+      "Financial, cost and budget accounting",
+      "Commitments and fixed assets",
+      "Multi site, multi currency and multi entity",
+      "Production management",
+      "Bill of materials planning",
+      "Shop floor control",
+      "Quality control",
+      "Distribution and inventory management",
+      "Sales app for field teams",
+      "Construction add on",
+      "Industry editions for process and discrete manufacturing",
+      "On premises or cloud deployment",
+    ],
+    integrations: [],
+    supportTypes: ["Partner network", "Knowledge base"],
+    countries: ["South Africa", "Global"],
+    languages: ["English"],
+    rating: 4.4, ease: 4.2, value: 4.1, service: 4.0, functionality: 4.3,
+    reviewCount: 147,
+    ratingSource: {
+      name: "Capterra",
+      url: "https://www.capterra.com/p/213927/Sage-X3/",
+      retrieved: "2026-09-15",
+    },
+    alternatives: ["sap-business-one", "syspro", "dynamics-365-business-central", "sage-300"],
+    bestFor: ["large-business", "manufacturing", "distribution"],
+  },
+
+  {
+    slug: "sage-intacct",
+    name: "Sage Intacct",
+    categorySlug: "accounting-software",
+    tagline: "Cloud financial management for multi entity finance teams",
+    descriptionShort:
+      "Sage Intacct is cloud financial management for finance teams that have outgrown a small business ledger, with dimensional reporting and multi entity consolidation as its main reasons to exist.",
+    descriptionFull: `
+<p>Sage Intacct is a cloud financial management system rather than a bookkeeping package. It is built for finance teams that close the books across several entities, report by department, project or location, and need approval workflows and an audit trail that a small business ledger does not offer.</p>
+<p>Its reporting is the headline. Transactions carry dimensions, so the same data can be sliced by entity, region, project or cost centre without maintaining parallel charts of accounts, and consolidations run inside the system rather than in spreadsheets. Dashboards, approval workflows and an open API round out the core.</p>
+<p>Reviewers are consistent about the trade offs. Building custom reports is powerful but not always intuitive, support response times draw complaints, and many of the capabilities worth having are separately priced modules, so the total cost grows as you add them. Get the module list into the quote before you compare it with anything.</p>
+<p>Sage prices it for each organisation based on size and modules, through its South African team and partners.</p>`,
+    vendorName: "Sage South Africa",
+    vendorWebsite: "https://www.sage.com/en-za/sage-business-cloud/intacct/",
+    foundedYear: 1999,
+    featured: false,
+    topFeatures: [
+      "Dimensional financial reporting",
+      "Multi entity consolidation",
+      "Approval workflows and audit trail",
+      "Open API for integrations",
+    ],
+    features: [
+      "General ledger with reporting dimensions",
+      "Accounts payable and receivable",
+      "Cash management",
+      "Multi entity consolidation",
+      "Dimensional financial reporting",
+      "Dashboards",
+      "Approval workflows",
+      "Audit trail",
+      "Open API",
+      "Industry specific modules",
+      "Business intelligence module for subscription businesses",
+      "Accountant partner programme",
+    ],
+    integrations: ["Salesforce"],
+    supportTypes: ["Partner network", "Knowledge base"],
+    countries: ["South Africa", "Global"],
+    languages: ["English"],
+    rating: 4.3, ease: 4.2, value: 4.0, service: 4.0, functionality: 4.2,
+    reviewCount: 716,
+    ratingSource: {
+      name: "Capterra",
+      url: "https://www.capterra.com/p/76/Intacct/",
+      retrieved: "2026-09-15",
+    },
+    alternatives: ["dynamics-365-business-central", "xero", "sage-200-evolution", "quickbooks-online"],
+    bestFor: ["medium-business", "growing-business", "multinational"],
+  },
+
+  {
+    slug: "sage-300",
+    name: "Sage 300",
+    categorySlug: "erp-software",
+    tagline: "Mid market ERP for multi company, multi currency finance",
+    descriptionShort:
+      "Sage 300, formerly Sage ERP Accpac, is a long standing mid market ERP whose strengths are multi company accounting and foreign currency, sold and supported through South African partners.",
+    descriptionFull: `
+<p>Sage 300 is the product many South African finance teams still know as Accpac. It is a mid market ERP for businesses with up to several hundred users, and its lasting appeal is on the finance side: several companies, several currencies and proper controls, handled reliably.</p>
+<p>Sage positions it for organisations that need GAAP or IFRS aligned reporting, full multicurrency, bank reconciliation and tax reporting, with inventory, purchasing and order entry alongside the ledger. It runs on premises or online, and it integrates with Sage 300 People for payroll and HR.</p>
+<p>Reviewers praise its stability and its permission controls, and criticise the same things repeatedly. Reporting beyond the standard set usually means Crystal Reports, which needs specialist skills, and the online option is not a modern cloud product. Support experiences are mixed, and complex problems tend to go through partners.</p>
+<p>It is quoted through Sage partners by module and user count.</p>`,
+    vendorName: "Sage South Africa",
+    vendorWebsite: "https://www.sage.com/en-za/products/sage-300-cloud/",
+    foundedYear: null,
+    featured: false,
+    topFeatures: [
+      "Multi company accounting",
+      "Full multicurrency",
+      "Security levels and user permissions",
+      "Integrates with Sage 300 People",
+    ],
+    features: [
+      "General ledger, payables and receivables",
+      "Multi company accounting",
+      "Full multicurrency",
+      "Bank reconciliation",
+      "Tax reporting",
+      "GAAP and IFRS aligned reporting",
+      "Inventory control",
+      "Purchase orders",
+      "Order entry",
+      "Security levels and user permissions",
+      "On premises or online deployment",
+      "Crystal Reports for custom reporting",
+    ],
+    integrations: ["Sage 300 People", "Sage CRM"],
+    supportTypes: ["Partner network", "Knowledge base"],
+    countries: ["South Africa", "Global"],
+    languages: ["English"],
+    rating: 4.0, ease: 3.8, value: 3.7, service: 3.8, functionality: 3.9,
+    reviewCount: 227,
+    ratingSource: {
+      name: "Capterra",
+      url: "https://www.capterra.com/p/180283/Sage-300cloud/",
+      retrieved: "2026-09-15",
+    },
+    alternatives: ["sage-200-evolution", "sage-x3", "sap-business-one", "syspro"],
+    bestFor: ["medium-business", "multinational", "established-business"],
+  },
+
+  {
+    slug: "sage-300-people",
+    name: "Sage 300 People",
+    categorySlug: "payroll-software",
+    tagline: "HR and payroll for employers with 100 or more staff",
+    descriptionShort:
+      "Sage 300 People combines South African payroll with HR and employee self service for businesses with a hundred or more employees, and it is the step up in the Sage range from a standalone payroll package.",
+    descriptionFull: `
+<p>Sage 300 People is the HR and payroll system Sage sells to larger South African employers. Sage aims it at businesses with a hundred or more employees, and at mid market and enterprise organisations whose payroll, HR administration and reporting have outgrown a standalone payroll package.</p>
+<p>It pairs Sage payroll with HR tools and an employee self service portal. Employees can view payslips, apply for leave, update personal details, submit claims where the employer enables it and open HR documents, and managers approve requests from anywhere. Automated reporting and compliance tools are a large part of the case for it.</p>
+<p>It integrates with Sage 300 for the general ledger, and Sage South Africa runs training courses for it.</p>
+<p>It is sold on a quoted basis through Sage and its partners. It has no published review score yet, so this page shows no rating.</p>`,
+    vendorName: "Sage South Africa",
+    vendorWebsite: "https://www.sage.com/en-za/products/sage-300-people/",
+    foundedYear: null,
+    featured: false,
+    topFeatures: [
+      "South African payroll",
+      "Employee self service portal",
+      "Manager approvals from anywhere",
+      "HR, reporting and compliance tools",
+    ],
+    features: [
+      "South African payroll",
+      "HR administration",
+      "Employee self service portal",
+      "Payslips online",
+      "Leave applications",
+      "Claims submission",
+      "Manager approvals from anywhere",
+      "HR document access",
+      "Automated reporting",
+      "Compliance tools",
+      "General ledger integration with Sage 300",
+      "Sage training courses",
+    ],
+    integrations: ["Sage 300"],
+    supportTypes: ["Partner network", "Training courses", "Knowledge base"],
+    countries: ["South Africa"],
+    languages: ["English"],
+    rating: 0, ease: 0, value: 0, service: 0, functionality: 0,
+    reviewCount: 0,
+    alternatives: ["payspace", "sage-pastel-payroll", "paysoft", "sap-successfactors"],
+    bestFor: ["large-business", "complex-payroll", "compliance-heavy"],
+  },
+
+  {
+    slug: "sage-crm",
+    name: "Sage CRM",
+    categorySlug: "crm-software",
+    tagline: "CRM that connects to the Sage ERP you already run",
+    descriptionShort:
+      "Sage CRM covers sales, marketing and customer service for businesses that already run Sage, where its connection to Sage ERP products matters more than a modern interface.",
+    descriptionFull: `
+<p>Sage CRM is a customer relationship management system for sales, marketing and service teams. Its practical argument in South Africa is the Sage connection: businesses running Sage ERP can see customer, order and account information beside their pipeline without building an integration themselves.</p>
+<p>Sales teams manage opportunities, relationships and orders. Marketing builds and targets campaigns. Service teams work cases against the customer history. Sage has also added Sage Copilot AI features to it.</p>
+<p>Reviewers find it quick to learn and say reports are easy to produce. They also describe it as dated next to newer CRMs, some modules as less intuitive than the rest, and support as inconsistent, with different answers to the same question. Its overall review score is modest, so compare it seriously with Zoho CRM and HubSpot before assuming the Sage fit decides it.</p>
+<p>It is sold through Sage partners on a quoted basis.</p>`,
+    vendorName: "Sage South Africa",
+    vendorWebsite: "https://www.sage.com/en-za/products/sage-crm/",
+    foundedYear: null,
+    featured: false,
+    topFeatures: [
+      "Integration with Sage ERP products",
+      "Sales opportunity and order management",
+      "Marketing campaigns",
+      "Customer service case tracking",
+    ],
+    features: [
+      "Opportunity management",
+      "Contact and account management",
+      "Order management",
+      "Marketing campaigns",
+      "Campaign targeting",
+      "Customer service cases",
+      "Customer history",
+      "Reports and dashboards",
+      "Integration with Sage ERP products",
+      "Sage Copilot AI features",
+    ],
+    integrations: ["Sage 300"],
+    supportTypes: ["Partner network", "Knowledge base"],
+    countries: ["South Africa", "Global"],
+    languages: ["English"],
+    rating: 3.6, ease: 3.3, value: 3.5, service: 3.5, functionality: 3.6,
+    reviewCount: 73,
+    ratingSource: {
+      name: "Capterra",
+      url: "https://www.capterra.com/p/227247/Sage-CRM/",
+      retrieved: "2026-09-15",
+    },
+    alternatives: ["zoho-crm", "hubspot-crm", "salesforce-sales-cloud", "pipedrive"],
+    bestFor: ["medium-business", "established-business", "complex-sales"],
   },
 ];
 

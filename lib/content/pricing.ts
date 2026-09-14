@@ -744,6 +744,79 @@ export const PRICING: Record<string, PricingRecord> = {
     notes:
       "The 14 day free trial is confirmed. Per user pricing renders client side and could not be read. Needs a manual check.",
   },
+
+  /* The wider Sage range. Sage South Africa quotes all of these. */
+  "sage-x3": {
+    slug: "sage-x3",
+    startingAmount: null,
+    currency: "ZAR",
+    period: "user",
+    vatInclusive: null,
+    freeTrialDays: null,
+    freeVersion: false,
+    verification: "quote-only",
+    sourceUrl: "https://www.sage.com/en-za/sage-business-cloud/sage-x3/industry/",
+    checkedAt: "2026-09-15",
+    notes:
+      "Sage does not publish a price. It is quoted through Sage partners by modules, users and deployment, and implementation is a separate cost.",
+  },
+
+  "sage-intacct": {
+    slug: "sage-intacct",
+    startingAmount: null,
+    currency: "ZAR",
+    period: "year",
+    vatInclusive: null,
+    freeTrialDays: null,
+    freeVersion: false,
+    verification: "quote-only",
+    sourceUrl: "https://www.sage.com/en-za/sage-business-cloud/intacct/",
+    checkedAt: "2026-09-15",
+    notes:
+      "Sage does not publish a price. It is quoted by organisation size and modules, and add on modules raise the total.",
+  },
+
+  "sage-300": {
+    slug: "sage-300",
+    startingAmount: null,
+    currency: "ZAR",
+    period: "user",
+    vatInclusive: null,
+    freeTrialDays: null,
+    freeVersion: false,
+    verification: "quote-only",
+    sourceUrl: "https://www.sage.com/en-za/products/sage-300-cloud/",
+    checkedAt: "2026-09-15",
+    notes: "Sage does not publish a price. It is quoted through Sage partners by module and user count.",
+  },
+
+  "sage-300-people": {
+    slug: "sage-300-people",
+    startingAmount: null,
+    currency: "ZAR",
+    period: "employee",
+    vatInclusive: null,
+    freeTrialDays: null,
+    freeVersion: false,
+    verification: "quote-only",
+    sourceUrl: "https://www.sage.com/en-za/products/sage-300-people/",
+    checkedAt: "2026-09-15",
+    notes: "Sage does not publish a price. It is quoted by Sage and its partners, usually by employee count and modules.",
+  },
+
+  "sage-crm": {
+    slug: "sage-crm",
+    startingAmount: null,
+    currency: "ZAR",
+    period: "user",
+    vatInclusive: null,
+    freeTrialDays: null,
+    freeVersion: false,
+    verification: "quote-only",
+    sourceUrl: "https://www.sage.com/en-za/products/sage-crm/",
+    checkedAt: "2026-09-15",
+    notes: "Sage does not publish a price. It is quoted through Sage partners by user count.",
+  },
 };
 
 /* -------------------------------------------------------------------------- */

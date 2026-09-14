@@ -40,7 +40,8 @@ import { StarRating } from "@/components/public/StarRating";
 import { Badge } from "@/components/ui/badge";
 import { buildFaqs, faqJsonLd } from "@/lib/content/faqs";
 import { serializeJsonLd } from "@/lib/json-ld";
-import { formatNumber, formatRating } from "@/lib/format";
+import { formatDate, formatNumber, formatRating } from "@/lib/format";
+import { hasOwnReviews, reviewsWord } from "@/lib/ratings";
 import {
   getAllSoftware,
   getAlternatives,
@@ -66,11 +67,17 @@ export async function generateMetadata(
   if (!software) return { title: "Not found" };
 
   const title = software.meta_title ?? `${software.name} review`;
+  const ratingSentence =
+    software.review_count > 0
+      ? `${formatRating(software.overall_rating)} out of 5 from ${formatNumber(
+          software.review_count,
+        )} ${
+          software.rating_source ? reviewsWord(software) : "verified reviews"
+        }, with pricing in rand.`
+      : "Pricing in rand, features and alternatives.";
   const description =
     software.meta_description ??
-    `${software.name} reviewed for South African businesses. ${formatRating(
-      software.overall_rating,
-    )} out of 5 from ${formatNumber(software.review_count)} verified reviews, with pricing in rand.`;
+    `${software.name} reviewed for South African businesses. ${ratingSentence}`;
 
   return {
     title,
@@ -87,8 +94,14 @@ export async function generateMetadata(
             title: software.name,
             eyebrow: software.category?.name ?? "Business software",
             subtitle: software.tagline ?? undefined,
-            rating: formatRating(software.overall_rating),
-            reviews: formatNumber(software.review_count),
+            rating:
+              software.review_count > 0
+                ? formatRating(software.overall_rating)
+                : undefined,
+            reviews:
+              software.review_count > 0
+                ? formatNumber(software.review_count)
+                : undefined,
           }),
           width: 1200,
           height: 630,
@@ -103,13 +116,13 @@ export async function generateMetadata(
  * Section pills. Screenshots only earn one when the product actually has
  * them, so the nav never points at a section that is not on the page.
  */
-function sectionsFor(hasScreenshots: boolean) {
+function sectionsFor(hasScreenshots: boolean, hasRatings: boolean) {
   return [
     { id: "overview", label: "Overview" },
     { id: "pricing", label: "Pricing" },
     { id: "features", label: "Features" },
     ...(hasScreenshots ? [{ id: "screenshots", label: "Screenshots" }] : []),
-    { id: "ratings", label: "Ratings" },
+    ...(hasRatings ? [{ id: "ratings", label: "Ratings" }] : []),
     { id: "compare", label: "Compare" },
     { id: "reviews", label: "Reviews" },
     { id: "alternatives", label: "Alternatives" },
@@ -167,6 +180,8 @@ export default async function SoftwareProfilePage(
   const seriesCool = "var(--color-petrol)";
   const faqs = buildFaqs(software);
   const topAlternative = alternatives[0];
+  /* A third-party snapshot, when the ratings are not this site's own reviews. */
+  const sourced = software.rating_source ?? null;
 
   const dimensionScores = [
     { label: "Ease of use", value: software.ease_of_use_rating },
@@ -175,8 +190,10 @@ export default async function SoftwareProfilePage(
     { label: "Functionality", value: software.functionality_rating },
   ];
 
-  /* Structured data. Product with AggregateRating, individual Reviews and the
-     FAQ block, all built from the same values the page renders. */
+  /* Structured data: the Product, the FAQ block and, only for reviews published
+     on this site, AggregateRating and individual Reviews. Ratings sourced from
+     another site are never marked up, because Google's review snippet rules do
+     not allow ratings aggregated from a third party. */
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -194,7 +211,7 @@ export default async function SoftwareProfilePage(
           },
         }
       : {}),
-    ...(software.review_count > 0
+    ...(hasOwnReviews(software)
       ? {
           aggregateRating: {
             "@type": "AggregateRating",
@@ -203,21 +220,21 @@ export default async function SoftwareProfilePage(
             bestRating: "5",
             worstRating: "1",
           },
+          review: reviewData.reviews.map((review) => ({
+            "@type": "Review",
+            author: { "@type": "Person", name: review.reviewer_name },
+            datePublished: review.review_date.slice(0, 10),
+            name: review.review_title,
+            reviewBody: review.summary,
+            reviewRating: {
+              "@type": "Rating",
+              ratingValue: String(review.overall_rating),
+              bestRating: "5",
+              worstRating: "1",
+            },
+          })),
         }
       : {}),
-    review: reviewData.reviews.map((review) => ({
-      "@type": "Review",
-      author: { "@type": "Person", name: review.reviewer_name },
-      datePublished: review.review_date.slice(0, 10),
-      name: review.review_title,
-      reviewBody: review.summary,
-      reviewRating: {
-        "@type": "Rating",
-        ratingValue: String(review.overall_rating),
-        bestRating: "5",
-        worstRating: "1",
-      },
-    })),
   };
 
   return (
@@ -243,8 +260,18 @@ export default async function SoftwareProfilePage(
       <header className="rail-grid">
         <Rail
           label={software.category?.name ?? "Software"}
-          count={formatRating(software.overall_rating)}
-          note="Weighted average out of 5."
+          count={
+            software.review_count > 0
+              ? formatRating(software.overall_rating)
+              : undefined
+          }
+          note={
+            software.review_count === 0
+              ? "No reviews yet."
+              : sourced
+                ? `Out of 5 on ${sourced.name}.`
+                : "Weighted average out of 5."
+          }
         />
 
         <div className="well">
@@ -270,19 +297,39 @@ export default async function SoftwareProfilePage(
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <span className="flex items-center gap-3">
-              <Figure className="text-[1.375rem] leading-none">
-                {formatRating(software.overall_rating)}
-              </Figure>
-              <StarRating rating={software.overall_rating} showNumber={false} />
-            </span>
-            <Link
-              href={`/software/${software.slug}/reviews`}
-              className="text-small text-[var(--color-text-accent)] underline underline-offset-4"
-            >
-              <Figure as="span">{formatNumber(software.review_count)}</Figure>{" "}
-              verified reviews
-            </Link>
+            {software.review_count > 0 ? (
+              <>
+                <span className="flex items-center gap-3">
+                  <Figure className="text-[1.375rem] leading-none">
+                    {formatRating(software.overall_rating)}
+                  </Figure>
+                  <StarRating rating={software.overall_rating} showNumber={false} />
+                </span>
+                {sourced ? (
+                  <a
+                    href={sourced.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-small text-[var(--color-text-accent)] underline underline-offset-4"
+                  >
+                    <Figure as="span">{formatNumber(software.review_count)}</Figure>{" "}
+                    reviews on {sourced.name}
+                  </a>
+                ) : (
+                  <Link
+                    href={`/software/${software.slug}/reviews`}
+                    className="text-small text-[var(--color-text-accent)] underline underline-offset-4"
+                  >
+                    <Figure as="span">{formatNumber(software.review_count)}</Figure>{" "}
+                    verified reviews
+                  </Link>
+                )}
+              </>
+            ) : (
+              <span className="text-small text-[var(--color-text-muted)]">
+                No reviews yet
+              </span>
+            )}
             {software.featured && <Badge variant="success">Featured</Badge>}
           </div>
 
@@ -308,7 +355,9 @@ export default async function SoftwareProfilePage(
         </div>
       </header>
 
-      <ProfileNav sections={sectionsFor(screenshots.length > 0)} />
+      <ProfileNav
+        sections={sectionsFor(screenshots.length > 0, software.review_count > 0)}
+      />
 
       <div className="grid gap-10 lg:grid-cols-[1fr_20rem] lg:items-start">
         <div className="flex min-w-0 flex-col gap-20">
@@ -439,61 +488,90 @@ export default async function SoftwareProfilePage(
           {/* -------------------------------------------------------------- */}
           {/* 5. Ratings                                                      */}
           {/* -------------------------------------------------------------- */}
-          <section id="ratings" aria-labelledby="ratings-heading" className="scroll-mt-32">
-            <SectionHeader
-              eyebrow="Ratings"
-              icon={BarChart3Icon}
-              title="What the numbers"
-              highlight="actually say"
-              subtitle={`Across ${formatNumber(software.review_count)} verified reviews from South African businesses.`}
-              headingId="ratings-heading"
-              className="mb-8"
-            />
+          {software.review_count > 0 && (
+            <section id="ratings" aria-labelledby="ratings-heading" className="scroll-mt-32">
+              <SectionHeader
+                eyebrow="Ratings"
+                icon={BarChart3Icon}
+                title="What the numbers"
+                highlight="actually say"
+                subtitle={
+                  sourced
+                    ? `From ${formatNumber(software.review_count)} reviews on ${sourced.name}, read on ${formatDate(sourced.retrieved)}.`
+                    : `Across ${formatNumber(software.review_count)} verified reviews from South African businesses.`
+                }
+                headingId="ratings-heading"
+                className="mb-8"
+              />
 
-            <div className="rounded-[1.75rem] bg-zinc-100/80 p-2 dark:bg-zinc-900/60">
-              <div className="grid gap-2 md:grid-cols-2">
-                <div className="flex flex-col items-center gap-5 rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 dark:border-zinc-800">
-                  <CircularRating
-                    rating={software.overall_rating}
-                    colour={seriesCool}
-                  />
-                  <StarRating
-                    rating={software.overall_rating}
-                    showNumber={false}
-                  />
-                  <SentimentBar distribution={distribution} className="w-full" />
-                </div>
-
-                <div className="flex flex-col gap-2 rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 dark:border-zinc-800">
-                  {[5, 4, 3, 2, 1].map((star) => (
-                    <RatingBar
-                      key={star}
-                      star={star}
-                      count={distribution[star as 1 | 2 | 3 | 4 | 5]}
-                      total={distributionTotal}
+              <div className="rounded-[1.75rem] bg-zinc-100/80 p-2 dark:bg-zinc-900/60">
+                <div className="grid gap-2 md:grid-cols-2">
+                  <div className="flex flex-col items-center gap-5 rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 dark:border-zinc-800">
+                    <CircularRating
+                      rating={software.overall_rating}
+                      colour={seriesCool}
                     />
-                  ))}
-                </div>
+                    <StarRating
+                      rating={software.overall_rating}
+                      showNumber={false}
+                    />
+                    {/* A star spread exists only for reviews published here. */}
+                    {!sourced && (
+                      <SentimentBar distribution={distribution} className="w-full" />
+                    )}
+                  </div>
 
-                <div className="rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 dark:border-zinc-800">
-                  <h3 className="mb-4 font-heading text-base font-bold tracking-tight">
-                    Rated by dimension
-                  </h3>
-                  <SoftwareRatingsChart
-                    scores={dimensionScores}
-                    colour={seriesCool}
-                  />
-                </div>
+                  {!sourced && (
+                    <div className="flex flex-col gap-2 rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 dark:border-zinc-800">
+                      {[5, 4, 3, 2, 1].map((star) => (
+                        <RatingBar
+                          key={star}
+                          star={star}
+                          count={distribution[star as 1 | 2 | 3 | 4 | 5]}
+                          total={distributionTotal}
+                        />
+                      ))}
+                    </div>
+                  )}
 
-                <div className="rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 dark:border-zinc-800">
-                  <h3 className="mb-4 font-heading text-base font-bold tracking-tight">
-                    Who reviews it
-                  </h3>
-                  <CompanySizeChart breakdown={sizeBreakdown} />
+                  <div className="rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 dark:border-zinc-800">
+                    <h3 className="mb-4 font-heading text-base font-bold tracking-tight">
+                      Rated by dimension
+                    </h3>
+                    <SoftwareRatingsChart
+                      scores={dimensionScores}
+                      colour={seriesCool}
+                    />
+                  </div>
+
+                  {!sourced && (
+                    <div className="rounded-[1.4rem] border border-zinc-200/70 bg-card p-6 dark:border-zinc-800">
+                      <h3 className="mb-4 font-heading text-base font-bold tracking-tight">
+                        Who reviews it
+                      </h3>
+                      <CompanySizeChart breakdown={sizeBreakdown} />
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          </section>
+
+              {sourced && (
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  These are {sourced.name}&apos;s published figures, not reviews
+                  collected by {SITE_NAME}.{" "}
+                  <a
+                    href={sourced.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-4 hover:text-foreground"
+                  >
+                    See the source
+                  </a>
+                  .
+                </p>
+              )}
+            </section>
+          )}
 
           {/* -------------------------------------------------------------- */}
           {/* 6. Compare                                                      */}
@@ -545,17 +623,44 @@ export default async function SoftwareProfilePage(
               className="mb-8"
             />
 
-            <div className="flex flex-col gap-4">
-              {reviewData.reviews.map((review) => (
-                <ReviewCard key={review.id} review={review} />
-              ))}
-            </div>
+            {hasOwnReviews(software) ? (
+              <>
+                <div className="flex flex-col gap-4">
+                  {reviewData.reviews.map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
+                </div>
 
-            <div className="mt-8 flex justify-center">
-              <GlossyCTA href={`/software/${software.slug}/reviews`}>
-                Read all {formatNumber(software.review_count)} reviews
-              </GlossyCTA>
-            </div>
+                <div className="mt-8 flex justify-center">
+                  <GlossyCTA href={`/software/${software.slug}/reviews`}>
+                    Read all {formatNumber(software.review_count)} reviews
+                  </GlossyCTA>
+                </div>
+              </>
+            ) : (
+              <div className="card-modern flex flex-col items-start gap-5 p-6">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {sourced
+                    ? `No reviews of ${software.name} have been published on ${SITE_NAME} yet. The ratings above come from ${formatNumber(software.review_count)} reviews on ${sourced.name}.`
+                    : `No reviews of ${software.name} have been published yet.`}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+                  <GlossyCTA href={`/software/${software.slug}/reviews/new`}>
+                    Write the first review
+                  </GlossyCTA>
+                  {sourced && (
+                    <a
+                      href={sourced.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium underline underline-offset-4"
+                    >
+                      Read reviews on {sourced.name}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* -------------------------------------------------------------- */}
@@ -665,10 +770,16 @@ function CompareFace({
       <p className="font-heading text-base font-bold tracking-tight">
         {software.name}
       </p>
-      <StarRating rating={software.overall_rating} size="sm" />
-      <p className="text-xs text-muted-foreground tabular-nums">
-        {formatNumber(software.review_count)} reviews
-      </p>
+      {software.review_count > 0 ? (
+        <>
+          <StarRating rating={software.overall_rating} size="sm" />
+          <p className="text-xs text-muted-foreground tabular-nums">
+            {formatNumber(software.review_count)} {reviewsWord(software)}
+          </p>
+        </>
+      ) : (
+        <p className="text-xs text-muted-foreground">No reviews yet</p>
+      )}
     </div>
   );
 }

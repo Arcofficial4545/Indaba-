@@ -16,6 +16,7 @@ import {
   startingPriceLabel,
 } from "@/lib/format";
 import { serializeJsonLd } from "@/lib/json-ld";
+import { reviewsWord } from "@/lib/ratings";
 import { getArticleBySlug, getLatestArticles } from "@/lib/queries/articles";
 import { getAllSoftware } from "@/lib/queries/software";
 import { ogImageUrl, SITE_NAME, SITE_URL } from "@/lib/site";
@@ -178,8 +179,9 @@ export default async function ArticlePage(props: PageProps<"/blog/[slug]">) {
                   </Link>
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Rated {formatRating(product.overall_rating)} out of 5 from{" "}
-                  {formatNumber(product.review_count)} reviews.{" "}
+                  {product.review_count > 0
+                    ? `Rated ${formatRating(product.overall_rating)} out of 5 from ${formatNumber(product.review_count)} ${reviewsWord(product)}. `
+                    : "No reviews yet. "}
                   {productPrice.isCustom || product.starting_price === 0
                     ? productPrice.amount
                     : `From ${productPrice.amount}`}

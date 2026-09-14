@@ -68,8 +68,9 @@ export default async function CategoryPage(
     getCategories(),
   ]);
 
+  // Reviews on this site only; third-party counts are someone else's reviews.
   const reviewTotal = software.reduce(
-    (sum, item) => sum + item.review_count,
+    (sum, item) => (item.rating_source ? sum : sum + item.review_count),
     0,
   );
 

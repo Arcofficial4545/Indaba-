@@ -4,6 +4,7 @@ import { CompareButton } from "@/components/public/CompareTray";
 import { Figure } from "@/components/public/Figure";
 import { SoftwareLogo } from "@/components/public/SoftwareLogo";
 import { formatNumber, formatRating, startingPriceLabel } from "@/lib/format";
+import { reviewsWord } from "@/lib/ratings";
 import type { SoftwareWithCategory } from "@/lib/types";
 
 /**
@@ -100,24 +101,32 @@ function ShowcaseCard({ product }: { product: SoftwareWithCategory }) {
         sand alone measures 1.70:1 on paper, so the figure next to it is what
         makes the bar legible rather than decorative.
       */}
-      <div className="showcase-rating">
-        <p>
-          <Figure className="showcase-score">{formatRating(rating)}</Figure>
-          <span className="showcase-outof" aria-hidden="true">/5</span>
-          <span className="sr-only">out of 5</span>
-        </p>
-        <p className="showcase-reviews">
-          <Figure>{formatNumber(product.review_count)}</Figure>{" "}
-          {product.review_count === 1 ? "review" : "reviews"}
-        </p>
-      </div>
-      <div
-        className="showcase-bar"
-        aria-hidden="true"
-        style={{ "--fill": Math.max(0, Math.min(1, rating / 5)) } as React.CSSProperties}
-      >
-        <span />
-      </div>
+      {product.review_count > 0 ? (
+        <>
+          <div className="showcase-rating">
+            <p>
+              <Figure className="showcase-score">{formatRating(rating)}</Figure>
+              <span className="showcase-outof" aria-hidden="true">/5</span>
+              <span className="sr-only">out of 5</span>
+            </p>
+            <p className="showcase-reviews">
+              <Figure>{formatNumber(product.review_count)}</Figure>{" "}
+              {reviewsWord(product)}
+            </p>
+          </div>
+          <div
+            className="showcase-bar"
+            aria-hidden="true"
+            style={{ "--fill": Math.max(0, Math.min(1, rating / 5)) } as React.CSSProperties}
+          >
+            <span />
+          </div>
+        </>
+      ) : (
+        <div className="showcase-rating">
+          <p className="showcase-reviews">No reviews yet</p>
+        </div>
+      )}
 
       <p className="showcase-price">
         {/*

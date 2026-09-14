@@ -38,6 +38,15 @@ export interface Screenshot {
   caption?: string;
 }
 
+/** A public third-party rating snapshot, always shown with its source and date. */
+export type RatingSource = {
+  /** The site the figures come from, for example "Capterra". */
+  name: string;
+  url: string;
+  /** ISO date the figures were read. */
+  retrieved: string;
+};
+
 export interface Software {
   id: string;
   name: string;
@@ -81,6 +90,11 @@ export interface Software {
   readonly customer_service_rating: number;
   readonly functionality_rating: number;
   readonly review_count: number;
+  /**
+   * Set when the ratings above are a public third-party snapshot rather than
+   * reviews published on this site. Absent or null for the site's own reviews.
+   */
+  rating_source?: RatingSource | null;
 
   meta_title: string | null;
   meta_description: string | null;

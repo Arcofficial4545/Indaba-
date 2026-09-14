@@ -65,12 +65,16 @@ export function SoftwareListRow({
           )}
         </p>
 
-        <StarRating
-          rating={software.overall_rating}
-          reviewCount={software.review_count}
-          size="sm"
-          className="mt-3"
-        />
+        {software.review_count > 0 ? (
+          <StarRating
+            rating={software.overall_rating}
+            reviewCount={software.review_count}
+            size="sm"
+            className="mt-3"
+          />
+        ) : (
+          <p className="mt-3 text-sm text-muted-foreground">No reviews yet</p>
+        )}
 
         <p className="mt-3 text-sm leading-relaxed text-pretty text-muted-foreground">
           {software.description_short}
@@ -116,7 +120,11 @@ export function SoftwareListRow({
       </div>
 
       <p className="sr-only">
-        {formatNumber(software.review_count)} verified reviews.
+        {software.review_count === 0
+          ? "No reviews yet."
+          : software.rating_source
+            ? `${formatNumber(software.review_count)} reviews on ${software.rating_source.name}.`
+            : `${formatNumber(software.review_count)} verified reviews.`}
       </p>
     </article>
   );

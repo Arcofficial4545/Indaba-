@@ -5,6 +5,7 @@ import { CompareToggle } from "@/components/public/CompareTray";
 import { Figure } from "@/components/public/Figure";
 import { SoftwareLogo } from "@/components/public/SoftwareLogo";
 import { formatNumber, formatRating, startingPriceLabel } from "@/lib/format";
+import { reviewsWord } from "@/lib/ratings";
 import type { SoftwareWithCategory } from "@/lib/types";
 
 /**
@@ -73,25 +74,32 @@ export function SoftwareResultRow({
         </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-small">
-          <span className="flex items-center gap-2">
-            <Figure>{formatRating(software.overall_rating)}</Figure>
-            <span aria-hidden="true" className="rating-track">
-              <span
-                className="rating-fill"
-                style={{ ["--fill" as string]: fill }}
-              />
-            </span>
-            <span className="sr-only">out of 5</span>
-          </span>
-          {/*
-            The count is a Figure, the word beside it is not. Passing the whole
-            of formatReviewCount() through Figure applies its negative word
-            spacing to the gap before "reviews" and renders "414reviews".
-          */}
-          <span className="text-[var(--color-text-muted)]">
-            <Figure as="span">{formatNumber(software.review_count)}</Figure>{" "}
-            {software.review_count === 1 ? "review" : "reviews"}
-          </span>
+          {software.review_count > 0 ? (
+            <>
+              <span className="flex items-center gap-2">
+                <Figure>{formatRating(software.overall_rating)}</Figure>
+                <span aria-hidden="true" className="rating-track">
+                  <span
+                    className="rating-fill"
+                    style={{ ["--fill" as string]: fill }}
+                  />
+                </span>
+                <span className="sr-only">out of 5</span>
+              </span>
+              {/*
+                The count is a Figure, the word beside it is not. Passing the
+                whole of formatReviewCount() through Figure applies its negative
+                word spacing to the gap before "reviews" and renders
+                "414reviews".
+              */}
+              <span className="text-[var(--color-text-muted)]">
+                <Figure as="span">{formatNumber(software.review_count)}</Figure>{" "}
+                {reviewsWord(software)}
+              </span>
+            </>
+          ) : (
+            <span className="text-[var(--color-text-muted)]">No reviews yet</span>
+          )}
           {software.free_trial && (
             <span className="text-[var(--color-text-cool)]">Free trial</span>
           )}

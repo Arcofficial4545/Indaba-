@@ -6,6 +6,7 @@ import { Figure } from "@/components/public/Figure";
 import { SoftwareLogo } from "@/components/public/SoftwareLogo";
 import { buildPlans, buildReasons } from "@/lib/compare-matrix";
 import { formatNumber, formatRating, startingPriceLabel } from "@/lib/format";
+import { reviewsWord } from "@/lib/ratings";
 import type { SoftwareWithCategory } from "@/lib/types";
 
 /**
@@ -145,15 +146,21 @@ function Column({
       <p className="cmp-col-tagline">{software.tagline}</p>
 
       <div className="cmp-col-score">
-        <Figure className="cmp-col-rating">
-          {formatRating(software.overall_rating)}
-        </Figure>
-        <span className="cmp-col-outof" aria-hidden="true">/5</span>
-        <span className="sr-only">out of 5</span>
-        <span className="cmp-col-reviews">
-          <Figure as="span">{formatNumber(software.review_count)}</Figure>{" "}
-          {software.review_count === 1 ? "review" : "reviews"}
-        </span>
+        {software.review_count > 0 ? (
+          <>
+            <Figure className="cmp-col-rating">
+              {formatRating(software.overall_rating)}
+            </Figure>
+            <span className="cmp-col-outof" aria-hidden="true">/5</span>
+            <span className="sr-only">out of 5</span>
+            <span className="cmp-col-reviews">
+              <Figure as="span">{formatNumber(software.review_count)}</Figure>{" "}
+              {reviewsWord(software)}
+            </span>
+          </>
+        ) : (
+          <span className="cmp-col-reviews">No reviews yet</span>
+        )}
       </div>
 
       <div className="cmp-col-price">

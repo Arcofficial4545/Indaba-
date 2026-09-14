@@ -5,6 +5,7 @@ import { CompareToggle } from "@/components/public/CompareTray";
 import { Figure } from "@/components/public/Figure";
 import { VendorMark } from "@/components/public/home/VendorMark";
 import { formatNumber, formatRating, startingPriceLabel } from "@/lib/format";
+import { reviewsWord } from "@/lib/ratings";
 import type { SoftwareWithCategory } from "@/lib/types";
 
 /** An editorial shortlist; catalogue scores are displayed without modification. */
@@ -43,9 +44,12 @@ export function TopRatedTable({ software }: {
 }
 
 function Rating({ software }: { software: SoftwareWithCategory }) {
+  if (software.review_count === 0) {
+    return <p className="home-detail-label">No reviews yet</p>;
+  }
   return <>
     <p className="home-rating"><Star size={15} aria-hidden="true" /><Figure>{formatRating(software.overall_rating)}</Figure><span>/ <Figure>5</Figure></span></p>
-    <p className="home-detail-label"><Figure>{formatNumber(software.review_count)}</Figure> reviews</p>
+    <p className="home-detail-label"><Figure>{formatNumber(software.review_count)}</Figure> {reviewsWord(software)}</p>
   </>;
 }
 

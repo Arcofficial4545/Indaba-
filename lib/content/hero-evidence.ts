@@ -22,13 +22,13 @@ export type HeroEvidence = {
 export const HERO_EVIDENCE_DATE = "2026-09-08";
 export const HERO_EVIDENCE: Record<string, HeroEvidence> = {
   "sage-accounting": {
-    rating: 4.5, reviews: 547,
+    rating: 4.5, reviews: 750,
     ratingSource: "https://www.capterra.co.za/software/140059/sage-one-uk",
     price: 240, vatInclusive: true, freePlan: false, plan: "Accounting Start",
     priceSource: "https://www.sage.com/en-za/sage-business-cloud/accounting/pricing/",
   },
   xero: {
-    rating: 4.4, reviews: 3250,
+    rating: 4.4, reviews: 700,
     ratingSource: "https://www.capterra.co.za/software/169561/xero",
     price: 450, vatInclusive: true, freePlan: false, plan: "Starter",
     priceSource: "https://www.xero.com/za/pricing-plans/",

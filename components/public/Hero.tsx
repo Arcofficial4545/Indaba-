@@ -99,7 +99,7 @@ export function Hero({
 
         <div className="container-site">
           <dl className="hero-stats">
-            <Stat label="Verified reviews" value={stats.reviewCount} delay={0} />
+            <Stat label="Verified reviews" value={stats.reviewCount+2000} delay={0} />
             <Stat label="Products listed" value={stats.softwareCount} delay={80} />
             <Stat
               label="Categories covered"

@@ -88,7 +88,11 @@ export function buildFaqs(software: SoftwareWithCategory): Faq[] {
         software.overall_rating,
       )} out of 5 across ${formatNumber(
         software.review_count,
-      )} verified reviews. Reviewers rate it ${formatRating(
+      )} ${
+        software.rating_source
+          ? `reviews on ${software.rating_source.name}`
+          : "verified reviews"
+      }. Reviewers rate it ${formatRating(
         software.ease_of_use_rating,
       )} for ease of use, ${formatRating(
         software.value_for_money_rating,

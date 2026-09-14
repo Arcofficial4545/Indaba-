@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import { SoftwareLogo } from "@/components/public/SoftwareLogo";
 import { StarRating } from "@/components/public/StarRating";
-import { formatRating, startingPriceLabel } from "@/lib/format";
+import { formatNumber, formatRating, startingPriceLabel } from "@/lib/format";
+import { reviewsWord } from "@/lib/ratings";
 import type { SoftwareWithCategory } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +21,10 @@ export function AlternativeCard({
 }) {
   const price = startingPriceLabel(software);
 
-  const verdict = comparedTo
+  // Only compared when both have ratings; "rates 4.1 higher" against a product
+  // with no reviews would be meaningless.
+  const verdict =
+    comparedTo && software.review_count > 0 && comparedTo.review_count > 0
     ? software.overall_rating > comparedTo.overall_rating
       ? `Rates ${formatRating(software.overall_rating - comparedTo.overall_rating)} higher overall`
       : software.overall_rating < comparedTo.overall_rating
@@ -66,11 +70,22 @@ export function AlternativeCard({
         )}
       </div>
 
-      <StarRating
-        rating={software.overall_rating}
-        reviewCount={software.review_count}
-        size="sm"
-      />
+      {software.review_count === 0 ? (
+        <p className="text-sm text-muted-foreground">No reviews yet</p>
+      ) : software.rating_source ? (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <StarRating rating={software.overall_rating} size="sm" />
+          <span className="text-xs text-muted-foreground">
+            {formatNumber(software.review_count)} {reviewsWord(software)}
+          </span>
+        </div>
+      ) : (
+        <StarRating
+          rating={software.overall_rating}
+          reviewCount={software.review_count}
+          size="sm"
+        />
+      )}
 
       <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
         {software.description_short}

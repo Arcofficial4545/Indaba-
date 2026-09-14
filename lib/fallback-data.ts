@@ -170,6 +170,7 @@ function buildSoftware(entry: CatalogueEntry): SoftwareWithCategory {
     customer_service_rating: entry.service,
     functionality_rating: entry.functionality,
     review_count: entry.reviewCount,
+    rating_source: entry.ratingSource ?? null,
 
     meta_title: null,
     meta_description: null,
@@ -271,8 +272,11 @@ export const FALLBACK_ARTICLES: Article[] = ARTICLE_SEEDS;
 /* Derived helpers                                                            */
 /* -------------------------------------------------------------------------- */
 
+// Reviews on this site only. A third-party review count is someone else's
+// reviews, so it never feeds the "verified reviews" total.
 export const FALLBACK_REVIEW_TOTAL = FALLBACK_SOFTWARE.reduce(
-  (sum, software) => sum + software.review_count,
+  (sum, software) =>
+    software.rating_source ? sum : sum + software.review_count,
   0,
 );
 

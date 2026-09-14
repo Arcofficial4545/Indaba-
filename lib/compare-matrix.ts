@@ -120,7 +120,7 @@ export function buildCompareGroups(
   const groups: CompareGroup[] = [
     {
       title: "Ratings",
-      note: "Out of 5, from reviews left on Indaba.",
+      note: ratingsNote(a, b),
       rows: [
         ratingRow("Overall", a.overall_rating, b.overall_rating),
         ratingRow("Ease of use", a.ease_of_use_rating, b.ease_of_use_rating),
@@ -192,6 +192,22 @@ export function buildCompareGroups(
   return groups.filter((group) => group.rows.length > 0);
 }
 
+/** Says where each side's ratings come from, so a sourced score is never passed off as ours. */
+function ratingsNote(a: SoftwareWithCategory, b: SoftwareWithCategory): string {
+  const sources = [a, b]
+    .map((s) =>
+      s.review_count === 0
+        ? `${s.name} has no reviews yet`
+        : s.rating_source
+          ? `${s.name} from ${s.rating_source.name}`
+          : null,
+    )
+    .filter(Boolean);
+  return sources.length === 0
+    ? "Out of 5, from reviews left on Indaba."
+    : `Out of 5. ${sources.join("; ")}.`;
+}
+
 /** A vendor's published tiers, for the plan ladder beside the matrix. */
 export function buildPlans(software: SoftwareWithCategory): ComparePlan[] {
   return (software.pricing_plans ?? []).map((plan) => ({
@@ -223,8 +239,10 @@ export function buildReasons(
   other: SoftwareWithCategory,
 ): string[] {
   const reasons: string[] = [];
+  // A score against a product with no reviews is not a lead.
+  const bothRated = self.review_count > 0 && other.review_count > 0;
 
-  if (self.overall_rating > other.overall_rating) {
+  if (bothRated && self.overall_rating > other.overall_rating) {
     reasons.push(
       `Rated higher overall — ${formatRating(self.overall_rating)} against ${formatRating(other.overall_rating)}.`,
     );
@@ -237,7 +255,7 @@ export function buildReasons(
     ["functionality", self.functionality_rating, other.functionality_rating],
   ] as const;
   const best = dimensions
-    .filter(([, mine, theirs]) => mine > theirs)
+    .filter(([, mine, theirs]) => bothRated && mine > theirs)
     .sort((x, y) => y[1] - y[2] - (x[1] - x[2]))[0];
   if (best) {
     reasons.push(
@@ -274,7 +292,7 @@ export function buildReasons(
     );
   }
 
-  if (self.review_count > other.review_count * 1.5) {
+  if (bothRated && self.review_count > other.review_count * 1.5) {
     reasons.push(
       `More evidence behind the score: ${formatNumber(self.review_count)} reviews against ${formatNumber(other.review_count)}.`,
     );

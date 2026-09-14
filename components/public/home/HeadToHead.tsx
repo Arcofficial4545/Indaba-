@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Figure } from "@/components/public/Figure";
 import { VendorMark } from "@/components/public/home/VendorMark";
 import { formatNumber, formatRating, startingPriceLabel } from "@/lib/format";
+import { reviewsWord } from "@/lib/ratings";
 import type { ComparisonPair } from "@/lib/queries/comparisons";
 import { canonicalComparisonSlug } from "@/lib/utils";
 
@@ -57,8 +58,14 @@ function Side({ software }: { software: ComparisonPair["a"] }) {
       </div>
       <div className="h2h-facts">
         <div>
-          <p className="home-rating"><Star size={15} aria-hidden="true" /><Figure>{formatRating(software.overall_rating)}</Figure><span>/ <Figure>5</Figure></span></p>
-          <p className="home-detail-label"><Figure>{formatNumber(software.review_count)}</Figure> reviews</p>
+          {software.review_count > 0 ? (
+            <>
+              <p className="home-rating"><Star size={15} aria-hidden="true" /><Figure>{formatRating(software.overall_rating)}</Figure><span>/ <Figure>5</Figure></span></p>
+              <p className="home-detail-label"><Figure>{formatNumber(software.review_count)}</Figure> {reviewsWord(software)}</p>
+            </>
+          ) : (
+            <p className="home-detail-label">No reviews yet</p>
+          )}
         </div>
         <div>
           <p className="h2h-price">{price.isCustom || software.starting_price === 0 ? price.amount : <>From <Figure>{price.amount}</Figure></>}</p>
