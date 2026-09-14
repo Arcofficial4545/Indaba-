@@ -139,7 +139,7 @@ export async function subscribeToNewsletter(
   return {
     status: "success",
     message: sent
-      ? "You are subscribed. We have sent a welcome email to your inbox."
+      ? "You are subscribed. Welcome to Indaba community. "
       : "You are subscribed. Welcome to Indaba.",
   };
 }
